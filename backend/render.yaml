@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: agendaao-backend
+    env: node
+    region: frankfurt
+    plan: free
+    buildCommand: node prisma/prepare-production.js && npm install && npx prisma generate && npx prisma db push
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        sync: false
+      - key: ADMIN_SECRET
+        sync: false
+      - key: MULTICAIXA_EXPRESS_NUMERO
+        sync: false
+      - key: MULTICAIXA_EXPRESS_NOME
+        value: AgendaAO
+      - key: IBAN_ATLANTICO
+        sync: false
+      - key: IBAN_ATLANTICO_BANCO
+        value: Atlantico
+      - key: IBAN_BAI
+        sync: false
+      - key: IBAN_BAI_BANCO
+        value: BAI
+      - key: IBAN_TITULAR
+        value: AgendaAO
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: UPLOAD_DIR
+        value: ./uploads
+      - key: MAX_FILE_SIZE
+        value: 5242880

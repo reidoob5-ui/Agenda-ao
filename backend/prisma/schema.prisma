@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Negocio {
+  id              String    @id @default(uuid())
+  nome            String
+  email           String    @unique
+  telefone        String
+  endereco        String?
+  cidade          String    @default("Luanda")
+  logo            String?
+  slug            String    @unique
+  plano           String     @default("BASICO")
+  planoStatus     String     @default("ATIVO")
+  planoExpira     DateTime?
+  ibanBancario    String?
+  merchantExpress String?
+  webhookSecret   String?
+  criadoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
+
+  usuarios        Usuario[]
+  profissionais   Profissional[]
+  servicos        Servico[]
+  clientes        Cliente[]
+  agendamentos    Agendamento[]
+  pagamentos      Pagamento[]
+  horarios        Horario[]
+  feriados        Feriado[]
+  assinaturas     Assinatura[]
+
+  @@map("negocios")
+}
+
+model Usuario {
+  id           String    @id @default(uuid())
+  negocioId    String
+  nome         String
+  email        String    @unique
+  senha        String
+  role         String      @default("PROFISSIONAL")
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now())
+
+  negocio      Negocio   @relation(fields: [negocioId], references: [id])
+  profissional Profissional?
+
+  @@map("usuarios")
+}
+
+model Profissional {
+  id           String    @id @default(uuid())
+  negocioId    String
+  usuarioId    String?   @unique
+  nome         String
+  email        String?
+  telefone     String?
+  foto         String?
+  bio          String?
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now())
+
+  negocio      Negocio   @relation(fields: [negocioId], references: [id])
+  usuario      Usuario?  @relation(fields: [usuarioId], references: [id])
+  agendamentos Agendamento[]
+  servicoProfissionais ServicoProfissional[]
+  horarios     HorarioProfissional[]
+
+  @@map("profissionais")
+}
+
+model Servico {
+  id           String    @id @default(uuid())
+  negocioId    String
+  nome         String
+  descricao    String?
+  duracaoMin   Int
+  preco        Int
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now())
+
+  negocio      Negocio   @relation(fields: [negocioId], references: [id])
+  agendamentos Agendamento[]
+  profissionais ServicoProfissional[]
+
+  @@map("servicos")
+}
+
+model ServicoProfissional {
+  servicoId      String
+  profissionalId String
+
+  servico        Servico      @relation(fields: [servicoId], references: [id])
+  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+
+  @@id([servicoId, profissionalId])
+  @@map("servico_profissionais")
+}
+
+model Cliente {
+  id           String    @id @default(uuid())
+  negocioId    String
+  nome         String
+  telefone     String
+  email        String?
+  notas        String?
+  pontosFidelidade Int   @default(0)
+  criadoEm     DateTime  @default(now())
+
+  negocio      Negocio   @relation(fields: [negocioId], references: [id])
+  agendamentos Agendamento[]
+
+  @@unique([negocioId, telefone])
+  @@map("clientes")
+}
+
+model Agendamento {
+  id              String    @id @default(uuid())
+  negocioId       String
+  clienteId       String
+  profissionalId  String
+  servicoId       String
+  dataHora        DateTime
+  duracaoMin      Int
+  preco           Int
+  status          String @default("PENDENTE")
+  notaCliente     String?
+  notaInterna     String?
+  lembrete24h     Boolean   @default(false)
+  lembrete2h      Boolean   @default(false)
+  criadoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
+
+  negocio         Negocio      @relation(fields: [negocioId], references: [id])
+  cliente         Cliente      @relation(fields: [clienteId], references: [id])
+  profissional    Profissional @relation(fields: [profissionalId], references: [id])
+  servico         Servico      @relation(fields: [servicoId], references: [id])
+
+  @@map("agendamentos")
+}
+
+model Pagamento {
+  id              String    @id @default(uuid())
+  negocioId       String
+  assinaturaId    String?
+  transactionId   String?   @unique
+  metodo          String
+  valor           Int
+  status          String @default("PENDENTE")
+  referencia      String?
+  webhookPayload  String?
+  processadoEm    DateTime?
+  expiresAt       DateTime?
+  criadoEm        DateTime  @default(now())
+
+  negocio         Negocio    @relation(fields: [negocioId], references: [id])
+  assinatura      Assinatura? @relation(fields: [assinaturaId], references: [id])
+
+  @@map("pagamentos")
+}
+
+model Assinatura {
+  id           String    @id @default(uuid())
+  negocioId    String
+  plano        String
+  valor        Int
+  status       String @default("PENDENTE")
+  periodoInicio DateTime
+  periodoFim   DateTime
+  criadoEm     DateTime  @default(now())
+
+  negocio      Negocio   @relation(fields: [negocioId], references: [id])
+  pagamentos   Pagamento[]
+
+  @@map("assinaturas")
+}
+
+model Horario {
+  id           String    @id @default(uuid())
+  negocioId    String
+  diaSemana    Int
+  horaInicio   String
+  horaFim      String
+  ativo        Boolean   @default(true)
+
+  negocio      Negocio   @relation(fields: [negocioId], references: [id])
+
+  @@map("horarios")
+}
+
+model HorarioProfissional {
+  id              String    @id @default(uuid())
+  profissionalId  String
+  diaSemana       Int
+  horaInicio      String
+  horaFim         String
+  ativo           Boolean   @default(true)
+
+  profissional    Profissional @relation(fields: [profissionalId], references: [id])
+
+  @@map("horarios_profissionais")
+}
+
+model Feriado {
+  id           String    @id @default(uuid())
+  negocioId    String?
+  data         DateTime
+  nome         String
+  nacional     Boolean   @default(false)
+
+  negocio      Negocio?  @relation(fields: [negocioId], references: [id])
+
+  @@map("feriados")
+}
+
+
