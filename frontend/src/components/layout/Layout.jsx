@@ -28,6 +28,13 @@ export default function Layout() {
 
   const handleLogout = () => { logout(); navigate('/login') }
 
+  // Calcular dias restantes do trial
+  const agora = new Date()
+  const diasRestantes = negocio?.planoExpira
+    ? Math.ceil((new Date(negocio.planoExpira) - agora) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isTrial = negocio?.plano === 'BASICO' && diasRestantes > 0;
+
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar */}
@@ -46,8 +53,10 @@ export default function Layout() {
         <div className="px-4 py-3 border-b border-slate-100">
           <p className="text-xs font-semibold text-slate-800 truncate">{negocio?.nome}</p>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1 inline-block
-            ${PLANO_BADGE[negocio?.plano] || PLANO_BADGE.BASICO}`}>
-            {negocio?.plano || 'BASICO'}
+            ${isTrial
+              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+              : PLANO_BADGE[negocio?.plano] || PLANO_BADGE.BASICO}`}>
+            {isTrial ? `TESTE - ${diasRestantes}d` : (negocio?.plano || 'BASICO')}
           </span>
         </div>
 

@@ -219,4 +219,13 @@ model Feriado {
   @@map("feriados")
 }
 
+model TrialUsado {
+  id                  String   @id @default(uuid())
+  email               String   @unique
+  telefoneNormalizado String   @unique
+  criadoEm            DateTime @default(now())
+
+  @@map("trials_usados")
+}
+
 

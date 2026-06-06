@@ -22,6 +22,22 @@ router.post('/registar', [
     const existe = await prisma.usuario.findUnique({ where: { email } });
     if (existe) return res.status(409).json({ erro: 'Email já registado' });
 
+    // Normalizar telefone para verificar se ja usou periodo de teste
+    const telNormalizado = telefone.replace(/\D/g, '');
+    const trialUsado = await prisma.trialUsado.findFirst({
+      where: {
+        OR: [
+          { email },
+          { telefoneNormalizado: telNormalizado }
+        ]
+      }
+    });
+
+    const jaTemTrial = !!trialUsado;
+    const diasTrial = 20;
+    const expiraData = jaTemTrial ? null : new Date(Date.now() + diasTrial * 24 * 60 * 60 * 1000);
+    const planoStatus = jaTemTrial ? 'INATIVO' : 'ATIVO';
+
     const slug = nomeNegocio.toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .replace(/\s+/g, '-')
@@ -36,6 +52,9 @@ router.post('/registar', [
           email,
           telefone,
           slug,
+          plano: 'BASICO',
+          planoStatus,
+          planoExpira: expiraData,
           horarios: {
             create: [
               { diaSemana: 1, horaInicio: '08:00', horaFim: '18:00' },
@@ -58,6 +77,16 @@ router.post('/registar', [
           role: 'DONO'
         }
       });
+
+      // Se nao usou trial ainda, marcar como usado
+      if (!jaTemTrial) {
+        await tx.trialUsado.create({
+          data: {
+            email,
+            telefoneNormalizado: telNormalizado
+          }
+        });
+      }
 
       return { negocio, usuario };
     });
