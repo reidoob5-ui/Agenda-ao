@@ -41,7 +41,7 @@ export default function LandingPage() {
         </div>
         <h1 className="font-display text-5xl md:text-6xl font-bold text-slate-900 leading-tight mb-6">
           Agendamentos online<br />
-          <span className="text-brand-600">para o teu salão</span>
+          <span className="text-brand-600">para o teu negócio</span>
         </h1>
         <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-10">
           Clientes marcam 24h/dia pelo telemóvel. Tu recebes confirmação no WhatsApp.<br />
@@ -62,7 +62,7 @@ export default function LandingPage() {
       <section id="funcionalidades" className="bg-slate-50 py-20">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="font-display text-3xl font-bold text-center mb-2">Tudo que precisas</h2>
-          <p className="text-slate-500 text-center mb-12">Construído para salões, barbearias e clínicas angolanas</p>
+          <p className="text-slate-500 text-center mb-12">Construído para prestadores de serviços e negócios angolanos</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               { icon: CalendarCheck, title: 'Agenda online', desc: 'Os teus clientes marcam pelo link. Tu vês tudo no painel.', cor: 'text-brand-600 bg-brand-50' },
