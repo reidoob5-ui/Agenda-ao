@@ -34,7 +34,7 @@ router.post('/registar', [
     });
 
     const jaTemTrial = !!trialUsado;
-    const diasTrial = 20;
+    const diasTrial = 14;
     const expiraData = jaTemTrial ? null : new Date(Date.now() + diasTrial * 24 * 60 * 60 * 1000);
     const planoStatus = jaTemTrial ? 'INATIVO' : 'ATIVO';
 
