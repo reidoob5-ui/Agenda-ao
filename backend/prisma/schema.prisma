@@ -34,6 +34,7 @@ model Negocio {
   horarios        Horario[]
   feriados        Feriado[]
   assinaturas     Assinatura[]
+  subscricoesPush SubscricaoPush[]
 
   @@map("negocios")
 }
@@ -226,6 +227,19 @@ model TrialUsado {
   criadoEm            DateTime @default(now())
 
   @@map("trials_usados")
+}
+
+model SubscricaoPush {
+  id         String   @id @default(uuid())
+  negocioId  String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  criadoEm   DateTime @default(now())
+
+  negocio    Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@map("subscricoes_push")
 }
 
 

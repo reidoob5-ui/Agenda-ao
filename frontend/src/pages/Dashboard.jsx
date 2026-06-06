@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import api from '../services/api'
-import { Calendar, Users, TrendingUp, Clock, Plus, ChevronRight } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { Calendar, Users, TrendingUp, Clock, Plus, ChevronRight, Bell } from 'lucide-react'
 import { format } from 'date-fns'
 import { pt } from 'date-fns/locale'
 
@@ -13,13 +14,160 @@ function fmtKz(v) {
   return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(v || 0)
 }
 
+// Converter string VAPID para Uint8Array para o Web Push
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i)
+  }
+  return outputArray
+}
+
+// Converter Buffer para Base64 de forma compativel
+const arrayBufferToBase64 = (buffer) => {
+  const binary = String.fromCharCode(...new Uint8Array(buffer))
+  return window.btoa(binary)
+}
+
+// Sintetizar sinal sonoro (chime) nativo usando Web Audio API
+const tocarSomNotificacao = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    
+    // Primeiro tom (Do5)
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+    osc1.type = 'sine'
+    osc1.frequency.value = 523.25 // C5
+    gain1.gain.setValueAtTime(0, ctx.currentTime)
+    gain1.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.05)
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+    osc1.start(ctx.currentTime)
+    osc1.stop(ctx.currentTime + 0.3)
+
+    // Segundo tom (Mi5)
+    const osc2 = ctx.createOscillator()
+    const gain2 = ctx.createGain()
+    osc2.connect(gain2)
+    gain2.connect(ctx.destination)
+    osc2.type = 'sine'
+    osc2.frequency.value = 659.25 // E5
+    gain2.gain.setValueAtTime(0, ctx.currentTime + 0.08)
+    gain2.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.13)
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45)
+    osc2.start(ctx.currentTime + 0.08)
+    osc2.stop(ctx.currentTime + 0.45)
+  } catch (e) {
+    console.error('[Dashboard] Erro ao tocar som nativo:', e)
+  }
+}
+
 export default function Dashboard() {
   const { negocio } = useAuthStore()
   const [dados, setDados] = useState(null)
   const [carregando, setCarregando] = useState(true)
 
+  // 1. Registo e Subscricao de Web Push (Notificacoes de fundo gratis)
   useEffect(() => {
-    api.get('/relatorios/dashboard').then(r => { setDados(r.data); setCarregando(false) }).catch(() => setCarregando(false))
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.log('ℹ️ [Web Push] O navegador nao suporta notificacoes push.');
+      return
+    }
+
+    const inicializarPush = async () => {
+      try {
+        // Pedir chave publica
+        const r = await api.get('/negocios/push-key')
+        const publicKey = r.data.publicKey
+        if (!publicKey) return
+
+        // Obter status de permissao
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') return
+
+        const reg = await navigator.serviceWorker.ready
+        let sub = await reg.pushManager.getSubscription()
+
+        // Se nao existe subscricao activa, criar uma
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey)
+          })
+        }
+
+        // Serializar chaves
+        const keys = {
+          p256dh: arrayBufferToBase64(sub.getKey('p256dh')),
+          auth: arrayBufferToBase64(sub.getKey('auth'))
+        }
+
+        // Submeter ao backend
+        await api.post('/negocios/push-subscribe', {
+          endpoint: sub.endpoint,
+          keys
+        })
+        console.log('🔔 [Web Push] Navegador registado com sucesso para alertas!')
+      } catch (err) {
+        console.error('❌ [Web Push] Erro na subscricao:', err.message)
+      }
+    }
+
+    // Registar apenas apos login bem-sucedido e dados carregados
+    if (negocio) {
+      inicializarPush()
+    }
+  }, [negocio])
+
+  // 2. Carregar dados + Polling com Alerta Sonoro e Popups
+  useEffect(() => {
+    // Primeira carga
+    api.get('/relatorios/dashboard')
+      .then(r => {
+        setDados(r.data)
+        setCarregando(false)
+      })
+      .catch(() => setCarregando(false))
+
+    // Polling a cada 25 segundos para monitorizar novos agendamentos
+    const interval = setInterval(async () => {
+      try {
+        const r = await api.get('/relatorios/dashboard')
+        
+        setDados(prev => {
+          if (prev && r.data.agendamentosHoje.length > prev.agendamentosHoje.length) {
+            // Detetar novos agendamentos comparando IDs
+            const novos = r.data.agendamentosHoje.filter(
+              novo => !prev.agendamentosHoje.some(velho => velho.id === novo.id)
+            )
+            
+            if (novos.length > 0) {
+              const novo = novos[0]
+              tocarSomNotificacao()
+              toast.success(
+                <div>
+                  <p className="font-semibold">Novo agendamento recebido! 📅</p>
+                  <p className="text-xs text-slate-500">{novo.cliente?.nome} marcou {novo.servico?.nome}</p>
+                </div>, 
+                { duration: 7000 }
+              )
+            }
+          }
+          return r.data
+        })
+      } catch (err) {
+        console.error('[Dashboard] Erro no polling de atualizacoes:', err.message)
+      }
+    }, 25000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const hoje = format(new Date(), "EEEE, d 'de' MMMM", { locale: pt })
@@ -38,9 +186,19 @@ export default function Dashboard() {
           <h1 className="font-display text-2xl font-bold text-slate-900">Bom dia! 👋</h1>
           <p className="text-slate-500 text-sm capitalize">{hoje}</p>
         </div>
-        <Link to="/agenda" className="btn-primary flex items-center gap-2">
-          <Plus size={16} /> Novo agendamento
-        </Link>
+        <div className="flex items-center gap-3">
+          {/* Botao de ativar notificacoes de teste no browser */}
+          {Notification.permission === 'default' && (
+            <button onClick={() => Notification.requestPermission()}
+              className="btn-ghost flex items-center gap-2 text-xs border border-slate-200 bg-white">
+              <Bell size={14} className="text-brand-600 animate-bounce" />
+              Ativar Alertas
+            </button>
+          )}
+          <Link to="/agenda" className="btn-primary flex items-center gap-2">
+            <Plus size={16} /> Novo agendamento
+          </Link>
+        </div>
       </div>
 
       {/* Métricas */}
@@ -116,7 +274,7 @@ export default function Dashboard() {
           <p className="text-sm text-slate-600 font-mono bg-slate-50 rounded-lg px-3 py-2 truncate">
             {window.location.origin}/b/{negocio?.slug}
           </p>
-          <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/b/${negocio?.slug}`); }}
+          <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/b/${negocio?.slug}`); toast.success('Link copiado com sucesso! 📋') }}
             className="btn-ghost text-xs mt-2 self-start">
             Copiar link
           </button>

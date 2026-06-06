@@ -192,6 +192,37 @@ negociosRouter.put('/meu', autenticar, async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
+negociosRouter.post('/push-subscribe', autenticar, async (req, res) => {
+  try {
+    const { endpoint, keys } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return res.status(400).json({ erro: 'Dados de subscrição inválidos' });
+    }
+
+    await prisma.subscricaoPush.upsert({
+      where: { endpoint },
+      update: {
+        negocioId: req.negocioId,
+        p256dh: keys.p256dh,
+        auth: keys.auth
+      },
+      create: {
+        negocioId: req.negocioId,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth
+      }
+    });
+
+    res.status(201).json({ mensagem: 'Subscrição push guardada com sucesso!' });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+negociosRouter.get('/push-key', autenticar, (req, res) => {
+  const { publicKey } = require('../services/pushService');
+  res.json({ publicKey });
+});
+
 module.exports.negociosRouter = negociosRouter;
 
 
@@ -406,6 +437,21 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
       },
       include: { cliente: true, servico: true, profissional: true }
     });
+
+    // Disparar notificacoes assincronamente (sem bloquear a resposta HTTP do cliente)
+    prisma.negocio.findUnique({
+      where: { id: check.id },
+      select: { nome: true, email: true }
+    }).then(async (negocioObj) => {
+      if (negocioObj) {
+        const { enviarEmailNovoAgendamento } = require('../services/emailService');
+        const { enviarPushNovoAgendamento } = require('../services/pushService');
+        
+        await enviarEmailNovoAgendamento(negocioObj, agendamento);
+        await enviarPushNovoAgendamento(check.id, agendamento);
+      }
+    }).catch(err => console.error('Erro ao disparar notificacoes:', err.message));
+
     res.status(201).json({ mensagem: 'Agendamento criado com sucesso!', agendamento });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
