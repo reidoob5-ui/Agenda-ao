@@ -280,8 +280,36 @@ module.exports.relatoriosRouter = relatoriosRouter;
 // ===== ROTA PÚBLICA (booking) =====
 const publicRouter = require('express').Router();
 
+// Helper para verificar se o negócio tem plano ativo antes de permitir ações públicas
+const verificarPlanoPublico = async (slug, res) => {
+  const negocio = await prisma.negocio.findUnique({
+    where: { slug },
+    select: { id: true, planoStatus: true, planoExpira: true }
+  });
+  
+  if (!negocio) {
+    res.status(404).json({ erro: 'Negócio não encontrado' });
+    return null;
+  }
+  
+  const expirou = negocio.planoExpira && new Date(negocio.planoExpira) < new Date();
+  if (negocio.planoStatus !== 'ATIVO' || expirou) {
+    res.status(403).json({
+      erro: 'Serviço suspenso',
+      codigo: 'PLANO_INATIVO',
+      mensagem: 'Os agendamentos online para este negócio estão temporariamente indisponíveis por falta de assinatura ativa.'
+    });
+    return null;
+  }
+  
+  return negocio;
+};
+
 publicRouter.get('/negocio/:slug', async (req, res) => {
   try {
+    const check = await verificarPlanoPublico(req.params.slug, res);
+    if (!check) return;
+
     const negocio = await prisma.negocio.findUnique({
       where: { slug: req.params.slug },
       select: {
@@ -294,27 +322,26 @@ publicRouter.get('/negocio/:slug', async (req, res) => {
         }
       }
     });
-    if (!negocio) return res.status(404).json({ erro: 'Negócio não encontrado' });
     res.json(negocio);
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
 publicRouter.get('/negocio/:slug/disponibilidade', async (req, res) => {
   try {
-    const { profissionalId, servicoId, data } = req.query;
-    const negocio = await prisma.negocio.findUnique({ where: { slug: req.params.slug } });
-    if (!negocio) return res.status(404).json({ erro: 'Negócio não encontrado' });
+    const check = await verificarPlanoPublico(req.params.slug, res);
+    if (!check) return;
 
+    const { profissionalId, servicoId, data } = req.query;
     const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
     const diaSemana = new Date(data).getDay();
     const horario = await prisma.horario.findFirst({
-      where: { negocioId: negocio.id, diaSemana, ativo: true }
+      where: { negocioId: check.id, diaSemana, ativo: true }
     });
     if (!horario) return res.json({ slots: [] });
 
     const agendamentos = await prisma.agendamento.findMany({
       where: {
-        negocioId: negocio.id,
+        negocioId: check.id,
         profissionalId,
         status: { in: ['PENDENTE', 'CONFIRMADO'] },
         dataHora: {
@@ -350,17 +377,17 @@ publicRouter.get('/negocio/:slug/disponibilidade', async (req, res) => {
 
 publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
   try {
-    const negocio = await prisma.negocio.findUnique({ where: { slug: req.params.slug } });
-    if (!negocio) return res.status(404).json({ erro: 'Negócio não encontrado' });
+    const check = await verificarPlanoPublico(req.params.slug, res);
+    if (!check) return;
 
     const { nome, telefone, email, profissionalId, servicoId, dataHora } = req.body;
 
     let cliente = await prisma.cliente.findFirst({
-      where: { negocioId: negocio.id, telefone }
+      where: { negocioId: check.id, telefone }
     });
     if (!cliente) {
       cliente = await prisma.cliente.create({
-        data: { negocioId: negocio.id, nome, telefone, email }
+        data: { negocioId: check.id, nome, telefone, email }
       });
     }
 
@@ -368,7 +395,7 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
 
     const agendamento = await prisma.agendamento.create({
       data: {
-        negocioId: negocio.id,
+        negocioId: check.id,
         clienteId: cliente.id,
         profissionalId,
         servicoId,

@@ -28,7 +28,10 @@ export default function BookingPage() {
   useEffect(() => {
     api.get(`/public/negocio/${slug}`)
       .then(r => setNegocio(r.data))
-      .catch(() => setErro('Negócio não encontrado'))
+      .catch((err) => {
+        const msg = err.response?.data?.mensagem || err.response?.data?.erro || 'Negócio não encontrado'
+        setErro(msg)
+      })
   }, [slug])
 
   // Carregar slots quando muda data/profissional/serviço

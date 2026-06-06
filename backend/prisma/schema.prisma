@@ -17,7 +17,7 @@ model Negocio {
   logo            String?
   slug            String    @unique
   plano           String     @default("BASICO")
-  planoStatus     String     @default("ATIVO")
+  planoStatus     String     @default("INATIVO")
   planoExpira     DateTime?
   ibanBancario    String?
   merchantExpress String?

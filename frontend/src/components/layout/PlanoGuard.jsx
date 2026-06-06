@@ -15,6 +15,27 @@ export default function PlanoGuard({ children }) {
   const expirou = negocio.planoExpira && new Date(negocio.planoExpira) < agora
   const status = expirou ? 'EXPIRADO' : negocio.planoStatus
 
+  if (status === 'INATIVO') {
+    return (
+      <>
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle size={16} className="text-amber-500 shrink-0" />
+            <p className="text-sm text-amber-700 font-medium">
+              A tua conta esta inativa. Ativa um plano para comecares a aceitar agendamentos.
+            </p>
+          </div>
+          <Link to="/faturacao"
+            className="shrink-0 flex items-center gap-1.5 bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-700 transition-all">
+            <CreditCard size={12} />
+            Ativar plano
+          </Link>
+        </div>
+        {children}
+      </>
+    )
+  }
+
   if (status === 'EXPIRADO') {
     return (
       <>
