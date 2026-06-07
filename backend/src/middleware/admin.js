@@ -4,9 +4,12 @@
 const verificarAdmin = (req, res, next) => {
   const segredo = req.headers['x-admin-secret'];
   if (!segredo || segredo !== process.env.ADMIN_SECRET) {
-    return res.status(401).json({ erro: 'Acesso negado. Chave de admin invalida.' });
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'desconhecido';
+    console.warn(`[ADMIN] ⛔ Tentativa de acesso falhada — IP: ${ip} — ${new Date().toISOString()}`);
+    return res.status(401).json({ erro: 'Acesso negado.' });
   }
   next();
 };
 
 module.exports = { verificarAdmin };
+

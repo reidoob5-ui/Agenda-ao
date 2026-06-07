@@ -1,0 +1,28 @@
+{
+  "name": "AgendaAO Admin",
+  "short_name": "Admin AO",
+  "description": "Painel de administração do sistema AgendaAO",
+  "start_url": "/gestao-x7k3m9",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#ea580c",
+  "background_color": "#0f172a",
+  "lang": "pt",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "business"]
+}

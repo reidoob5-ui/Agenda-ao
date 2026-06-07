@@ -62,8 +62,12 @@ const authLimiter = rateLimit({
   message: { erro: 'Muitas tentativas. Tenta em 15 minutos.' }
 });
 const adminLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, max: 50,
-  message: { erro: 'Rate limit do admin atingido.' }
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // max 5 tentativas por IP
+  skipSuccessfulRequests: true, // nao contar pedidos bem-sucedidos (so falhas)
+  message: { erro: 'Demasiadas tentativas de acesso ao admin. Tenta novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 app.use('/api/', limiter);

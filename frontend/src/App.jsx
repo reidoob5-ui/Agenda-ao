@@ -30,8 +30,8 @@ export default function App() {
       <Route path="/criar"   element={<RegistarPage />} />
       <Route path="/b/:slug" element={<BookingPage />} />
 
-      {/* Painel Admin do Dono do Sistema */}
-      <Route path="/admin" element={<AdminPage />} />
+      {/* Painel Admin do Dono do Sistema — rota secreta, nao partilhar */}
+      <Route path="/gestao-x7k3m9" element={<AdminPage />} />
 
       {/* Protegidas (requerem login) */}
       <Route element={<RotaProtegida />}>

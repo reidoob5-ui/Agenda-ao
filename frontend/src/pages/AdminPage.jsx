@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, CreditCard, CheckCircle, XCircle,
   Clock, TrendingUp, ShieldAlert, RefreshCw, CalendarCheck,
-  Building2, Smartphone, Eye, EyeOff, LogOut, AlertTriangle
+  Building2, Smartphone, Eye, EyeOff, LogOut, AlertTriangle,
+  Download
 } from 'lucide-react'
 
 const ADMIN_SECRET_KEY = 'agendaao-admin-secret'
@@ -55,6 +56,31 @@ export default function AdminPage() {
   const [pendentes, setPendentes] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [mensagem, setMensagem] = useState(null)
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [instalado, setInstalado] = useState(false)
+
+  // Capturar o evento de instalação PWA
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault()
+      setInstallPrompt(e)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    window.addEventListener('appinstalled', () => {
+      setInstalado(true)
+      setInstallPrompt(null)
+    })
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const instalarApp = useCallback(async () => {
+    if (!installPrompt) return
+    const result = await installPrompt.prompt()
+    if (result.outcome === 'accepted') {
+      setInstallPrompt(null)
+      setInstalado(true)
+    }
+  }, [installPrompt])
 
   const entrar = async (e) => {
     e.preventDefault()
@@ -244,6 +270,22 @@ export default function AdminPage() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            {/* Botão instalar PWA — aparece automaticamente quando disponível */}
+            {installPrompt && !instalado && (
+              <button
+                onClick={instalarApp}
+                className="flex items-center gap-1.5 bg-brand-600/20 text-brand-400 border border-brand-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-brand-600/30 transition-all animate-pulse"
+                title="Instalar o painel como app"
+              >
+                <Download size={13} />
+                Instalar App
+              </button>
+            )}
+            {instalado && (
+              <span className="flex items-center gap-1.5 text-green-400 text-xs font-medium">
+                <CheckCircle size={13} /> App instalada
+              </span>
+            )}
             <button onClick={() => carregarDados()} disabled={carregando}
               className="text-slate-400 hover:text-white transition-colors">
               <RefreshCw size={15} className={carregando ? 'animate-spin' : ''} />
