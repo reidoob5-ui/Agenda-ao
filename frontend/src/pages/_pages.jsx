@@ -4,7 +4,7 @@ import api from '../services/api'
 import toast from 'react-hot-toast'
 import { format, addDays, subDays, parseISO } from 'date-fns'
 import { pt } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, X, Check, Clock, User, Scissors } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Check, Clock, User, Scissors, Plus } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
 const STATUS_BADGE = { PENDENTE:'badge-yellow',CONFIRMADO:'badge-green',CONCLUIDO:'badge-gray',CANCELADO:'badge-red' }
