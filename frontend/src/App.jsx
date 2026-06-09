@@ -17,6 +17,7 @@ import ConfigPage     from './pages/ConfigPage'
 import FaturacaoPage  from './pages/FaturacaoPage'
 import BookingPage    from './pages/BookingPage'
 import AdminPage      from './pages/AdminPage'
+import ProfissionaisPage from './pages/ProfissionaisPage'
 
 export default function App() {
   const inicializar = useAuthStore(s => s.inicializar)
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/agenda"      element={<AgendaPage />} />
           <Route path="/clientes"    element={<ClientesPage />} />
           <Route path="/servicos"    element={<ServicosPage />} />
+          <Route path="/profissionais" element={<ProfissionaisPage />} />
           <Route path="/relatorios"  element={<RelatoriosPage />} />
           <Route path="/config"      element={<ConfigPage />} />
           <Route path="/faturacao"   element={<FaturacaoPage />} />

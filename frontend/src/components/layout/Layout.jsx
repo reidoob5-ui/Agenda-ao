@@ -3,17 +3,18 @@ import { useAuthStore } from '../../store/authStore'
 import PlanoGuard from './PlanoGuard'
 import {
   LayoutDashboard, Calendar, Users, Scissors,
-  BarChart2, Settings, CreditCard, LogOut, CalendarCheck, ShieldCheck
+  BarChart2, Settings, CreditCard, LogOut, CalendarCheck, ShieldCheck, User
 } from 'lucide-react'
 
 const nav = [
   { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/agenda',     icon: Calendar,        label: 'Agenda' },
   { to: '/clientes',   icon: Users,           label: 'Clientes' },
-  { to: '/servicos',   icon: Scissors,        label: 'Servicos' },
-  { to: '/relatorios', icon: BarChart2,       label: 'Relatorios' },
-  { to: '/config',     icon: Settings,        label: 'Configuracoes' },
-  { to: '/faturacao',  icon: CreditCard,      label: 'Faturacao' },
+  { to: '/servicos',   icon: Scissors,        label: 'Serviços' },
+  { to: '/profissionais', icon: User,         label: 'Profissionais' },
+  { to: '/relatorios', icon: BarChart2,       label: 'Relatórios' },
+  { to: '/config',     icon: Settings,        label: 'Configurações' },
+  { to: '/faturacao',  icon: CreditCard,      label: 'Faturação' },
 ]
 
 const PLANO_BADGE = {
