@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import api from '../services/api'
 import toast from 'react-hot-toast'
-import { CalendarCheck, Clock, ChevronLeft, Check, MapPin, Phone } from 'lucide-react'
+import { CalendarCheck, Clock, ChevronLeft, Check, MapPin, Phone, AlertTriangle, Hourglass } from 'lucide-react'
 import { format, addDays, isBefore, startOfDay } from 'date-fns'
 import { pt } from 'date-fns/locale'
 
@@ -14,7 +14,7 @@ export default function BookingPage() {
   const { slug } = useParams()
   const [negocio, setNegocio] = useState(null)
   const [erro, setErro] = useState(null)
-  const [passo, setPasso] = useState(1) // 1=serviço 2=profissional 3=data/hora 4=dados 5=confirmado
+  const [passo, setPasso] = useState(1) // 1=serviço 2=profissional 3=data/hora 4=dados 5=enviado
   const [servicoSel, setServico] = useState(null)
   const [profSel, setProf] = useState(null)
   const [dataSel, setData] = useState('')
@@ -24,6 +24,10 @@ export default function BookingPage() {
   const [form, setForm] = useState({ nome: '', telefone: '', email: '' })
   const [enviando, setEnviando] = useState(false)
   const [agendamento, setAgendamento] = useState(null)
+  
+  // Estado para conflito de horário
+  const [conflito, setConflito] = useState(null) // { mensagem, sugestoes[] }
+  const [pendingPayload, setPendingPayload] = useState(null) // payload a re-enviar com sugestão
 
   useEffect(() => {
     api.get(`/public/negocio/${slug}`)
@@ -43,22 +47,43 @@ export default function BookingPage() {
       .finally(() => setSlotsLoad(false))
   }, [dataSel, profSel, servicoSel])
 
-  const confirmar = async (e) => {
-    e.preventDefault()
+  const enviarPedido = async (payload) => {
     setEnviando(true)
     try {
-      const dataHora = `${dataSel}T${horaSel}:00`
-      const r = await api.post(`/public/negocio/${slug}/agendar`, {
-        ...form,
-        profissionalId: profSel.id,
-        servicoId: servicoSel.id,
-        dataHora
-      })
+      const r = await api.post(`/public/negocio/${slug}/agendar`, payload)
       setAgendamento(r.data.agendamento)
+      setConflito(null)
+      setPendingPayload(null)
       setPasso(5)
     } catch (err) {
-      toast.error(err.response?.data?.erro || 'Erro ao criar agendamento')
-    } finally { setEnviando(false) }
+      const data = err.response?.data
+      if (err.response?.status === 409 && data?.sugestoes?.length > 0) {
+        // Backend detectou conflito — mostrar modal com sugestões
+        setPendingPayload(payload)
+        setConflito({ mensagem: data.mensagem || 'Horário ocupado', sugestoes: data.sugestoes })
+      } else {
+        toast.error(data?.erro || 'Erro ao enviar pedido')
+      }
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const confirmar = (e) => {
+    e.preventDefault()
+    const dataHora = `${dataSel}T${horaSel}:00`
+    enviarPedido({
+      ...form,
+      profissionalId: profSel.id,
+      servicoId: servicoSel.id,
+      dataHora
+    })
+  }
+
+  const aceitarSugestao = (horaStr) => {
+    const dataHora = `${dataSel}T${horaStr}:00`
+    setHora(horaStr)
+    enviarPedido({ ...pendingPayload, dataHora })
   }
 
   // Gerar próximos 14 dias
@@ -89,7 +114,6 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header do negócio */}
       <div className="bg-white border-b border-slate-100">
         <div className="max-w-lg mx-auto px-4 py-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-brand-600 flex items-center justify-center text-white font-display font-bold text-lg shrink-0">
@@ -107,7 +131,6 @@ export default function BookingPage() {
           </div>
         </div>
 
-        {/* Indicador de passos */}
         {passo < 5 && (
           <div className="max-w-lg mx-auto px-4 pb-4">
             <div className="flex items-center gap-1">
@@ -169,7 +192,6 @@ export default function BookingPage() {
             <h2 className="font-display font-bold text-xl text-slate-900 mb-1">Escolhe o profissional</h2>
             <p className="text-sm text-slate-400 mb-4">Para {servicoSel?.nome}</p>
             <div className="space-y-2">
-              {/* Opção "qualquer" */}
               <button onClick={() => { setProf(profsFiltrados[0] || negocio.profissionais[0]); setPasso(3) }}
                 className="w-full card p-4 flex items-center gap-3 hover:border-brand-300 hover:shadow-soft transition-all text-left">
                 <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm font-bold shrink-0">
@@ -205,7 +227,6 @@ export default function BookingPage() {
             </button>
             <h2 className="font-display font-bold text-xl text-slate-900 mb-4">Escolhe a data</h2>
 
-            {/* Seletor de data */}
             <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
               {diasDisponiveis.map(d => (
                 <button key={d.data} onClick={() => { setData(d.data); setHora('') }}
@@ -220,7 +241,6 @@ export default function BookingPage() {
               ))}
             </div>
 
-            {/* Slots de hora */}
             {dataSel && (
               <>
                 <h3 className="font-semibold text-slate-700 text-sm mb-3">Horários disponíveis</h3>
@@ -265,7 +285,6 @@ export default function BookingPage() {
             </button>
             <h2 className="font-display font-bold text-xl text-slate-900 mb-2">Os teus dados</h2>
 
-            {/* Resumo */}
             <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="text-brand-700 font-medium">{servicoSel?.nome}</span>
@@ -292,25 +311,30 @@ export default function BookingPage() {
                 <label className="label">Email (opcional)</label>
                 <input className="input" type="email" placeholder="teu@email.com" value={form.email}
                   onChange={e => setForm({ ...form, email: e.target.value })} />
+                <p className="text-xs text-slate-400 mt-1">Recebes a confirmação por email quando aprovado</p>
               </div>
               <button type="submit" className="btn-primary w-full py-3 text-base" disabled={enviando}>
-                {enviando ? 'A confirmar...' : 'Confirmar agendamento'}
+                {enviando ? 'A enviar pedido...' : 'Enviar pedido de agendamento'}
               </button>
               <p className="text-xs text-slate-400 text-center">
-                Ao confirmar, recebes um SMS com os detalhes do agendamento.
+                O negócio irá confirmar o teu pedido em breve.
               </p>
             </form>
           </div>
         )}
 
-        {/* PASSO 5 — Confirmado */}
+        {/* PASSO 5 — Pedido enviado, a aguardar aprovação */}
         {passo === 5 && agendamento && (
           <div className="text-center py-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
-              <Check size={36} className="text-green-600" />
+            <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-5 animate-pulse">
+              <Hourglass size={36} className="text-amber-500" />
             </div>
-            <h2 className="font-display text-2xl font-bold text-slate-900 mb-2">Agendado com sucesso!</h2>
-            <p className="text-slate-500 mb-6">Vemo-nos em breve, {agendamento.cliente?.nome?.split(' ')[0]}!</p>
+            <h2 className="font-display text-2xl font-bold text-slate-900 mb-2">Pedido enviado!</h2>
+            <p className="text-slate-500 mb-2">Obrigado, <strong>{agendamento.cliente?.nome?.split(' ')[0]}</strong>!</p>
+            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium px-4 py-2 rounded-full mb-6 animate-pulse">
+              <Clock size={14} />
+              A aguardar aprovação do negócio
+            </div>
 
             <div className="card p-5 text-left mb-6">
               {[
@@ -327,17 +351,61 @@ export default function BookingPage() {
               ))}
             </div>
 
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 mb-5">
-              <p>📱 Vais receber um lembrete por SMS 24h e 2h antes do agendamento.</p>
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 mb-5 text-left">
+              <p className="font-semibold mb-1">📬 O que acontece agora?</p>
+              <ul className="space-y-1 text-xs text-blue-600">
+                <li>• O negócio irá aprovar ou rejeitar o teu pedido</li>
+                <li>• Se forneceste email, receberás a confirmação por email</li>
+                <li>• O teu lugar fica reservado até à decisão</li>
+              </ul>
             </div>
 
-            <button onClick={() => { setPasso(1); setServico(null); setProf(null); setData(''); setHora(''); setForm({ nome:'', telefone:'', email:'' }) }}
+            <button onClick={() => { setPasso(1); setServico(null); setProf(null); setData(''); setHora(''); setForm({ nome:'', telefone:'', email:'' }); setAgendamento(null) }}
               className="btn-ghost text-sm">
               Fazer outro agendamento
             </button>
           </div>
         )}
       </div>
+
+      {/* Modal de conflito — Sugestão de horários livres */}
+      {conflito && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={22} className="text-amber-500" />
+            </div>
+            <h3 className="font-display font-bold text-lg text-slate-900 text-center mb-2">
+              Horário ocupado
+            </h3>
+            <p className="text-sm text-slate-500 text-center mb-5">
+              {conflito.mensagem}
+            </p>
+
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 text-center">
+              Horários livres mais próximos
+            </p>
+
+            <div className="flex gap-3 justify-center mb-5">
+              {conflito.sugestoes.map(hora => (
+                <button
+                  key={hora}
+                  onClick={() => aceitarSugestao(hora)}
+                  disabled={enviando}
+                  className="flex-1 py-3 rounded-xl bg-brand-50 border-2 border-brand-200 hover:bg-brand-600 hover:text-white hover:border-brand-600 text-brand-700 font-display font-bold text-lg transition-all disabled:opacity-50">
+                  {hora}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => { setConflito(null); setPendingPayload(null) }}
+              className="w-full py-2.5 text-sm text-slate-400 hover:text-slate-700 transition-colors">
+              Escolher outra data
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Footer powered by */}
       <div className="text-center py-6">

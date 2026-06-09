@@ -83,6 +83,50 @@ async function enviarEmailNovoAgendamento(negocio, agendamento) {
   }
 }
 
+
+/**
+ * Envia e-mail de confirmacao ao cliente quando o negocio aprova o agendamento
+ */
+async function enviarEmailConfirmacao(negocio, agendamento) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return;
+  if (!agendamento.cliente?.email) return;
+
+  const transporter = obterTransporter();
+  const remetente = process.env.EMAIL_FROM || `"AgendaAO" <${process.env.SMTP_USER}>`;
+  const dataFmt = new Date(agendamento.dataHora).toLocaleDateString('pt-PT');
+  const horaFmt = new Date(agendamento.dataHora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  const valorFmt = new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(agendamento.preco);
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #f1f5f9; border-radius: 12px; padding: 24px;">
+      <h2 style="color: #16a34a; margin-bottom: 8px;">✅ Agendamento Confirmado!</h2>
+      <p style="color: #64748b; font-size: 14px;">Olá <strong>${agendamento.cliente.nome}</strong>, o teu agendamento em <strong>${negocio.nome}</strong> foi aprovado.</p>
+      <div style="background-color: #f0fdf4; border-radius: 8px; padding: 16px; margin: 20px 0; border: 1px solid #bbf7d0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="color: #94a3b8; font-size: 12px; padding: 6px 0;">Serviço</td><td style="color: #334155; font-size: 14px; font-weight: bold; text-align: right;">${agendamento.servico.nome}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 12px; padding: 6px 0;">Profissional</td><td style="color: #334155; font-size: 14px; text-align: right;">${agendamento.profissional.nome}</td></tr>
+          <tr><td style="color: #94a3b8; font-size: 12px; padding: 6px 0;">Data & Hora</td><td style="color: #334155; font-size: 14px; font-weight: bold; text-align: right;">${dataFmt} às ${horaFmt}</td></tr>
+          <tr style="border-top: 1px solid #d1fae5;"><td style="color: #94a3b8; font-size: 12px; padding: 10px 0 0 0;">Valor</td><td style="color: #16a34a; font-size: 18px; font-weight: bold; text-align: right;">${valorFmt}</td></tr>
+        </table>
+      </div>
+      <p style="font-size: 13px; color: #64748b;">Em caso de dúvida, contacta o negócio: <strong>${negocio.email || ''}</strong></p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: remetente,
+      to: agendamento.cliente.email,
+      subject: `✅ Agendamento confirmado — ${negocio.nome} — ${dataFmt} às ${horaFmt}`,
+      html,
+    });
+    console.log(`✉️ [EmailService] Confirmação enviada ao cliente ${agendamento.cliente.email}`);
+  } catch (error) {
+    console.error('❌ [EmailService] Erro ao enviar email de confirmacao:', error.message);
+  }
+}
+
 module.exports = {
   enviarEmailNovoAgendamento,
+  enviarEmailConfirmacao,
 };

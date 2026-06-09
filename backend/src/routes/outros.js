@@ -406,13 +406,103 @@ publicRouter.get('/negocio/:slug/disponibilidade', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
+// Helper: calcular horários livres mais próximos do slot pedido
+async function calcularSugestoes(negocioId, profissionalId, servicoId, dataHoraDesejada) {
+  const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
+  if (!servico) return [];
+  const duracaoMs = servico.duracaoMin * 60000;
+
+  const dataStr = dataHoraDesejada.toISOString().split('T')[0];
+  const diaSemana = dataHoraDesejada.getDay();
+  const horario = await prisma.horario.findFirst({
+    where: { negocioId, diaSemana, ativo: true }
+  });
+  if (!horario) return [];
+
+  const agendamentosNoDia = await prisma.agendamento.findMany({
+    where: {
+      negocioId,
+      profissionalId,
+      status: { in: ['PENDENTE', 'CONFIRMADO'] },
+      dataHora: {
+        gte: new Date(`${dataStr}T00:00:00`),
+        lte: new Date(`${dataStr}T23:59:59`)
+      }
+    }
+  });
+
+  const [hIni, mIni] = horario.horaInicio.split(':').map(Number);
+  const [hFim, mFim] = horario.horaFim.split(':').map(Number);
+  const inicioExpediente = hIni * 60 + mIni;
+  const fimExpediente = hFim * 60 + mFim;
+  const duracaoMin = servico.duracaoMin;
+
+  // Gerar todos os slots do dia
+  const todosSlots = [];
+  let cursor = inicioExpediente;
+  while (cursor + duracaoMin <= fimExpediente) {
+    const h = String(Math.floor(cursor / 60)).padStart(2, '0');
+    const m = String(cursor % 60).padStart(2, '0');
+    const slotInicio = new Date(`${dataStr}T${h}:${m}:00`);
+    const slotFim = new Date(slotInicio.getTime() + duracaoMs);
+    const ocupado = agendamentosNoDia.some(a => {
+      const aFim = new Date(new Date(a.dataHora).getTime() + a.duracaoMin * 60000);
+      return new Date(a.dataHora) < slotFim && aFim > slotInicio;
+    });
+    todosSlots.push({ hora: `${h}:${m}`, minutos: cursor, disponivel: !ocupado });
+    cursor += 30;
+  }
+
+  // Encontrar slots livres: os 2 mais próximos (antes + depois) do solicitado
+  const minutosDesejados = dataHoraDesejada.getHours() * 60 + dataHoraDesejada.getMinutes();
+  const livres = todosSlots.filter(s => s.disponivel);
+  if (!livres.length) return [];
+
+  const anterior = [...livres].reverse().find(s => s.minutos < minutosDesejados);
+  const proximo = livres.find(s => s.minutos > minutosDesejados);
+
+  return [anterior, proximo].filter(Boolean).map(s => s.hora);
+}
+
 publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
   try {
     const check = await verificarPlanoPublico(req.params.slug, res);
     if (!check) return;
 
     const { nome, telefone, email, profissionalId, servicoId, dataHora } = req.body;
+    const dataHoraObj = new Date(dataHora);
+    const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
+    if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
 
+    // Verificar conflito de horário
+    const slotFim = new Date(dataHoraObj.getTime() + servico.duracaoMin * 60000);
+    const conflito = await prisma.agendamento.findFirst({
+      where: {
+        negocioId: check.id,
+        profissionalId,
+        status: { in: ['PENDENTE', 'CONFIRMADO'] },
+        dataHora: { lt: slotFim },
+        // Sobreposição: agendamento existente começa antes do fim do novo slot
+        AND: [{
+          dataHora: {
+            gte: new Date(dataHoraObj.getTime() - servico.duracaoMin * 60000)
+          }
+        }]
+      }
+    });
+
+    if (conflito) {
+      // Calcular sugestões de horários livres mais próximos
+      const sugestoes = await calcularSugestoes(check.id, profissionalId, servicoId, dataHoraObj);
+      return res.status(409).json({
+        conflito: true,
+        erro: 'Horário indisponível',
+        mensagem: 'Este horário já está ocupado. Escolhe um dos horários sugeridos.',
+        sugestoes
+      });
+    }
+
+    // Criar ou encontrar cliente
     let cliente = await prisma.cliente.findFirst({
       where: { negocioId: check.id, telefone }
     });
@@ -422,15 +512,13 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
       });
     }
 
-    const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
-
     const agendamento = await prisma.agendamento.create({
       data: {
         negocioId: check.id,
         clienteId: cliente.id,
         profissionalId,
         servicoId,
-        dataHora: new Date(dataHora),
+        dataHora: dataHoraObj,
         duracaoMin: servico.duracaoMin,
         preco: servico.preco,
         status: 'PENDENTE'
@@ -438,7 +526,7 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
       include: { cliente: true, servico: true, profissional: true }
     });
 
-    // Disparar notificacoes assincronamente (sem bloquear a resposta HTTP do cliente)
+    // Notificações assíncronas (não bloqueiam a resposta)
     prisma.negocio.findUnique({
       where: { id: check.id },
       select: { nome: true, email: true }
@@ -446,13 +534,67 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
       if (negocioObj) {
         const { enviarEmailNovoAgendamento } = require('../services/emailService');
         const { enviarPushNovoAgendamento } = require('../services/pushService');
-        
         await enviarEmailNovoAgendamento(negocioObj, agendamento);
         await enviarPushNovoAgendamento(check.id, agendamento);
       }
     }).catch(err => console.error('Erro ao disparar notificacoes:', err.message));
 
-    res.status(201).json({ mensagem: 'Agendamento criado com sucesso!', agendamento });
+    res.status(201).json({
+      mensagem: 'Pedido de agendamento enviado! Aguarda a aprovação do negócio.',
+      agendamento
+    });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+// GET /api/public/negocio/:slug/pendentes — lista pedidos pendentes (para a empresa aprovar)
+publicRouter.get('/negocio/:slug/pendentes', autenticar, async (req, res) => {
+  try {
+    const negocio = await prisma.negocio.findUnique({
+      where: { id: req.negocioId },
+      select: { id: true, slug: true }
+    });
+    if (!negocio || negocio.slug !== req.params.slug) {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+    const pendentes = await prisma.agendamento.findMany({
+      where: { negocioId: req.negocioId, status: 'PENDENTE' },
+      include: { cliente: true, servico: true, profissional: true },
+      orderBy: { dataHora: 'asc' }
+    });
+    res.json(pendentes);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+// PATCH /api/public/negocio/:slug/agendamento/:id/aprovar
+publicRouter.patch('/negocio/:slug/agendamento/:id/aprovar', autenticar, async (req, res) => {
+  try {
+    const agendamento = await prisma.agendamento.update({
+      where: { id: req.params.id, negocioId: req.negocioId },
+      data: { status: 'CONFIRMADO' },
+      include: { cliente: true, servico: true, profissional: true }
+    });
+    // Notificar cliente por email
+    const negocioObj = await prisma.negocio.findUnique({
+      where: { id: req.negocioId },
+      select: { nome: true, email: true }
+    });
+    if (negocioObj && agendamento.cliente?.email) {
+      const { enviarEmailConfirmacao } = require('../services/emailService');
+      enviarEmailConfirmacao(negocioObj, agendamento).catch(e => console.error(e.message));
+    }
+    res.json({ mensagem: 'Agendamento aprovado!', agendamento });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+// PATCH /api/public/negocio/:slug/agendamento/:id/rejeitar
+publicRouter.patch('/negocio/:slug/agendamento/:id/rejeitar', autenticar, async (req, res) => {
+  try {
+    const agendamento = await prisma.agendamento.update({
+      where: { id: req.params.id, negocioId: req.negocioId },
+      data: { status: 'CANCELADO' },
+      include: { cliente: true, servico: true, profissional: true }
+    });
+    res.json({ mensagem: 'Agendamento rejeitado.', agendamento });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 

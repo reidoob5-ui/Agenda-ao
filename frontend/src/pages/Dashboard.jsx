@@ -195,8 +195,8 @@ export default function Dashboard() {
               Ativar Alertas
             </button>
           )}
-          <Link to="/agenda" className="btn-primary flex items-center gap-2">
-            <Plus size={16} /> Novo agendamento
+          <Link to="/agenda" className="btn-ghost flex items-center gap-2 text-sm border border-slate-200">
+            <Calendar size={14} /> Ver Agenda
           </Link>
         </div>
       </div>
@@ -232,9 +232,7 @@ export default function Dashboard() {
           <div className="px-6 py-12 text-center">
             <Calendar size={32} className="text-slate-300 mx-auto mb-3" />
             <p className="text-slate-400 text-sm">Sem agendamentos para hoje</p>
-            <Link to="/agenda" className="btn-primary mt-4 inline-flex items-center gap-2 text-sm">
-              <Plus size={14} /> Criar agendamento
-            </Link>
+            <p className="text-xs text-slate-300 mt-1">Os clientes marcam pelo link de agendamento</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
