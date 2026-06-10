@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import api from '../services/api'
 import toast from 'react-hot-toast'
-import { CalendarCheck, Clock, ChevronLeft, Check, MapPin, Phone, AlertTriangle, Hourglass } from 'lucide-react'
+import { CalendarCheck, Clock, ChevronLeft, Check, MapPin, Phone, AlertTriangle, Hourglass, PartyPopper, XCircle, ExternalLink } from 'lucide-react'
 import { format, addDays, isBefore, startOfDay } from 'date-fns'
 import { pt } from 'date-fns/locale'
 
@@ -24,7 +24,8 @@ export default function BookingPage() {
   const [form, setForm] = useState({ nome: '', telefone: '', email: '' })
   const [enviando, setEnviando] = useState(false)
   const [agendamento, setAgendamento] = useState(null)
-  
+  const pollingRef = useRef(null)
+
   // Estado para conflito de horário
   const [conflito, setConflito] = useState(null) // { mensagem, sugestoes[] }
   const [pendingPayload, setPendingPayload] = useState(null) // payload a re-enviar com sugestão
@@ -51,10 +52,13 @@ export default function BookingPage() {
     setEnviando(true)
     try {
       const r = await api.post(`/public/negocio/${slug}/agendar`, payload)
-      setAgendamento(r.data.agendamento)
+      const ag = r.data.agendamento
+      setAgendamento(ag)
       setConflito(null)
       setPendingPayload(null)
       setPasso(5)
+      // Iniciar polling para detectar confirmação
+      iniciarPolling(ag.id)
     } catch (err) {
       const data = err.response?.data
       if (err.response?.status === 409 && data?.sugestoes?.length > 0) {
@@ -84,6 +88,44 @@ export default function BookingPage() {
     const dataHora = `${dataSel}T${horaStr}:00`
     setHora(horaStr)
     enviarPedido({ ...pendingPayload, dataHora })
+  }
+
+  // Polling: verifica estado do agendamento a cada 5 segundos
+  const iniciarPolling = (id) => {
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    pollingRef.current = setInterval(async () => {
+      try {
+        const { data } = await api.get(`/public/agendamento/${id}/status`)
+        if (data.status === 'CONFIRMADO') {
+          clearInterval(pollingRef.current)
+          setAgendamento(data)
+          setPasso(6) // Ecrã de confirmação
+        } else if (data.status === 'CANCELADO') {
+          clearInterval(pollingRef.current)
+          setAgendamento(data)
+          setPasso(7) // Ecrã de rejeição
+        }
+      } catch (_) { /* silencioso */ }
+    }, 5000)
+  }
+
+  // Limpar polling ao sair da página
+  useEffect(() => () => { if (pollingRef.current) clearInterval(pollingRef.current) }, [])
+
+  // Gerar link de Google Calendar
+  const linkCalendario = (ag) => {
+    if (!ag?.dataHora) return '#'
+    const inicio = new Date(ag.dataHora)
+    const fim = new Date(inicio.getTime() + (ag.duracaoMin || 30) * 60000)
+    const fmt = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `${ag.servico?.nome} — ${ag.negocio?.nome}`,
+      dates: `${fmt(inicio)}/${fmt(fim)}`,
+      details: `Profissional: ${ag.profissional?.nome}\nLocal: ${ag.negocio?.endereco || ag.negocio?.cidade || ''}\nTelefone: ${ag.negocio?.telefone || ''}`,
+      location: ag.negocio?.endereco || ag.negocio?.cidade || '',
+    })
+    return `https://calendar.google.com/calendar/render?${params.toString()}`
   }
 
   // Gerar próximos 14 dias
@@ -323,30 +365,34 @@ export default function BookingPage() {
           </div>
         )}
 
-        {/* PASSO 5 — Pedido enviado, a aguardar aprovação */}
+        {/* PASSO 5 — A aguardar confirmação (com polling automático) */}
         {passo === 5 && agendamento && (
           <div className="text-center py-8">
-            <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-5 animate-pulse">
-              <Hourglass size={36} className="text-amber-500" />
+            <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+              <Hourglass size={40} className="text-amber-500 animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-400 animate-ping" />
             </div>
-            <h2 className="font-display text-2xl font-bold text-slate-900 mb-2">Pedido enviado!</h2>
-            <p className="text-slate-500 mb-2">Obrigado, <strong>{agendamento.cliente?.nome?.split(' ')[0]}</strong>!</p>
-            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium px-4 py-2 rounded-full mb-6 animate-pulse">
-              <Clock size={14} />
-              A aguardar aprovação do negócio
+            <h2 className="font-display text-2xl font-bold text-slate-900 mb-2">Pedido enviado! ✅</h2>
+            <p className="text-slate-500 mb-1">Obrigado, <strong>{agendamento.cliente?.nome?.split(' ')[0]}</strong>!</p>
+            <p className="text-xs text-slate-400 mb-5">Esta página atualiza automaticamente quando o negócio responder.</p>
+
+            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium px-4 py-2.5 rounded-full mb-6">
+              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              A aguardar aprovação do negócio...
             </div>
 
             <div className="card p-5 text-left mb-6">
               {[
-                { label: 'Serviço', valor: agendamento.servico?.nome },
-                { label: 'Profissional', valor: agendamento.profissional?.nome },
-                { label: 'Data', valor: format(new Date(agendamento.dataHora), "d 'de' MMMM 'de' yyyy", { locale: pt }) },
-                { label: 'Hora', valor: format(new Date(agendamento.dataHora), 'HH:mm') },
-                { label: 'Valor', valor: fmtKz(agendamento.preco) },
+                { label: 'Serviço',       valor: agendamento.servico?.nome },
+                { label: 'Profissional',  valor: agendamento.profissional?.nome },
+                { label: 'Data',          valor: format(new Date(agendamento.dataHora), "EEEE, d 'de' MMMM 'de' yyyy", { locale: pt }) },
+                { label: 'Hora',          valor: format(new Date(agendamento.dataHora), 'HH:mm') },
+                { label: 'Duração',       valor: `${agendamento.duracaoMin} minutos` },
+                { label: 'Valor',         valor: fmtKz(agendamento.preco) },
               ].map(({ label, valor }) => (
                 <div key={label} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
                   <span className="text-xs text-slate-400">{label}</span>
-                  <span className="text-sm font-semibold text-slate-800">{valor}</span>
+                  <span className="text-sm font-semibold text-slate-800 capitalize">{valor}</span>
                 </div>
               ))}
             </div>
@@ -355,15 +401,109 @@ export default function BookingPage() {
               <p className="font-semibold mb-1">📬 O que acontece agora?</p>
               <ul className="space-y-1 text-xs text-blue-600">
                 <li>• O negócio irá aprovar ou rejeitar o teu pedido</li>
-                <li>• Se forneceste email, receberás a confirmação por email</li>
-                <li>• O teu lugar fica reservado até à decisão</li>
+                <li>• Esta página atualiza automaticamente — não precisas de fazer refresh</li>
+                <li>• Se forneceste email, receberás também a confirmação por email</li>
               </ul>
             </div>
+          </div>
+        )}
 
-            <button onClick={() => { setPasso(1); setServico(null); setProf(null); setData(''); setHora(''); setForm({ nome:'', telefone:'', email:'' }); setAgendamento(null) }}
-              className="btn-ghost text-sm">
-              Fazer outro agendamento
-            </button>
+        {/* PASSO 6 — CONFIRMADO 🎉 */}
+        {passo === 6 && agendamento && (
+          <div className="py-6">
+            {/* Cabeçalho verde impactante */}
+            <div className="relative bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-8 text-center mb-6 overflow-hidden">
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+              <div className="relative">
+                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-xl">
+                  <Check size={48} className="text-green-500" strokeWidth={3} />
+                </div>
+                <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                  <PartyPopper size={13} /> CONFIRMADO
+                </div>
+                <h2 className="font-display text-3xl font-bold text-white mb-2">Agendamento
+Confirmado!</h2>
+                <p className="text-green-100 text-sm">O teu lugar está garantido. Guarda estes detalhes!</p>
+              </div>
+            </div>
+
+            {/* Detalhes bem visíveis */}
+            <div className="bg-white rounded-2xl border-2 border-green-200 shadow-md overflow-hidden mb-5">
+              <div className="bg-green-50 px-5 py-3 flex items-center gap-2 border-b border-green-100">
+                <CalendarCheck size={16} className="text-green-600" />
+                <span className="text-sm font-bold text-green-800">Detalhes do Agendamento</span>
+              </div>
+              <div className="divide-y divide-slate-50">
+                {[
+                  { label: '📋 Serviço',       valor: agendamento.servico?.nome },
+                  { label: '💇 Profissional',  valor: agendamento.profissional?.nome },
+                  { label: '📅 Data',          valor: format(new Date(agendamento.dataHora), "EEEE, d 'de' MMMM 'de' yyyy", { locale: pt }) },
+                  { label: '🕐 Hora',          valor: format(new Date(agendamento.dataHora), 'HH:mm') },
+                  { label: '⏱ Duração',       valor: `${agendamento.duracaoMin} minutos` },
+                  { label: '💰 Valor',         valor: fmtKz(agendamento.preco) },
+                  ...(agendamento.negocio?.telefone ? [{ label: '📞 Contacto', valor: agendamento.negocio.telefone }] : []),
+                ].map(({ label, valor }) => (
+                  <div key={label} className="flex items-center justify-between px-5 py-3.5">
+                    <span className="text-sm text-slate-500">{label}</span>
+                    <span className="text-sm font-bold text-slate-900 text-right max-w-[60%] capitalize">{valor}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Aviso grande para não esquecer */}
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 mb-5">
+              <p className="text-center font-display font-bold text-amber-800 text-base mb-1">⚠️ Não te esqueças!</p>
+              <p className="text-center text-amber-700 text-sm">
+                O teu agendamento é <strong>{format(new Date(agendamento.dataHora), "d 'de' MMMM 'às' HH:mm", { locale: pt })}</strong>.
+                Faz screenshot desta página ou adiciona ao calendário.
+              </p>
+            </div>
+
+            {/* Botões de ação */}
+            <div className="space-y-3">
+              <a
+                href={linkCalendario(agendamento)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-md"
+              >
+                <CalendarCheck size={18} />
+                Adicionar ao Google Calendar
+                <ExternalLink size={13} className="opacity-70" />
+              </a>
+              <button
+                onClick={() => { setPasso(1); setServico(null); setProf(null); setData(''); setHora(''); setForm({ nome:'', telefone:'', email:'' }); setAgendamento(null) }}
+                className="w-full py-3 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+              >
+                Fazer outro agendamento
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* PASSO 7 — CANCELADO / REJEITADO */}
+        {passo === 7 && (
+          <div className="text-center py-8">
+            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-5">
+              <XCircle size={44} className="text-red-500" />
+            </div>
+            <h2 className="font-display text-2xl font-bold text-slate-900 mb-2">Pedido não aceite</h2>
+            <p className="text-slate-500 mb-6">O negócio não pôde aceitar o teu pedido. Tenta outro horário ou contacta-os diretamente.</p>
+            {agendamento?.negocio?.telefone && (
+              <a href={`tel:${agendamento.negocio.telefone}`}
+                className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-5 py-3 rounded-xl transition-all mb-5">
+                <Phone size={16} /> {agendamento.negocio.telefone}
+              </a>
+            )}
+            <div>
+              <button
+                onClick={() => { setPasso(1); setServico(null); setProf(null); setData(''); setHora(''); setForm({ nome:'', telefone:'', email:'' }); setAgendamento(null) }}
+                className="btn-primary px-8 py-3"
+              >
+                Tentar outro horário
+              </button>
+            </div>
           </div>
         )}
       </div>

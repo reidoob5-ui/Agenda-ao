@@ -598,4 +598,27 @@ publicRouter.patch('/negocio/:slug/agendamento/:id/rejeitar', autenticar, async 
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
+// GET /api/public/agendamento/:id/status
+// Rota publica para o cliente verificar o estado do seu agendamento (polling)
+publicRouter.get('/agendamento/:id/status', async (req, res) => {
+  try {
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true,
+        status: true,
+        dataHora: true,
+        duracaoMin: true,
+        preco: true,
+        servico:      { select: { nome: true } },
+        profissional: { select: { nome: true } },
+        cliente:      { select: { nome: true } },
+        negocio:      { select: { nome: true, telefone: true, endereco: true, cidade: true } },
+      }
+    });
+    if (!agendamento) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    res.json(agendamento);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
 module.exports.publicRouter = publicRouter;
