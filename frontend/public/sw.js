@@ -3,7 +3,8 @@
 // Cache offline + Notificações de pagamentos pendentes
 // ============================================================
 
-const CACHE_NAME = 'agendaao-admin-v1';
+// Mudar este número apaga as versões antigas guardadas e obriga a descarregar o site novo
+const CACHE_NAME = 'agendaao-admin-v2';
 const ADMIN_ROUTE = '/gestao-x7k3m9';
 
 // Ficheiros a fazer cache para funcionamento offline
@@ -38,8 +39,12 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ── Fetch: Network-first para API, Cache-first para assets ───
+// ── Fetch ────────────────────────────────────────────────────
+// - API: rede primeiro (cache só como recurso offline)
+// - Páginas (HTML): rede primeiro, para o site novo aparecer logo após cada publicação
+// - Ficheiros com hash (JS/CSS/imagens): cache primeiro, porque o nome muda a cada versão
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
   // Pedidos à API: sempre tentar rede primeiro
@@ -47,9 +52,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((res) => {
-          // Guardar resposta da API em cache para uso offline
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
           return res;
         })
         .catch(() => caches.match(event.request))
@@ -57,16 +63,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets estáticos: cache-first
+  // Páginas: rede primeiro; offline usa a última versão guardada
+  const ehPagina = event.request.mode === 'navigate' || event.request.destination === 'document';
+  if (ehPagina) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Ficheiros estáticos: cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
         return res;
       });
-    }).catch(() => caches.match('/index.html')) // fallback para SPA
+    }).catch(() => caches.match('/index.html'))
   );
 });
 

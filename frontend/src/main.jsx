@@ -19,6 +19,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 
 if ('serviceWorker' in navigator) {
+  // Quando uma versão nova do site assume o controlo, recarrega uma vez para a mostrar
+  let jaRecarregou = false
+  const tinhaControlador = !!navigator.serviceWorker.controller // false na primeira visita
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (jaRecarregou || !tinhaControlador) return
+    jaRecarregou = true
+    window.location.reload()
+  })
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(reg => console.log('🚀 Service Worker registado com sucesso:', reg.scope))
