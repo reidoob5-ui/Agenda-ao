@@ -1,7 +1,11 @@
 const router = require('express').Router();
 const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
+const { temConflito, usoAgendamentos } = require('../utils/agenda');
 const prisma = new PrismaClient();
+
+const STATUS_VALIDOS = ['PENDENTE', 'CONFIRMADO', 'CONCLUIDO', 'CANCELADO', 'FALTA'];
+const INCLUIR = { cliente: true, profissional: true, servico: true };
 
 // GET /api/agendamentos
 router.get('/', autenticar, async (req, res) => {
@@ -17,7 +21,7 @@ router.get('/', autenticar, async (req, res) => {
     }
     const agendamentos = await prisma.agendamento.findMany({
       where,
-      include: { cliente: true, profissional: true, servico: true },
+      include: INCLUIR,
       orderBy: { dataHora: 'asc' }
     });
     res.json(agendamentos);
@@ -28,29 +32,31 @@ router.get('/', autenticar, async (req, res) => {
 router.post('/', autenticar, async (req, res) => {
   try {
     const { clienteId, profissionalId, servicoId, dataHora, notaCliente } = req.body;
-    const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
-    if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
 
-    // Verificar conflito de horário
+    // Tudo tem de pertencer ao negocio de quem esta autenticado
+    const [servico, profissional, cliente] = await Promise.all([
+      prisma.servico.findFirst({ where: { id: servicoId, negocioId: req.negocioId } }),
+      prisma.profissional.findFirst({ where: { id: profissionalId, negocioId: req.negocioId } }),
+      prisma.cliente.findFirst({ where: { id: clienteId, negocioId: req.negocioId } }),
+    ]);
+    if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
+    if (!profissional) return res.status(404).json({ erro: 'Profissional não encontrado' });
+    if (!cliente) return res.status(404).json({ erro: 'Cliente não encontrado' });
+
     const inicio = new Date(dataHora);
     if (isNaN(inicio.getTime())) return res.status(400).json({ erro: 'Data/hora inválida' });
     const fim = new Date(inicio.getTime() + servico.duracaoMin * 60000);
 
-    // Dois agendamentos sobrepõem-se quando: inicioExistente < fimNovo E fimExistente > inicioNovo.
-    // Procuramos os que começam até ao fim do novo e que podem ainda estar a decorrer
-    // (janela de 24h para trás cobre qualquer duração de serviço).
-    const candidatos = await prisma.agendamento.findMany({
-      where: {
-        profissionalId,
-        status: { in: ['PENDENTE', 'CONFIRMADO'] },
-        dataHora: { gt: new Date(inicio.getTime() - 24 * 60 * 60000), lt: fim }
-      },
-      select: { dataHora: true, duracaoMin: true }
-    });
-    const conflito = candidatos.some(a => {
-      const fimExistente = a.dataHora.getTime() + a.duracaoMin * 60000;
-      return fimExistente > inicio.getTime();
-    });
+    // Limite de marcacoes do plano gratis
+    const uso = await usoAgendamentos(req.negocioId, req.usuario.negocio.plano);
+    if (uso.atingido) {
+      return res.status(403).json({
+        codigo: 'LIMITE_PLANO',
+        erro: `Limite de ${uso.limite} marcações por mês atingido. Muda para um plano superior em Faturação.`
+      });
+    }
+
+    const conflito = await temConflito({ negocioId: req.negocioId, profissionalId, inicio, fim });
     if (conflito) return res.status(409).json({ erro: 'Horário indisponível para este profissional' });
 
     const agendamento = await prisma.agendamento.create({
@@ -65,7 +71,7 @@ router.post('/', autenticar, async (req, res) => {
         notaCliente,
         status: 'PENDENTE'
       },
-      include: { cliente: true, profissional: true, servico: true }
+      include: INCLUIR
     });
     res.status(201).json(agendamento);
   } catch (err) { res.status(500).json({ erro: err.message }); }
@@ -75,10 +81,18 @@ router.post('/', autenticar, async (req, res) => {
 router.patch('/:id/status', autenticar, async (req, res) => {
   try {
     const { status } = req.body;
-    const agendamento = await prisma.agendamento.update({
+    if (!STATUS_VALIDOS.includes(status)) return res.status(400).json({ erro: 'Estado inválido' });
+
+    // Só altera se a marcação for deste negócio
+    const r = await prisma.agendamento.updateMany({
+      where: { id: req.params.id, negocioId: req.negocioId },
+      data: { status }
+    });
+    if (r.count === 0) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+
+    const agendamento = await prisma.agendamento.findUnique({
       where: { id: req.params.id },
-      data: { status },
-      include: { cliente: true, profissional: true, servico: true }
+      include: INCLUIR
     });
     res.json(agendamento);
   } catch (err) { res.status(500).json({ erro: err.message }); }
@@ -87,10 +101,11 @@ router.patch('/:id/status', autenticar, async (req, res) => {
 // DELETE /api/agendamentos/:id
 router.delete('/:id', autenticar, async (req, res) => {
   try {
-    await prisma.agendamento.update({
-      where: { id: req.params.id },
+    const r = await prisma.agendamento.updateMany({
+      where: { id: req.params.id, negocioId: req.negocioId },
       data: { status: 'CANCELADO' }
     });
+    if (r.count === 0) return res.status(404).json({ erro: 'Agendamento não encontrado' });
     res.json({ mensagem: 'Agendamento cancelado' });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });

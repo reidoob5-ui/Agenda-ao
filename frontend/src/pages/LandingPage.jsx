@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { DepoimentosRotativos } from '../components/Depoimentos'
 import { CalendarCheck, Bell, CreditCard, BarChart2, Smartphone, Star, ArrowRight, Check } from 'lucide-react'
 
 const planos = [
@@ -25,6 +26,7 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-6 text-sm text-slate-600">
             <a href="#funcionalidades" className="hover:text-slate-900 transition-colors">Funcionalidades</a>
             <a href="#precos" className="hover:text-slate-900 transition-colors">Preços</a>
+            <Link to="/depoimentos" className="hover:text-slate-900 transition-colors">Depoimentos</Link>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm text-slate-600 hover:text-slate-900 font-medium">Entrar</Link>
@@ -57,6 +59,9 @@ export default function LandingPage() {
         </div>
         <p className="text-xs text-slate-400 mt-4">Sem cartão de crédito · Começa hoje</p>
       </section>
+
+      {/* Depoimentos reais, um de cada vez */}
+      <DepoimentosRotativos />
 
       {/* Funcionalidades */}
       <section id="funcionalidades" className="bg-slate-50 py-20">

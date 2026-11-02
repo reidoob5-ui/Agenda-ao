@@ -237,3 +237,15 @@ Para implementar as APIs reais:
 ---
 
 **Construído com ❤️ para Angola**
+
+## Login com Google (criação de conta)
+
+1. No [Google Cloud Console](https://console.cloud.google.com) cria um projeto e, em *APIs e serviços → Credenciais*, um **ID do cliente OAuth** do tipo *Aplicação Web*.
+2. Em *Origens JavaScript autorizadas* adiciona o endereço do site (ex.: `https://agenda-ao.vercel.app`).
+3. Define `GOOGLE_CLIENT_ID` nas variáveis de ambiente do backend (Render).
+
+Com `GOOGLE_CLIENT_ID` definido, as **contas novas só podem ser criadas com Google**. Contas antigas continuam a entrar com email e senha, ou com Google (ligadas pelo mesmo email). Sem a variável, o registo por email e senha continua a funcionar.
+
+## Depoimentos
+
+Depois de 10 dias de uso, o dono do negócio é convidado a deixar um depoimento (`/avaliar`). Os depoimentos aparecem na página inicial (um de cada vez) e em `/depoimentos`. O administrador pode esconder um depoimento com `PATCH /api/admin/depoimentos/:id` (`{ "visivel": false }`).

@@ -76,6 +76,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // ── Rotas Publicas ─────────────────────────────────────────────────────────
 app.use('/api/auth',    authLimiter, authRoutes);
 app.use('/api/public',  publicRouter);
+app.use('/api/depoimentos', require('./routes/depoimentos'));
 app.use('/api/admin',   adminLimiter, adminRoutes);
 
 // ── Health Check ──────────────────────────────────────────────────────────────

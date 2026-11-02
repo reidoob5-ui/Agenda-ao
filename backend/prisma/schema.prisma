@@ -35,6 +35,7 @@ model Negocio {
   feriados        Feriado[]
   assinaturas     Assinatura[]
   subscricoesPush SubscricaoPush[]
+  depoimento      Depoimento?
 
   @@map("negocios")
 }
@@ -242,4 +243,16 @@ model SubscricaoPush {
   @@map("subscricoes_push")
 }
 
+model Depoimento {
+  id           String   @id @default(uuid())
+  negocioId    String   @unique
+  texto        String
+  estrelas     Int
+  visivel      Boolean  @default(true)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
+  negocio      Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@map("depoimentos")
+}

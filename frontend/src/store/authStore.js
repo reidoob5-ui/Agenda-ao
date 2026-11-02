@@ -36,6 +36,32 @@ export const useAuthStore = create(
         }
       },
 
+      googleLogin: async (credential) => {
+        set({ carregando: true })
+        try {
+          const { data } = await api.post('/auth/google-login', { credential })
+          api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
+          set({ token: data.token, usuario: data.usuario, negocio: data.negocio, carregando: false })
+          return { sucesso: true }
+        } catch (err) {
+          set({ carregando: false })
+          return { sucesso: false, codigo: err.response?.data?.codigo, erro: err.response?.data?.erro || 'Erro ao entrar com Google' }
+        }
+      },
+
+      googleRegistar: async (credential, dados) => {
+        set({ carregando: true })
+        try {
+          const { data } = await api.post('/auth/google-registar', { credential, ...dados })
+          api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
+          set({ token: data.token, usuario: data.usuario, negocio: data.negocio, carregando: false })
+          return { sucesso: true }
+        } catch (err) {
+          set({ carregando: false })
+          return { sucesso: false, codigo: err.response?.data?.codigo, erro: err.response?.data?.erro || 'Erro ao criar conta com Google' }
+        }
+      },
+
       logout: () => {
         delete api.defaults.headers.common['Authorization']
         set({ token: null, usuario: null, negocio: null })

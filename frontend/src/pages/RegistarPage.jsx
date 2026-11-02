@@ -1,18 +1,37 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
-import { CalendarCheck } from 'lucide-react'
+import { CalendarCheck, ShieldCheck } from 'lucide-react'
+import api from '../services/api'
+import GoogleButton from '../components/GoogleButton'
 
 export default function RegistarPage() {
   const [form, setForm] = useState({ nome: '', email: '', senha: '', telefone: '', nomeNegocio: '' })
   const [passo, setPasso] = useState(1)
-  const { registar, carregando } = useAuthStore()
+  const { registar, googleRegistar, carregando } = useAuthStore()
   const navigate = useNavigate()
+  const [config, setConfig] = useState(null) // { googleClientId, exigeGoogle }
+
+  useEffect(() => {
+    api.get('/auth/config').then(r => setConfig(r.data)).catch(() => setConfig({}))
+  }, [])
+
+  const exigeGoogle = !!config?.exigeGoogle
+
+  const criarComGoogle = async (credential) => {
+    const r = await googleRegistar(credential, { nomeNegocio: form.nomeNegocio, telefone: form.telefone })
+    if (r.sucesso) { toast.success('Conta criada! Bem-vindo 🎉'); navigate('/dashboard') }
+    else {
+      toast.error(r.erro)
+      if (r.codigo === 'JA_EXISTE') navigate('/login')
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (passo === 1) { setPasso(2); return }
+    if (exigeGoogle) return // com Google, a conta cria-se pelo botão do Google
     const r = await registar(form)
     if (r.sucesso) { toast.success('Conta criada! Bem-vindo 🎉'); navigate('/dashboard') }
     else toast.error(r.erro)
@@ -43,7 +62,19 @@ export default function RegistarPage() {
               <div><label className="label">Telefone</label>
                 <input className="input" placeholder="+244 923 456 789" value={form.telefone}
                   onChange={e=>setForm({...form,telefone:e.target.value})} required/></div>
-            </>) : (<>
+            </>) : exigeGoogle ? (
+              <div className="text-center space-y-4 py-2">
+                <div className="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mx-auto">
+                  <ShieldCheck size={24} className="text-brand-600" />
+                </div>
+                <p className="text-sm text-slate-600">
+                  Para a tua segurança, a conta é criada e confirmada com o teu <strong>Google</strong>.
+                  Não precisas de criar palavra-passe.
+                </p>
+                <GoogleButton clientId={config.googleClientId} texto="signup_with" onCredential={criarComGoogle} />
+                {carregando && <p className="text-xs text-slate-400">A criar a tua conta...</p>}
+              </div>
+            ) : (<>
               <div><label className="label">O teu nome</label>
                 <input className="input" placeholder="Nome completo" value={form.nome}
                   onChange={e=>setForm({...form,nome:e.target.value})} required/></div>
@@ -54,9 +85,11 @@ export default function RegistarPage() {
                 <input className="input" type="password" placeholder="Mínimo 6 caracteres" value={form.senha}
                   onChange={e=>setForm({...form,senha:e.target.value})} required minLength={6}/></div>
             </>)}
-            <button type="submit" className="btn-primary w-full py-3" disabled={carregando}>
-              {passo===1 ? 'Continuar →' : carregando ? 'A criar...' : 'Criar conta'}
-            </button>
+            {!(passo === 2 && exigeGoogle) && (
+              <button type="submit" className="btn-primary w-full py-3" disabled={carregando}>
+                {passo===1 ? 'Continuar →' : carregando ? 'A criar...' : 'Criar conta'}
+              </button>
+            )}
           </form>
         </div>
         {passo===2 && <button onClick={()=>setPasso(1)} className="block text-center text-sm text-slate-500 mt-3 hover:text-slate-700">← Voltar</button>}

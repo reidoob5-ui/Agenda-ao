@@ -1,14 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
 import { CalendarCheck, Eye, EyeOff } from 'lucide-react'
+import api from '../services/api'
+import GoogleButton from '../components/GoogleButton'
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', senha: '' })
   const [mostrarSenha, setMostrarSenha] = useState(false)
-  const { login, carregando } = useAuthStore()
+  const { login, googleLogin, carregando } = useAuthStore()
   const navigate = useNavigate()
+  const [googleClientId, setGoogleClientId] = useState(null)
+
+  useEffect(() => {
+    api.get('/auth/config').then(r => setGoogleClientId(r.data.googleClientId)).catch(() => {})
+  }, [])
+
+  const entrarComGoogle = async (credential) => {
+    const r = await googleLogin(credential)
+    if (r.sucesso) { toast.success('Bem-vindo de volta!'); navigate('/dashboard') }
+    else {
+      toast.error(r.erro)
+      if (r.codigo === 'NAO_REGISTADO') navigate('/criar')
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -31,6 +47,16 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500 mt-1">Acede ao teu painel de gestão</p>
         </div>
         <div className="card p-6">
+          {googleClientId && (
+            <>
+              <GoogleButton clientId={googleClientId} texto="signin_with" onCredential={entrarComGoogle} />
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-xs text-slate-400">ou com email</span>
+                <div className="flex-1 h-px bg-slate-200" />
+              </div>
+            </>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">Email</label>

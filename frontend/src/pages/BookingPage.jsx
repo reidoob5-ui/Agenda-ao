@@ -66,7 +66,7 @@ export default function BookingPage() {
         setPendingPayload(payload)
         setConflito({ mensagem: data.mensagem || 'Horário ocupado', sugestoes: data.sugestoes })
       } else {
-        toast.error(data?.erro || 'Erro ao enviar pedido')
+        toast.error(data?.mensagem || data?.erro || 'Erro ao enviar pedido')
       }
     } finally {
       setEnviando(false)

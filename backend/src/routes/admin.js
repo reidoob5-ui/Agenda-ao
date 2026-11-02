@@ -1,5 +1,5 @@
 // ===== ROTAS DE SUPER-ADMIN =====
-// Acesso exclusivo com header: x-admin-secret: TL345
+// Acesso exclusivo com o header x-admin-secret (valor na variavel de ambiente ADMIN_SECRET)
 // Gerir negocios, confirmar pagamentos, activar/suspender planos
 
 const router = require('express').Router();
@@ -196,6 +196,34 @@ router.post('/rejeitar-pagamento/:id', async (req, res) => {
     res.json({ mensagem: 'Pagamento rejeitado' });
   } catch (err) {
     res.status(500).json({ erro: err.message });
+  }
+});
+
+// ── DEPOIMENTOS (moderacao) ───────────────────────────────────────────────────
+// Listar todos os depoimentos (visiveis e escondidos)
+router.get('/depoimentos', async (req, res) => {
+  try {
+    const itens = await prisma.depoimento.findMany({
+      orderBy: { criadoEm: 'desc' },
+      include: { negocio: { select: { nome: true, email: true } } }
+    });
+    res.json(itens);
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+// Esconder ou mostrar um depoimento na pagina publica
+router.patch('/depoimentos/:id', async (req, res) => {
+  try {
+    const visivel = !!req.body.visivel;
+    const depoimento = await prisma.depoimento.update({
+      where: { id: req.params.id },
+      data: { visivel }
+    });
+    res.json({ mensagem: visivel ? 'Depoimento visível' : 'Depoimento escondido', depoimento });
+  } catch (err) {
+    res.status(404).json({ erro: 'Depoimento não encontrado' });
   }
 });
 

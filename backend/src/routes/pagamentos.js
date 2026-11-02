@@ -181,8 +181,11 @@ router.post('/webhook', async (req, res) => {
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 function validarHMAC(campos, signatureRecebida) {
   try {
+    // Sem segredo configurado, o webhook fica desligado (nunca aceitar uma chave de teste)
+    const segredo = process.env.EMIS_WEBHOOK_SECRET;
+    if (!segredo) return false;
     const str = [campos.transactionId, campos.merchantId, campos.amount, campos.currency, campos.status, campos.timestamp].join('|');
-    const calculada = crypto.createHmac('sha256', process.env.EMIS_WEBHOOK_SECRET || 'dev_secret').update(str).digest('hex');
+    const calculada = crypto.createHmac('sha256', segredo).update(str).digest('hex');
     return crypto.timingSafeEqual(Buffer.from(calculada), Buffer.from(signatureRecebida || ''));
   } catch { return false; }
 }

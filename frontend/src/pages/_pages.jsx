@@ -6,6 +6,7 @@ import { format, addDays, subDays, parseISO } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, X, Check, Clock, User, Scissors, Plus } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import { linkWhatsApp } from '../utils/whatsapp'
 
 const STATUS_BADGE = { PENDENTE:'badge-yellow',CONFIRMADO:'badge-green',CONCLUIDO:'badge-gray',CANCELADO:'badge-red' }
 const STATUS_LABEL = { PENDENTE:'Pendente',CONFIRMADO:'Confirmado',CONCLUIDO:'Concluído',CANCELADO:'Cancelado' }
@@ -19,6 +20,15 @@ export function AgendaPage() {
   const [abaPendentes, setAbaPendentes] = useState(false)
 
   const slug = negocio?.slug
+
+  // Mensagem de WhatsApp para o cliente (abre o WhatsApp com o texto pronto)
+  const linkMensagem = (ag) => {
+    const quando = `${format(parseISO(ag.dataHora), "d 'de' MMMM", { locale: pt })} às ${format(parseISO(ag.dataHora), 'HH:mm')}`
+    const texto = ag.status === 'PENDENTE'
+      ? `Olá ${ag.cliente?.nome}! Recebemos o teu pedido de marcação em ${negocio?.nome}: ${ag.servico?.nome}, ${quando}. Já te confirmamos!`
+      : `Olá ${ag.cliente?.nome}! A tua marcação em ${negocio?.nome} está confirmada: ${ag.servico?.nome} com ${ag.profissional?.nome}, ${quando}. Até já!`
+    return linkWhatsApp(ag.cliente?.telefone, texto)
+  }
 
   const carregar = async () => {
     const data = format(dataAtual, 'yyyy-MM-dd')
@@ -139,6 +149,12 @@ export function AgendaPage() {
                     <td className="px-4 py-4"><span className={STATUS_BADGE[ag.status]}>{STATUS_LABEL[ag.status]}</span></td>
                     <td className="px-4 py-4">
                       <div className="flex gap-1">
+                        {['PENDENTE','CONFIRMADO'].includes(ag.status) && linkMensagem(ag) && (
+                          <a href={linkMensagem(ag)} target="_blank" rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 text-xs font-medium px-2">
+                            WhatsApp
+                          </a>
+                        )}
                         {ag.status === 'CONFIRMADO' && (
                           <button onClick={() => atualizarStatus(ag.id,'CONCLUIDO')} className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium px-2">
                             ✓ Feito
@@ -204,6 +220,12 @@ export function AgendaPage() {
                           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold transition-all border border-red-100">
                           <X size={14}/> Rejeitar
                         </button>
+                        {linkMensagem(ag) && (
+                          <a href={linkMensagem(ag)} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-green-50 text-green-700 text-sm font-semibold transition-all border border-green-200">
+                            WhatsApp
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>

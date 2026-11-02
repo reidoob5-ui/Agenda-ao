@@ -7,6 +7,7 @@ import { Calendar, Users, TrendingUp, Clock, Plus, ChevronRight, Bell } from 'lu
 import { format } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { QRCodeCanvas } from 'qrcode.react'
+import PedidoDepoimento from '../components/PedidoDepoimento'
 
 const statusBadge = { PENDENTE: 'badge-yellow', CONFIRMADO: 'badge-green', CONCLUIDO: 'badge-gray', CANCELADO: 'badge-red', FALTA: 'badge-red' }
 const statusLabel = { PENDENTE: 'Pendente', CONFIRMADO: 'Confirmado', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado', FALTA: 'Falta' }
@@ -261,6 +262,43 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Uso do plano grátis: barra de limite com convite ao upgrade */}
+      {dados?.usoPlano?.limite != null && (() => {
+        const { usados, limite } = dados.usoPlano
+        const pct = Math.min(100, Math.round((usados / limite) * 100))
+        const perto = pct >= 80
+        return (
+          <div className={`card p-5 mt-4 border ${perto ? 'border-amber-200 bg-amber-50' : 'border-slate-100'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-slate-800">Plano Básico · marcações deste mês</p>
+              <p className="text-sm font-bold text-slate-900">{usados} de {limite}</p>
+            </div>
+            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-red-500' : perto ? 'bg-amber-500' : 'bg-brand-500'}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {pct >= 100 ? (
+              <p className="text-xs text-red-600 mt-2 font-medium">
+                Limite atingido: os teus clientes já não conseguem marcar este mês.
+              </p>
+            ) : perto ? (
+              <p className="text-xs text-amber-700 mt-2 font-medium">
+                Estás a chegar ao limite. Muda de plano para não perder marcações.
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 mt-2">Plano grátis · até {limite} marcações por mês.</p>
+            )}
+            {perto && (
+              <Link to="/faturacao" className="btn-primary text-xs mt-3 inline-block">
+                Ver planos · desde 8.000 Kz/mês
+              </Link>
+            )}
+          </div>
+        )
+      })()}
+
       {/* Receita do mês */}
       <div className="grid md:grid-cols-2 gap-4 mt-4">
         <div className="card p-5">
@@ -303,8 +341,12 @@ export default function Dashboard() {
               Copiar link
             </button>
           </div>
+          <Link to="/cartaz" className="text-xs font-semibold text-brand-600 hover:underline mt-3">
+            🖨️ Imprimir cartaz para o balcão
+          </Link>
         </div>
       </div>
+      <PedidoDepoimento />
     </div>
   )
 }

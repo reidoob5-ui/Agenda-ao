@@ -18,6 +18,9 @@ import FaturacaoPage  from './pages/FaturacaoPage'
 import BookingPage    from './pages/BookingPage'
 import AdminPage      from './pages/AdminPage'
 import ProfissionaisPage from './pages/ProfissionaisPage'
+import DepoimentosPage from './pages/DepoimentosPage'
+import AvaliarPage from './pages/AvaliarPage'
+import CartazPage from './pages/CartazPage'
 
 export default function App() {
   const inicializar = useAuthStore(s => s.inicializar)
@@ -30,12 +33,15 @@ export default function App() {
       <Route path="/login"   element={<LoginPage />} />
       <Route path="/criar"   element={<RegistarPage />} />
       <Route path="/b/:slug" element={<BookingPage />} />
+      <Route path="/depoimentos" element={<DepoimentosPage />} />
 
       {/* Painel Admin do Dono do Sistema — rota secreta, nao partilhar */}
       <Route path="/gestao-x7k3m9" element={<AdminPage />} />
 
       {/* Protegidas (requerem login) */}
       <Route element={<RotaProtegida />}>
+        {/* Cartaz fora do Layout para imprimir sem o menu lateral */}
+        <Route path="/cartaz" element={<CartazPage />} />
         <Route element={<Layout />}>
           <Route path="/dashboard"   element={<Dashboard />} />
           <Route path="/agenda"      element={<AgendaPage />} />
@@ -45,6 +51,7 @@ export default function App() {
           <Route path="/relatorios"  element={<RelatoriosPage />} />
           <Route path="/config"      element={<ConfigPage />} />
           <Route path="/faturacao"   element={<FaturacaoPage />} />
+          <Route path="/avaliar"     element={<AvaliarPage />} />
         </Route>
       </Route>
 

@@ -2,6 +2,7 @@
 const clientesRouter = require('express').Router();
 const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
+const { limitesDoPlano, usoAgendamentos, temConflito } = require('../utils/agenda');
 const prisma = new PrismaClient();
 
 clientesRouter.get('/', autenticar, async (req, res) => {
@@ -23,8 +24,11 @@ clientesRouter.get('/', autenticar, async (req, res) => {
 
 clientesRouter.post('/', autenticar, async (req, res) => {
   try {
+    // Só campos permitidos (nunca deixar o body escolher o negocioId)
+    const { nome, telefone, email, notas } = req.body;
+    if (!nome || !telefone) return res.status(400).json({ erro: 'Nome e telefone são obrigatórios' });
     const cliente = await prisma.cliente.create({
-      data: { negocioId: req.negocioId, ...req.body }
+      data: { negocioId: req.negocioId, nome, telefone, email, notas }
     });
     res.status(201).json(cliente);
   } catch (err) {
@@ -52,12 +56,18 @@ clientesRouter.get('/:id', autenticar, async (req, res) => {
 
 clientesRouter.put('/:id', autenticar, async (req, res) => {
   try {
-    const cliente = await prisma.cliente.update({
-      where: { id: req.params.id },
-      data: req.body
+    const { nome, telefone, email, notas } = req.body;
+    const r = await prisma.cliente.updateMany({
+      where: { id: req.params.id, negocioId: req.negocioId },
+      data: { nome, telefone, email, notas }
     });
+    if (r.count === 0) return res.status(404).json({ erro: 'Cliente não encontrado' });
+    const cliente = await prisma.cliente.findUnique({ where: { id: req.params.id } });
     res.json(cliente);
-  } catch (err) { res.status(500).json({ erro: err.message }); }
+  } catch (err) {
+    if (err.code === 'P2002') return res.status(409).json({ erro: 'Telefone já registado' });
+    res.status(500).json({ erro: err.message });
+  }
 });
 
 module.exports.clientesRouter = clientesRouter;
@@ -80,12 +90,20 @@ servicosRouter.get('/', autenticar, async (req, res) => {
 servicosRouter.post('/', autenticar, async (req, res) => {
   try {
     const { nome, descricao, duracaoMin, preco, profissionalIds } = req.body;
+    // Só aceitar profissionais deste negócio
+    let idsValidos;
+    if (profissionalIds) {
+      const meus = await prisma.profissional.findMany({
+        where: { id: { in: profissionalIds }, negocioId: req.negocioId }, select: { id: true }
+      });
+      idsValidos = meus.map(p => p.id);
+    }
     const servico = await prisma.servico.create({
       data: {
         negocioId: req.negocioId,
         nome, descricao, duracaoMin, preco,
-        profissionais: profissionalIds ? {
-          create: profissionalIds.map(id => ({ profissionalId: id }))
+        profissionais: idsValidos ? {
+          create: idsValidos.map(id => ({ profissionalId: id }))
         } : undefined
       },
       include: { profissionais: { include: { profissional: true } } }
@@ -96,12 +114,26 @@ servicosRouter.post('/', autenticar, async (req, res) => {
 
 servicosRouter.put('/:id', autenticar, async (req, res) => {
   try {
-    const { profissionalIds, ...dados } = req.body;
+    const { profissionalIds, nome, descricao, duracaoMin, preco, ativo } = req.body;
+    const dados = { nome, descricao, duracaoMin, preco, ativo };
+
+    // O serviço tem de ser deste negócio
+    const existente = await prisma.servico.findFirst({ where: { id: req.params.id, negocioId: req.negocioId } });
+    if (!existente) return res.status(404).json({ erro: 'Serviço não encontrado' });
+
+    let idsValidos;
+    if (profissionalIds) {
+      const meus = await prisma.profissional.findMany({
+        where: { id: { in: profissionalIds }, negocioId: req.negocioId }, select: { id: true }
+      });
+      idsValidos = meus.map(p => p.id);
+    }
+
     const servico = await prisma.$transaction(async (tx) => {
-      if (profissionalIds) {
+      if (idsValidos) {
         await tx.servicoProfissional.deleteMany({ where: { servicoId: req.params.id } });
         await tx.servicoProfissional.createMany({
-          data: profissionalIds.map(id => ({ servicoId: req.params.id, profissionalId: id }))
+          data: idsValidos.map(id => ({ servicoId: req.params.id, profissionalId: id }))
         });
       }
       return tx.servico.update({
@@ -116,7 +148,11 @@ servicosRouter.put('/:id', autenticar, async (req, res) => {
 
 servicosRouter.delete('/:id', autenticar, async (req, res) => {
   try {
-    await prisma.servico.update({ where: { id: req.params.id }, data: { ativo: false } });
+    const r = await prisma.servico.updateMany({
+      where: { id: req.params.id, negocioId: req.negocioId },
+      data: { ativo: false }
+    });
+    if (r.count === 0) return res.status(404).json({ erro: 'Serviço não encontrado' });
     res.json({ mensagem: 'Serviço desactivado' });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -139,8 +175,23 @@ profissionaisRouter.get('/', autenticar, async (req, res) => {
 
 profissionaisRouter.post('/', autenticar, async (req, res) => {
   try {
+    const { nome, email, telefone, foto, bio } = req.body;
+    if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório' });
+
+    // Limite de profissionais do plano
+    const limite = limitesDoPlano(req.usuario.negocio.plano).profissionais;
+    if (limite !== null) {
+      const activos = await prisma.profissional.count({ where: { negocioId: req.negocioId, ativo: true } });
+      if (activos >= limite) {
+        return res.status(403).json({
+          codigo: 'LIMITE_PLANO',
+          erro: `O teu plano permite ${limite} profissional${limite > 1 ? 'is' : ''}. Muda para um plano superior em Faturação para adicionar mais.`
+        });
+      }
+    }
+
     const profissional = await prisma.profissional.create({
-      data: { negocioId: req.negocioId, ...req.body }
+      data: { negocioId: req.negocioId, nome, email, telefone, foto, bio }
     });
     res.status(201).json(profissional);
   } catch (err) { res.status(500).json({ erro: err.message }); }
@@ -148,10 +199,13 @@ profissionaisRouter.post('/', autenticar, async (req, res) => {
 
 profissionaisRouter.put('/:id', autenticar, async (req, res) => {
   try {
-    const profissional = await prisma.profissional.update({
-      where: { id: req.params.id },
-      data: req.body
+    const { nome, email, telefone, foto, bio, ativo } = req.body;
+    const r = await prisma.profissional.updateMany({
+      where: { id: req.params.id, negocioId: req.negocioId },
+      data: { nome, email, telefone, foto, bio, ativo }
     });
+    if (r.count === 0) return res.status(404).json({ erro: 'Profissional não encontrado' });
+    const profissional = await prisma.profissional.findUnique({ where: { id: req.params.id } });
     res.json(profissional);
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -174,7 +228,9 @@ negociosRouter.get('/meu', autenticar, async (req, res) => {
 
 negociosRouter.put('/meu', autenticar, async (req, res) => {
   try {
-    const { horarios, ...dados } = req.body;
+    // Só campos de perfil. NUNCA aceitar plano, planoStatus, planoExpira, slug, etc. vindos do cliente
+    const { horarios, nome, telefone, endereco, cidade, logo, ibanBancario, merchantExpress } = req.body;
+    const dados = { nome, telefone, endereco, cidade, logo, ibanBancario, merchantExpress };
     const negocio = await prisma.$transaction(async (tx) => {
       if (horarios) {
         await tx.horario.deleteMany({ where: { negocioId: req.negocioId } });
@@ -236,7 +292,8 @@ relatoriosRouter.get('/dashboard', autenticar, async (req, res) => {
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
 
-    const [agHoje, agMes, receitaMes, novosClientes] = await Promise.all([
+    const planoActual = req.usuario.negocio.plano;
+    const [agHoje, agMes, receitaMes, novosClientes, uso] = await Promise.all([
       prisma.agendamento.findMany({
         where: { negocioId: req.negocioId, dataHora: { gte: hoje, lt: amanha } },
         include: { cliente: true, servico: true, profissional: true },
@@ -251,7 +308,8 @@ relatoriosRouter.get('/dashboard', autenticar, async (req, res) => {
       }),
       prisma.cliente.count({
         where: { negocioId: req.negocioId, criadoEm: { gte: inicioMes } }
-      })
+      }),
+      usoAgendamentos(req.negocioId, planoActual)
     ]);
 
     res.json({
@@ -262,7 +320,10 @@ relatoriosRouter.get('/dashboard', autenticar, async (req, res) => {
       receitaHoje: agHoje.filter(a => a.status === 'CONCLUIDO').reduce((s, a) => s + a.preco, 0),
       agendamentosMes: agMes,
       receitaMes: receitaMes._sum.preco || 0,
-      novosClientes
+      novosClientes,
+      // Uso do plano (para a barra de limite no painel)
+      plano: planoActual,
+      usoPlano: uso
     });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -315,7 +376,7 @@ const publicRouter = require('express').Router();
 const verificarPlanoPublico = async (slug, res) => {
   const negocio = await prisma.negocio.findUnique({
     where: { slug },
-    select: { id: true, planoStatus: true, planoExpira: true }
+    select: { id: true, plano: true, planoStatus: true, planoExpira: true }
   });
   
   if (!negocio) {
@@ -470,25 +531,39 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
     if (!check) return;
 
     const { nome, telefone, email, profissionalId, servicoId, dataHora } = req.body;
+    if (!nome || !String(nome).trim() || !telefone || !String(telefone).trim()) {
+      return res.status(400).json({ erro: 'Nome e telefone são obrigatórios' });
+    }
     const dataHoraObj = new Date(dataHora);
-    const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
-    if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
+    if (isNaN(dataHoraObj.getTime())) return res.status(400).json({ erro: 'Data/hora inválida' });
+    if (dataHoraObj.getTime() < Date.now() - 5 * 60000) {
+      return res.status(400).json({ erro: 'Não é possível marcar no passado' });
+    }
 
-    // Verificar conflito de horário
+    // Serviço e profissional têm de pertencer a ESTE negócio
+    const servico = await prisma.servico.findFirst({
+      where: { id: servicoId, negocioId: check.id, ativo: true }
+    });
+    if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
+    const profissionalOk = await prisma.profissional.findFirst({
+      where: { id: profissionalId, negocioId: check.id, ativo: true }, select: { id: true }
+    });
+    if (!profissionalOk) return res.status(404).json({ erro: 'Profissional não encontrado' });
+
+    // Limite de marcações do plano grátis
+    const uso = await usoAgendamentos(check.id, check.plano);
+    if (uso.atingido) {
+      return res.status(403).json({
+        codigo: 'LIMITE_PLANO',
+        erro: 'Limite de marcações atingido',
+        mensagem: 'Este negócio atingiu o limite de marcações deste mês. Tenta novamente no próximo mês ou contacta o negócio diretamente.'
+      });
+    }
+
+    // Verificar conflito de horário (sobreposição real: início e fim)
     const slotFim = new Date(dataHoraObj.getTime() + servico.duracaoMin * 60000);
-    const conflito = await prisma.agendamento.findFirst({
-      where: {
-        negocioId: check.id,
-        profissionalId,
-        status: { in: ['PENDENTE', 'CONFIRMADO'] },
-        dataHora: { lt: slotFim },
-        // Sobreposição: agendamento existente começa antes do fim do novo slot
-        AND: [{
-          dataHora: {
-            gte: new Date(dataHoraObj.getTime() - servico.duracaoMin * 60000)
-          }
-        }]
-      }
+    const conflito = await temConflito({
+      negocioId: check.id, profissionalId, inicio: dataHoraObj, fim: slotFim
     });
 
     if (conflito) {
