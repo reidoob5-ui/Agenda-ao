@@ -195,9 +195,9 @@ O dono partilha este link no:
 
 | Plano        | Preço/mês | Profissionais |
 |-------------|-----------|---------------|
-| Básico      | 15.000 Kz | 1             |
-| Profissional | 35.000 Kz | Até 5         |
-| Premium     | 75.000 Kz | Ilimitado     |
+| Básico      | Grátis    | 1             |
+| Profissional | 8.000 Kz | Até 5         |
+| Premium     | 19.000 Kz | Ilimitado     |
 
 ---
 

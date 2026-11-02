@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom'
 import { CalendarCheck, Bell, CreditCard, BarChart2, Smartphone, Star, ArrowRight, Check } from 'lucide-react'
 
 const planos = [
-  { nome: 'Básico', preco: '15.000', profissionais: '1 profissional', cor: 'border-slate-200', popular: false,
+  { nome: 'Básico', preco: 'Grátis', profissionais: '1 profissional', cor: 'border-slate-200', popular: false,
     features: ['Agenda online pública', '50 agendamentos/mês', 'Lembretes SMS', 'Painel simples'] },
-  { nome: 'Profissional', preco: '35.000', profissionais: 'Até 5 profissionais', cor: 'border-brand-500', popular: true,
+  { nome: 'Profissional', preco: '8.000', profissionais: 'Até 5 profissionais', cor: 'border-brand-500', popular: true,
     features: ['Tudo do Básico', 'Agendamentos ilimitados', 'WhatsApp + SMS', 'Relatórios financeiros', 'CRM de clientes', 'Multicaixa Express'] },
-  { nome: 'Premium', preco: '75.000', profissionais: 'Ilimitado', cor: 'border-slate-200', popular: false,
+  { nome: 'Premium', preco: '19.000', profissionais: 'Ilimitado', cor: 'border-slate-200', popular: false,
     features: ['Tudo do Profissional', 'Profissionais ilimitados', 'Programa de fidelidade', 'App marca própria', 'Suporte prioritário', 'Relatórios avançados'] },
 ]
 
@@ -100,7 +100,7 @@ export default function LandingPage() {
                 <p className="font-display font-bold text-slate-800 text-lg mb-1">{p.nome}</p>
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="font-display text-3xl font-bold text-slate-900">{p.preco}</span>
-                  <span className="text-slate-400 text-sm">Kz/mês</span>
+                  {p.preco !== 'Grátis' && <span className="text-slate-400 text-sm">Kz/mês</span>}
                 </div>
                 <p className="text-xs text-slate-400 mb-6">{p.profissionais}</p>
                 <Link to="/criar" className={`block text-center py-2.5 rounded-xl text-sm font-semibold mb-6 transition-all

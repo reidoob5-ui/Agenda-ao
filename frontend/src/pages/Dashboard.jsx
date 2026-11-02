@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { Calendar, Users, TrendingUp, Clock, Plus, ChevronRight, Bell } from 'lucide-react'
 import { format } from 'date-fns'
 import { pt } from 'date-fns/locale'
+import { QRCodeCanvas } from 'qrcode.react'
 
 const statusBadge = { PENDENTE: 'badge-yellow', CONFIRMADO: 'badge-green', CONCLUIDO: 'badge-gray', CANCELADO: 'badge-red', FALTA: 'badge-red' }
 const statusLabel = { PENDENTE: 'Pendente', CONFIRMADO: 'Confirmado', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado', FALTA: 'Falta' }
@@ -267,15 +268,41 @@ export default function Dashboard() {
           <p className="font-display text-3xl font-bold text-slate-900">{fmtKz(dados?.receitaMes)}</p>
           <p className="text-xs text-slate-400 mt-1">{dados?.agendamentosMes} agendamentos concluídos</p>
         </div>
-        <div className="card p-5 flex flex-col justify-between">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Link de agendamento</p>
-          <p className="text-sm text-slate-600 font-mono bg-slate-50 rounded-lg px-3 py-2 truncate">
-            {window.location.origin}/b/{negocio?.slug}
+        <div className="card p-5 flex flex-col items-center text-center">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">QR Code de agendamento</p>
+          <div className="bg-white p-2 rounded-xl border border-slate-100">
+            <QRCodeCanvas
+              id="qr-agendamento"
+              value={`${window.location.origin}/b/${negocio?.slug}`}
+              size={512}
+              level="M"
+              includeMargin
+              style={{ width: 176, height: 176 }}
+            />
+          </div>
+          <p className="text-xs text-slate-400 mt-3 max-w-[16rem]">
+            Mostra este QR aos teus clientes. Basta apontar a câmara do telemóvel para marcar.
           </p>
-          <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/b/${negocio?.slug}`); toast.success('Link copiado com sucesso! 📋') }}
-            className="btn-ghost text-xs mt-2 self-start">
-            Copiar link
-          </button>
+          <div className="flex items-center gap-2 mt-3">
+            <button
+              onClick={() => {
+                const canvas = document.getElementById('qr-agendamento')
+                if (!canvas) return
+                const a = document.createElement('a')
+                a.href = canvas.toDataURL('image/png')
+                a.download = `qr-agendamento-${negocio?.slug || 'negocio'}.png`
+                a.click()
+                toast.success('QR Code descarregado! 📥')
+              }}
+              className="btn-primary text-xs">
+              Descarregar QR
+            </button>
+            <button
+              onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/b/${negocio?.slug}`); toast.success('Link copiado com sucesso! 📋') }}
+              className="btn-ghost text-xs">
+              Copiar link
+            </button>
+          </div>
         </div>
       </div>
     </div>

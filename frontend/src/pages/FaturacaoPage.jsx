@@ -10,6 +10,7 @@ import { format, parseISO } from 'date-fns'
 import { pt } from 'date-fns/locale'
 
 function fmtKz(v) {
+  if (v === 0) return 'Grátis'
   return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(v || 0)
 }
 
@@ -17,7 +18,7 @@ const PLANOS = [
   {
     key: 'BASICO',
     label: 'Basico',
-    preco: 15000,
+    preco: 0,
     profissionais: '1 profissional',
     features: ['50 agendamentos/mes', 'Lembretes SMS', 'Agenda online', 'Painel basico'],
     cor: 'border-slate-200 hover:border-slate-300',
@@ -26,7 +27,7 @@ const PLANOS = [
   {
     key: 'PROFISSIONAL',
     label: 'Profissional',
-    preco: 35000,
+    preco: 8000,
     profissionais: 'Ate 5 profissionais',
     features: ['Agendamentos ilimitados', 'WhatsApp + SMS', 'Relatorios financeiros', 'CRM de clientes', 'Multicaixa Express'],
     cor: 'border-brand-500 shadow-lg',
@@ -35,7 +36,7 @@ const PLANOS = [
   {
     key: 'PREMIUM',
     label: 'Premium',
-    preco: 75000,
+    preco: 19000,
     profissionais: 'Ilimitado',
     features: ['Tudo do Profissional', 'Profissionais ilimitados', 'Programa de fidelidade', 'Suporte prioritario'],
     cor: 'border-slate-200 hover:border-slate-300',
@@ -118,6 +119,21 @@ export default function FaturacaoPage() {
     } finally { setCarregando(false) }
   }
 
+  const ativarGratis = async () => {
+    setCarregando(true)
+    try {
+      await api.post('/pagamentos/ativar-gratis')
+      toast.success('Plano Basico gratis activado!')
+      const me = await api.get('/auth/me')
+      atualizarNegocio(me.data.negocio)
+      setMostrarPlanos(false)
+    } catch (err) {
+      toast.error(err.response?.data?.erro || 'Erro ao activar plano gratis')
+    } finally { setCarregando(false) }
+  }
+
+  const planoSelecionadoGratis = PLANOS.find(p => p.key === planoSelecionado)?.preco === 0
+
   const planoAtual = negocio?.plano || 'BASICO'
   const planoStatus = negocio?.planoStatus || 'ATIVO'
   const planoExpira = negocio?.planoExpira
@@ -149,7 +165,7 @@ export default function FaturacaoPage() {
               </span>
             </div>
             <p className="text-slate-500 text-sm">
-              {fmtKz(planoActualInfo?.preco || 15000)}/mes
+              {fmtKz(planoActualInfo?.preco ?? 0)}{planoActualInfo?.preco !== 0 && '/mes'}
               {planoExpira && (
                 <span className="ml-2 text-slate-400">
                   · {diasRestantes === 0
@@ -215,7 +231,7 @@ export default function FaturacaoPage() {
                     )}
                   </div>
                   <p className="font-display font-bold text-slate-900 text-xl">
-                    {fmtKz(p.preco)}<span className="text-xs font-normal text-slate-400">/mes</span>
+                    {fmtKz(p.preco)}{p.preco !== 0 && <span className="text-xs font-normal text-slate-400">/mes</span>}
                   </p>
                   <p className="text-xs text-slate-400 mb-3">{p.profissionais}</p>
                   <ul className="space-y-1">
@@ -235,13 +251,26 @@ export default function FaturacaoPage() {
                 <p className="text-sm font-semibold text-slate-700">
                   Plano seleccionado: <span className="text-brand-700">{PLANOS.find(p => p.key === planoSelecionado)?.label}</span>
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">Validade: 30 dias apos confirmacao do pagamento</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {PLANOS.find(p => p.key === planoSelecionado)?.preco === 0
+                    ? 'Plano gratis, sem prazo de validade'
+                    : 'Validade: 30 dias apos confirmacao do pagamento'}
+                </p>
               </div>
               <p className="font-display font-bold text-2xl text-slate-900">
-                {fmtKz(PLANOS.find(p => p.key === planoSelecionado)?.preco || 15000)}
+                {fmtKz(PLANOS.find(p => p.key === planoSelecionado)?.preco ?? 0)}
               </p>
             </div>
 
+            {planoSelecionadoGratis ? (
+              <button
+                onClick={ativarGratis}
+                disabled={carregando}
+                className="btn-primary w-full py-3"
+              >
+                {carregando ? 'A activar...' : 'Activar plano gratis'}
+              </button>
+            ) : (<>
             {/* Metodos de pagamento */}
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
               Escolhe o metodo de pagamento
@@ -285,6 +314,7 @@ export default function FaturacaoPage() {
                 <strong>"Pagamento AgendaAO - [teu nome de negocio]"</strong> para agilizar a activacao.
               </p>
             </div>
+            </>)}
           </div>
         )}
       </div>

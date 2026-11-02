@@ -33,13 +33,23 @@ router.post('/', autenticar, async (req, res) => {
 
     // Verificar conflito de horário
     const inicio = new Date(dataHora);
+    if (isNaN(inicio.getTime())) return res.status(400).json({ erro: 'Data/hora inválida' });
     const fim = new Date(inicio.getTime() + servico.duracaoMin * 60000);
-    const conflito = await prisma.agendamento.findFirst({
+
+    // Dois agendamentos sobrepõem-se quando: inicioExistente < fimNovo E fimExistente > inicioNovo.
+    // Procuramos os que começam até ao fim do novo e que podem ainda estar a decorrer
+    // (janela de 24h para trás cobre qualquer duração de serviço).
+    const candidatos = await prisma.agendamento.findMany({
       where: {
         profissionalId,
         status: { in: ['PENDENTE', 'CONFIRMADO'] },
-        dataHora: { gte: inicio, lt: fim }
-      }
+        dataHora: { gt: new Date(inicio.getTime() - 24 * 60 * 60000), lt: fim }
+      },
+      select: { dataHora: true, duracaoMin: true }
+    });
+    const conflito = candidatos.some(a => {
+      const fimExistente = a.dataHora.getTime() + a.duracaoMin * 60000;
+      return fimExistente > inicio.getTime();
     });
     if (conflito) return res.status(409).json({ erro: 'Horário indisponível para este profissional' });
 

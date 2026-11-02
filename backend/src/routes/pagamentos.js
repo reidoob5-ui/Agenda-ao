@@ -4,17 +4,33 @@ const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const PLANO_PRECO = { BASICO: 15000, PROFISSIONAL: 35000, PREMIUM: 75000 };
+const PLANO_PRECO = { BASICO: 0, PROFISSIONAL: 8000, PREMIUM: 19000 };
 const PLANO_LABEL = { BASICO: 'Basico', PROFISSIONAL: 'Profissional', PREMIUM: 'Premium' };
+
+// ── ACTIVAR PLANO GRATIS ─────────────────────────────────────────────────────
+// O plano Basico e gratis e nao expira: activa directamente, sem pagamento
+router.post('/ativar-gratis', autenticar, async (req, res) => {
+  try {
+    await prisma.negocio.update({
+      where: { id: req.negocioId },
+      data: { plano: 'BASICO', planoStatus: 'ATIVO', planoExpira: null }
+    });
+    res.json({ mensagem: 'Plano Basico gratis activado.', plano: 'BASICO' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao activar plano gratis' });
+  }
+});
 
 // ── INICIAR PAGAMENTO EXPRESS ─────────────────────────────────────────────────
 // Gera referencia unica e mostra numero Express do dono para pagamento manual
 router.post('/iniciar-express', autenticar, async (req, res) => {
   try {
     const { plano } = req.body;
-    const planoPedido = plano || 'BASICO';
+    const planoPedido = plano || 'PROFISSIONAL';
     const valorKz = PLANO_PRECO[planoPedido];
-    if (!valorKz) return res.status(400).json({ erro: 'Plano invalido' });
+    if (valorKz === undefined) return res.status(400).json({ erro: 'Plano invalido' });
+    if (valorKz === 0) return res.status(400).json({ erro: 'Este plano e gratis, nao precisa de pagamento' });
 
     const negocio = await prisma.negocio.findUnique({ where: { id: req.negocioId } });
     const assinatura = await criarAssinatura(req.negocioId, planoPedido);
@@ -56,9 +72,10 @@ router.post('/iniciar-express', autenticar, async (req, res) => {
 router.post('/iniciar-iban', autenticar, async (req, res) => {
   try {
     const { plano, banco } = req.body;
-    const planoPedido = plano || 'BASICO';
+    const planoPedido = plano || 'PROFISSIONAL';
     const valorKz = PLANO_PRECO[planoPedido];
-    if (!valorKz) return res.status(400).json({ erro: 'Plano invalido' });
+    if (valorKz === undefined) return res.status(400).json({ erro: 'Plano invalido' });
+    if (valorKz === 0) return res.status(400).json({ erro: 'Este plano e gratis, nao precisa de pagamento' });
 
     const assinatura = await criarAssinatura(req.negocioId, planoPedido);
     const referencia = 'IBAN-' + assinatura.id.slice(0, 8).toUpperCase();

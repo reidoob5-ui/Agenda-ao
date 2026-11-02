@@ -33,10 +33,10 @@ router.post('/registar', [
       }
     });
 
+    // O plano Basico agora e gratis e nao expira: todas as contas novas comecam activas
     const jaTemTrial = !!trialUsado;
-    const diasTrial = 14;
-    const expiraData = jaTemTrial ? null : new Date(Date.now() + diasTrial * 24 * 60 * 60 * 1000);
-    const planoStatus = jaTemTrial ? 'INATIVO' : 'ATIVO';
+    const expiraData = null;
+    const planoStatus = 'ATIVO';
 
     const slug = nomeNegocio.toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
