@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const { temConflito, usoAgendamentos } = require('../utils/agenda');
+const { temRecurso, pontosDaVisita } = require('../utils/planos');
 const prisma = new PrismaClient();
 
 const STATUS_VALIDOS = ['PENDENTE', 'CONFIRMADO', 'CONCLUIDO', 'CANCELADO', 'FALTA'];
@@ -83,6 +84,12 @@ router.patch('/:id/status', autenticar, async (req, res) => {
     const { status } = req.body;
     if (!STATUS_VALIDOS.includes(status)) return res.status(400).json({ erro: 'Estado inválido' });
 
+    const anterior = await prisma.agendamento.findFirst({
+      where: { id: req.params.id, negocioId: req.negocioId },
+      select: { status: true, preco: true, clienteId: true }
+    });
+    if (!anterior) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+
     // Só altera se a marcação for deste negócio
     const r = await prisma.agendamento.updateMany({
       where: { id: req.params.id, negocioId: req.negocioId },
@@ -94,6 +101,15 @@ router.patch('/:id/status', autenticar, async (req, res) => {
       where: { id: req.params.id },
       include: INCLUIR
     });
+    // Fidelidade (Premium): pontos ao concluir; se deixar de estar concluida, retira-os
+    if (temRecurso(req.usuario.negocio.plano, 'fidelidade') && anterior.status !== status) {
+      const pts = pontosDaVisita(anterior.preco);
+      if (status === 'CONCLUIDO') {
+        await prisma.cliente.updateMany({ where: { id: anterior.clienteId, negocioId: req.negocioId }, data: { pontosFidelidade: { increment: pts } } });
+      } else if (anterior.status === 'CONCLUIDO') {
+        await prisma.cliente.updateMany({ where: { id: anterior.clienteId, negocioId: req.negocioId, pontosFidelidade: { gte: pts } }, data: { pontosFidelidade: { decrement: pts } } });
+      }
+    }
     if (status === 'CONFIRMADO') {
       require('../services/whatsappService')
         .enviarWhatsAppAgendamento({ agendamento, negocio: req.usuario.negocio, tipo: 'CONFIRMACAO' })

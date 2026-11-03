@@ -3,8 +3,11 @@ import { useAuthStore } from '../../store/authStore'
 import PlanoGuard from './PlanoGuard'
 import {
   LayoutDashboard, Calendar, Users, Scissors,
-  BarChart2, Settings, CreditCard, LogOut, CalendarCheck, ShieldCheck, User, Star
+  BarChart2, Settings, CreditCard, LogOut, CalendarCheck, ShieldCheck, User, Star, Hourglass, LifeBuoy
 } from 'lucide-react'
+
+// Email de suporte definido no Vercel (VITE_SUPORTE_EMAIL); sem ele o botao nao aparece
+const EMAIL_SUPORTE = import.meta.env.VITE_SUPORTE_EMAIL || ''
 
 const nav = [
   { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
@@ -13,6 +16,7 @@ const nav = [
   { to: '/servicos',   icon: Scissors,        label: 'Serviços' },
   { to: '/profissionais', icon: User,         label: 'Profissionais' },
   { to: '/relatorios', icon: BarChart2,       label: 'Relatórios' },
+  { to: '/lista-espera', icon: Hourglass,     label: 'Lista de espera' },
   { to: '/config',     icon: Settings,        label: 'Configurações' },
   { to: '/faturacao',  icon: CreditCard,      label: 'Faturação' },
   { to: '/avaliar',    icon: Star,            label: 'Depoimento' },
@@ -79,6 +83,13 @@ export default function Layout() {
 
         {/* Rodape sidebar */}
         <div className="p-3 border-t border-slate-100">
+          {EMAIL_SUPORTE && (
+            <a href={`mailto:${EMAIL_SUPORTE}?subject=${encodeURIComponent(`${negocio?.plano === 'PREMIUM' ? '[PRIORITÁRIO] ' : ''}Suporte AgendaAO — ${negocio?.nome || ''}`)}`}
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all">
+              <LifeBuoy size={15} />
+              {negocio?.plano === 'PREMIUM' ? 'Suporte prioritário' : 'Suporte'}
+            </a>
+          )}
           <div className="flex items-center gap-2.5 px-2 mb-2">
             <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">
               {usuario?.nome?.charAt(0)?.toUpperCase()}

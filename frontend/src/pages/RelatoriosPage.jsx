@@ -3,11 +3,85 @@ import api from '../services/api'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { format } from 'date-fns'
 import { pt } from 'date-fns/locale'
-import { Download } from 'lucide-react'
+import { linkWhatsApp } from '../utils/whatsapp'
+import { usePlano } from '../utils/planos'
+import Bloqueado from '../components/Bloqueado'
 
 function fmtKz(v){return new Intl.NumberFormat('pt-AO',{style:'currency',currency:'AOA',minimumFractionDigits:0}).format(v||0)}
 
+// Premium: ultimos 90 dias — por profissional, horas de pico, clientes que nao voltam
+function RelatorioAvancado() {
+  const [d, setD] = useState(null)
+  useEffect(() => { api.get('/relatorios/avancado').then(r => setD(r.data)).catch(() => setD(false)) }, [])
+  if (d === null) return <div className="card p-6 mt-4 text-sm text-slate-400">A carregar relatório avançado...</div>
+  if (d === false) return <div className="card p-6 mt-4 text-sm text-red-500">Não foi possível carregar o relatório avançado.</div>
+  const profs = Object.entries(d.porProfissional).sort((a, b) => b[1].receita - a[1].receita)
+  const maxH = Math.max(1, ...d.horasPico.map(h => h.total))
+  return (
+    <div className="mt-6 space-y-4">
+      <div className="flex items-center gap-2">
+        <h2 className="font-display font-bold text-lg">Relatório avançado</h2>
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">PREMIUM</span>
+        <span className="text-xs text-slate-400">últimos {d.dias} dias</span>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          ['Ticket médio', fmtKz(d.ticketMedio)],
+          ['Visitas concluídas', d.concluidos],
+          ['Cancelamentos', `${d.taxaCancelamento}%`],
+          ['Faltas', `${d.taxaFaltas}%`],
+        ].map(([l, v]) => (
+          <div key={l} className="card p-4">
+            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">{l}</p>
+            <p className="font-display font-bold text-xl text-slate-900 mt-1">{v}</p>
+          </div>
+        ))}
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="card p-5">
+          <h3 className="font-semibold text-slate-800 mb-3 text-sm">Receita por profissional</h3>
+          {profs.length === 0 ? <p className="text-sm text-slate-400">Sem dados</p> : profs.map(([nome, v]) => (
+            <div key={nome} className="flex items-center justify-between py-1.5 text-sm">
+              <span className="text-slate-700">{nome} <span className="text-xs text-slate-400">({v.count})</span></span>
+              <span className="font-semibold text-slate-800">{fmtKz(v.receita)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="card p-5">
+          <h3 className="font-semibold text-slate-800 mb-3 text-sm">Horas de maior procura</h3>
+          {d.horasPico.length === 0 ? <p className="text-sm text-slate-400">Sem dados</p> : d.horasPico.map(h => (
+            <div key={h.hora} className="flex items-center gap-3 py-1">
+              <span className="w-12 text-sm text-slate-600">{String(h.hora).padStart(2, '0')}:00</span>
+              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-brand-400 rounded-full" style={{ width: `${(h.total / maxH) * 100}%` }} />
+              </div>
+              <span className="text-xs text-slate-400 w-6 text-right">{h.total}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="card p-5">
+        <h3 className="font-semibold text-slate-800 mb-1 text-sm">Clientes que não voltam</h3>
+        <p className="text-xs text-slate-400 mb-3">Já vieram, mas a última visita foi há mais de 45 dias. Manda uma mensagem a convidar.</p>
+        {d.clientesInativos.length === 0 ? <p className="text-sm text-slate-400">Nenhum — boa retenção! 🎉</p> : d.clientesInativos.map(c => {
+          const link = linkWhatsApp(c.telefone, `Olá ${c.nome.split(' ')[0]}! Já sentimos a tua falta. Queres marcar uma nova visita?`)
+          return (
+            <div key={c.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+              <div>
+                <p className="text-sm font-medium text-slate-800">{c.nome}</p>
+                <p className="text-xs text-slate-400">{c.visitas} visitas · última {format(new Date(c.ultimaVisita), 'dd/MM/yyyy')}</p>
+              </div>
+              {link && <a href={link} target="_blank" rel="noreferrer" className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">WhatsApp</a>}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function RelatoriosPage() {
+  const { tem } = usePlano()
   const agora = new Date()
   const [ano, setAno] = useState(agora.getFullYear())
   const [mes, setMes] = useState(agora.getMonth() + 1)
@@ -15,6 +89,7 @@ export default function RelatoriosPage() {
   const [dashboard, setDashboard] = useState(null)
 
   useEffect(() => {
+    if (!tem('relatoriosFinanceiros')) return
     Promise.all([
       api.get(`/relatorios/mensal?ano=${ano}&mes=${mes}`),
       api.get('/relatorios/dashboard')
@@ -23,6 +98,17 @@ export default function RelatoriosPage() {
 
   const semanas = dados ? Object.entries(dados.porSemana).map(([s,v]) => ({ semana: `Sem ${s}`, receita: v })) : []
   const servicos = dados ? Object.entries(dados.porServico).sort((a,b)=>b[1].receita-a[1].receita).slice(0,5) : []
+
+  if (!tem('relatoriosFinanceiros')) {
+    return (
+      <div className="p-6 max-w-3xl">
+        <h1 className="font-display text-2xl font-bold mb-6">Relatórios</h1>
+        <Bloqueado planoNecessario="PROFISSIONAL"
+          titulo="Relatórios financeiros mensais"
+          texto="Vê a receita por semana, os serviços mais vendidos e quanto cada mês rendeu. Disponível a partir do plano Profissional." />
+      </div>
+    )
+  }
 
   const meses = Array.from({length:12},(_,i)=>({num:i+1,nome:format(new Date(2025,i,1),'MMMM',{locale:pt})}))
 
@@ -94,6 +180,12 @@ export default function RelatoriosPage() {
           </div>
         )}
       </div>
+
+      {tem('relatoriosAvancados')
+        ? <RelatorioAvancado />
+        : <div className="mt-6"><Bloqueado compacto planoNecessario="PREMIUM"
+            titulo="Relatório avançado"
+            texto="Receita por profissional, horas de pico, taxa de faltas e lista de clientes que não voltam." /></div>}
     </div>
   )
 }

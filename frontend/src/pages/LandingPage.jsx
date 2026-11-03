@@ -4,11 +4,11 @@ import { CalendarCheck, Bell, CreditCard, BarChart2, Smartphone, Star, ArrowRigh
 
 const planos = [
   { nome: 'Básico', preco: 'Grátis', profissionais: '1 profissional', cor: 'border-slate-200', popular: false,
-    features: ['Agenda online pública', '50 agendamentos/mês', 'Lembretes SMS', 'Painel simples'] },
+    features: ['1 profissional', '50 marcações/mês', 'Página de marcação com QR code', 'Botão de WhatsApp manual', 'Lista simples de clientes'] },
   { nome: 'Profissional', preco: '8.000', profissionais: 'Até 5 profissionais', cor: 'border-brand-500', popular: true,
-    features: ['Tudo do Básico', 'Agendamentos ilimitados', 'WhatsApp + SMS', 'Relatórios financeiros', 'CRM de clientes', 'Multicaixa Express'] },
+    features: ['Tudo do Básico', 'Até 5 profissionais', 'Marcações ilimitadas', 'Lembretes por email', 'Ficha e histórico do cliente (CRM)', 'Relatórios financeiros mensais', 'O teu logotipo na página'] },
   { nome: 'Premium', preco: '19.000', profissionais: 'Ilimitado', cor: 'border-slate-200', popular: false,
-    features: ['Tudo do Profissional', 'Profissionais ilimitados', 'Programa de fidelidade', 'App marca própria', 'Suporte prioritário', 'Relatórios avançados'] },
+    features: ['Tudo do Profissional', 'Profissionais ilimitados', 'WhatsApp automático', 'Pontos de fidelidade', 'Relatórios avançados', 'Lista de espera', 'Cor própria, sem marca AgendaAO', 'Suporte prioritário'] },
 ]
 
 export default function LandingPage() {
@@ -46,7 +46,7 @@ export default function LandingPage() {
           <span className="text-brand-600">para o teu negócio</span>
         </h1>
         <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-10">
-          Clientes marcam 24h/dia pelo telemóvel. Tu recebes confirmação no WhatsApp.<br />
+          Clientes marcam 24h/dia pelo telemóvel. Tu geres tudo num só painel.<br />
           Gestão completa de serviços, profissionais e receita.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -71,11 +71,11 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               { icon: CalendarCheck, title: 'Agenda online', desc: 'Os teus clientes marcam pelo link. Tu vês tudo no painel.', cor: 'text-brand-600 bg-brand-50' },
-              { icon: Bell, title: 'Lembretes automáticos', desc: 'WhatsApp e SMS 24h e 2h antes. Reduz faltas em 40%.', cor: 'text-green-600 bg-green-50' },
-              { icon: CreditCard, title: 'Multicaixa Express', desc: 'Clientes pagam directamente pelo telemóvel. Confirmação imediata.', cor: 'text-blue-600 bg-blue-50' },
+              { icon: Bell, title: 'Lembretes automáticos', desc: 'Email (Profissional) e WhatsApp (Premium) 24h e 2h antes, para o cliente não faltar.', cor: 'text-green-600 bg-green-50' },
+              { icon: CreditCard, title: 'QR code para clientes', desc: 'Cola o cartaz no balcão. O cliente aponta o telemóvel e marca em segundos.', cor: 'text-blue-600 bg-blue-50' },
               { icon: BarChart2, title: 'Relatórios em Kz', desc: 'Receita, serviços mais vendidos e profissional mais rentável.', cor: 'text-purple-600 bg-purple-50' },
               { icon: Smartphone, title: 'Funciona como app', desc: 'PWA — instala no telemóvel sem precisar da Play Store.', cor: 'text-amber-600 bg-amber-50' },
-              { icon: Star, title: 'Fidelidade de clientes', desc: 'Pontos por visita. Recompensas. Clientes voltam mais vezes.', cor: 'text-rose-600 bg-rose-50' },
+              { icon: Star, title: 'Fidelidade de clientes', desc: 'No Premium: pontos por visita e lista de clientes que deixaram de voltar.', cor: 'text-rose-600 bg-rose-50' },
             ].map(({ icon: Icon, title, desc, cor }) => (
               <div key={title} className="card p-6">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${cor}`}>

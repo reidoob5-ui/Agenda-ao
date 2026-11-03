@@ -126,7 +126,50 @@ async function enviarEmailConfirmacao(negocio, agendamento) {
   }
 }
 
+const escapar = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/**
+ * Lembrete por e-mail ao cliente (planos Profissional e Premium). tipo: '24h' | '2h'
+ */
+async function enviarEmailLembrete(negocio, agendamento, tipo) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return { enviado: false, motivo: 'SMTP' };
+  if (!agendamento.cliente?.email) return { enviado: false, motivo: 'SEM_EMAIL' };
+
+  const fuso = 'Africa/Luanda';
+  const d = new Date(agendamento.dataHora);
+  const dataFmt = d.toLocaleDateString('pt-PT', { timeZone: fuso });
+  const horaFmt = d.toLocaleTimeString('pt-PT', { timeZone: fuso, hour: '2-digit', minute: '2-digit' });
+  const quando = tipo === '2h' ? 'daqui a pouco' : 'amanhã';
+  const remetente = process.env.EMAIL_FROM || `"AgendaAO" <${process.env.SMTP_USER}>`;
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #f1f5f9; border-radius: 12px; padding: 24px;">
+      <h2 style="color: #0d9488; margin-bottom: 8px;">⏰ Lembrete da tua marcação</h2>
+      <p style="color: #64748b; font-size: 14px;">Olá <strong>${escapar(agendamento.cliente.nome)}</strong>, a tua marcação em <strong>${escapar(negocio.nome)}</strong> é ${quando}.</p>
+      <div style="background-color: #f0fdfa; border-radius: 8px; padding: 16px; margin: 20px 0; border: 1px solid #99f6e4;">
+        <p style="margin: 4px 0; color: #334155;"><strong>${escapar(agendamento.servico?.nome)}</strong></p>
+        <p style="margin: 4px 0; color: #334155;">${dataFmt} às <strong>${horaFmt}</strong></p>
+        ${agendamento.profissional?.nome ? `<p style="margin: 4px 0; color: #64748b; font-size: 13px;">Com ${escapar(agendamento.profissional.nome)}</p>` : ''}
+      </div>
+      <p style="font-size: 13px; color: #64748b;">Não podes ir? Avisa o negócio${negocio.telefone ? `: <strong>${escapar(negocio.telefone)}</strong>` : ''}.</p>
+    </div>`;
+
+  try {
+    await obterTransporter().sendMail({
+      from: remetente,
+      to: agendamento.cliente.email,
+      subject: `⏰ Lembrete — ${negocio.nome} — ${dataFmt} às ${horaFmt}`,
+      html,
+    });
+    return { enviado: true };
+  } catch (error) {
+    console.error('❌ [EmailService] Erro ao enviar lembrete:', error.message);
+    return { enviado: false, motivo: 'ERRO' };
+  }
+}
+
 module.exports = {
+  enviarEmailLembrete,
   enviarEmailNovoAgendamento,
   enviarEmailConfirmacao,
 };

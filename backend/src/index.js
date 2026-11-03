@@ -99,6 +99,7 @@ app.use('/api/servicos',     autenticar, verificarPlano, servicosRouter);
 app.use('/api/profissionais',autenticar, verificarPlano, profissionaisRouter);
 app.use('/api/negocios',     autenticar, negociosRouter);
 app.use('/api/relatorios',   autenticar, verificarPlano, relatoriosRouter);
+app.use('/api/lista-espera', autenticar, verificarPlano, require('./routes/listaEspera'));
 
 // ── Handler de erros global ───────────────────────────────────────────────────
 app.use((err, req, res, next) => {

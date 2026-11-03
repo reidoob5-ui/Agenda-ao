@@ -79,7 +79,7 @@ export const useAuthStore = create(
         set({ token: null, usuario: null, negocio: null })
       },
 
-      atualizarNegocio: (negocio) => set({ negocio }),
+      atualizarNegocio: (negocio) => set(s => ({ negocio: { ...s.negocio, ...negocio } })),
 
       inicializar: () => {
         const { token } = get()

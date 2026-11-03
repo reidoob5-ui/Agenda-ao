@@ -15,6 +15,7 @@ model Negocio {
   endereco        String?
   cidade          String    @default("Luanda")
   logo            String?
+  corPrimaria     String?
   slug            String    @unique
   plano           String     @default("BASICO")
   planoStatus     String     @default("INATIVO")
@@ -26,6 +27,7 @@ model Negocio {
   atualizadoEm    DateTime  @updatedAt
 
   usuarios        Usuario[]
+  listaEspera     ListaEspera[]
   profissionais   Profissional[]
   servicos        Servico[]
   clientes        Cliente[]
@@ -271,4 +273,22 @@ model MensagemWhatsapp {
 
   @@index([negocioId, criadoEm])
   @@map("mensagens_whatsapp")
+}
+
+model ListaEspera {
+  id             String    @id @default(uuid())
+  negocioId      String
+  nome           String
+  telefone       String
+  servicoId      String?
+  profissionalId String?
+  dataDesejada   DateTime?
+  nota           String?
+  status         String    @default("AGUARDA")
+  criadoEm       DateTime  @default(now())
+
+  negocio        Negocio   @relation(fields: [negocioId], references: [id])
+
+  @@index([negocioId, status])
+  @@map("lista_espera")
 }

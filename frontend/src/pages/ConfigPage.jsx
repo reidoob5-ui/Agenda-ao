@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
-import { Save } from 'lucide-react'
+import { Save, ImagePlus, Lock } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { usePlano } from '../utils/planos'
+import { reduzirImagem } from '../utils/imagem'
 
 const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
 export default function ConfigPage() {
   const { atualizarNegocio } = useAuthStore()
+  const { tem } = usePlano()
+  const [logo, setLogo] = useState(undefined) // undefined = ainda a carregar (nao enviar)
+  const [cor, setCor] = useState(undefined)
   const [form, setForm] = useState({ nome:'',telefone:'',endereco:'',cidade:'Luanda',ibanBancario:'',merchantExpress:'' })
   const [horarios, setHorarios] = useState(
     Array.from({length:7},(_,i)=>({ diaSemana:i, horaInicio:'08:00', horaFim:'18:00', ativo: i>=1&&i<=5 }))
@@ -17,6 +23,7 @@ export default function ConfigPage() {
   useEffect(() => {
     api.get('/negocios/meu').then(r => {
       const n = r.data
+      setLogo(n.logo || null); setCor(n.corPrimaria || '')
       setForm({ nome:n.nome||'', telefone:n.telefone||'', endereco:n.endereco||'', cidade:n.cidade||'Luanda', ibanBancario:n.ibanBancario||'', merchantExpress:n.merchantExpress||'' })
       if (n.horarios?.length) {
         const h = [...horarios]
@@ -29,7 +36,10 @@ export default function ConfigPage() {
   const guardar = async (e) => {
     e.preventDefault(); setGuardando(true)
     try {
-      const r = await api.put('/negocios/meu', { ...form, horarios })
+      const dados = { ...form, horarios }
+      if (logo !== undefined) dados.logo = logo
+      if (tem('corPropria') && cor !== undefined) dados.corPrimaria = cor
+      const r = await api.put('/negocios/meu', dados)
       atualizarNegocio(r.data)
       toast.success('Configurações guardadas!')
     } catch { toast.error('Erro ao guardar') }
@@ -55,6 +65,45 @@ export default function ConfigPage() {
               <select className="input" value={form.cidade} onChange={e=>setForm({...form,cidade:e.target.value})}>
                 {['Luanda','Benguela','Huambo','Lubango','Cabinda','Malanje','Namibe'].map(c=><option key={c}>{c}</option>)}
               </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Aparência da página de marcação */}
+        <div className="card p-6">
+          <h2 className="font-semibold text-slate-800 mb-1">Aparência da página de marcação</h2>
+          <p className="text-xs text-slate-400 mb-4">O que os teus clientes veem quando abrem o teu QR code</p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="label">Logotipo</label>
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-slate-300">
+                  {logo ? <img src={logo} alt="" className="w-full h-full object-cover" /> : <ImagePlus size={20} />}
+                </div>
+                <label className="btn-ghost cursor-pointer">
+                  {logo ? 'Mudar' : 'Escolher imagem'}
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                    const f = e.target.files?.[0]; if (!f) return
+                    try { setLogo(await reduzirImagem(f, 256)) } catch { toast.error('Não consegui ler essa imagem') }
+                  }} />
+                </label>
+                {logo && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setLogo(null)}>Remover</button>}
+              </div>
+              {!tem('logoPagina') && (
+                <p className="text-xs text-amber-700 mt-2 flex items-center gap-1"><Lock size={11}/> No plano Básico o logotipo só aparece nos depoimentos. Na página de marcação: <Link to="/faturacao" className="underline">plano Profissional</Link>.</p>
+              )}
+            </div>
+            <div>
+              <label className="label">Cor da página</label>
+              {tem('corPropria') ? (
+                <div className="flex items-center gap-3">
+                  <input type="color" value={cor || '#ea580c'} onChange={e => setCor(e.target.value)} className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5 bg-white" />
+                  <span className="text-sm text-slate-500 font-mono">{cor || 'Cor AgendaAO'}</span>
+                  {cor && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setCor('')}>Repor</button>}
+                </div>
+              ) : (
+                <p className="text-xs text-amber-700 flex items-center gap-1"><Lock size={11}/> Cor própria e página sem a marca AgendaAO: <Link to="/faturacao" className="underline">plano Premium</Link>.</p>
+              )}
             </div>
           </div>
         </div>

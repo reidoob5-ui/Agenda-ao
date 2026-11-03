@@ -21,6 +21,7 @@ import ProfissionaisPage from './pages/ProfissionaisPage'
 import DepoimentosPage from './pages/DepoimentosPage'
 import AvaliarPage from './pages/AvaliarPage'
 import CartazPage from './pages/CartazPage'
+import ListaEsperaPage from './pages/ListaEsperaPage'
 
 export default function App() {
   const inicializar = useAuthStore(s => s.inicializar)
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/config"      element={<ConfigPage />} />
           <Route path="/faturacao"   element={<FaturacaoPage />} />
           <Route path="/avaliar"     element={<AvaliarPage />} />
+          <Route path="/lista-espera" element={<ListaEsperaPage />} />
         </Route>
       </Route>
 

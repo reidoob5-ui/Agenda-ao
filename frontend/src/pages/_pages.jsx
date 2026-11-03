@@ -7,6 +7,8 @@ import { pt } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, X, Check, Clock, User, Scissors, Plus } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { linkWhatsApp } from '../utils/whatsapp'
+import { usePlano } from '../utils/planos'
+import Bloqueado from '../components/Bloqueado'
 
 const STATUS_BADGE = { PENDENTE:'badge-yellow',CONFIRMADO:'badge-green',CONCLUIDO:'badge-gray',CANCELADO:'badge-red' }
 const STATUS_LABEL = { PENDENTE:'Pendente',CONFIRMADO:'Confirmado',CONCLUIDO:'Concluído',CANCELADO:'Cancelado' }
@@ -241,6 +243,7 @@ export function AgendaPage() {
 
 // ─── CLIENTES PAGE ────────────────────────────────────────────────────────────
 export function ClientesPage() {
+  const { tem } = usePlano()
   const [clientes, setClientes] = useState([])
   const [q, setQ] = useState('')
   const [modal, setModal] = useState(false)
@@ -263,8 +266,29 @@ export function ClientesPage() {
   }
 
   const verCliente = async (id) => {
-    const r = await api.get(`/clientes/${id}`)
-    setSelecionado(r.data)
+    // Basico: so a ficha simples (contacto). Historico/CRM e do Profissional para cima.
+    if (!tem('crm')) {
+      setSelecionado({ ...clientes.find(c => c.id === id), semCrm: true })
+      return
+    }
+    try {
+      const r = await api.get(`/clientes/${id}`)
+      setSelecionado(r.data)
+    } catch (err) { toast.error(err.response?.data?.erro || 'Erro ao abrir cliente') }
+  }
+
+  // Premium: usar pontos de fidelidade (ex.: desconto na proxima visita)
+  const usarPontos = async () => {
+    const txt = window.prompt(`Quantos pontos usar? (tem ${selecionado.pontosFidelidade})`)
+    if (!txt) return
+    const pontos = parseInt(txt)
+    if (!(pontos > 0)) return toast.error('Número inválido')
+    try {
+      const r = await api.post(`/clientes/${selecionado.id}/pontos/usar`, { pontos })
+      setSelecionado({ ...selecionado, pontosFidelidade: r.data.pontosFidelidade })
+      toast.success(`${pontos} pontos usados`)
+      carregar()
+    } catch (err) { toast.error(err.response?.data?.erro || 'Erro ao usar pontos') }
   }
 
   return (
@@ -285,7 +309,7 @@ export function ClientesPage() {
             <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase">Cliente</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Telefone</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Visitas</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Pontos</th>
+            {tem('fidelidade') && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Pontos</th>}
             <th className="px-4 py-3"></th>
           </tr></thead>
           <tbody className="divide-y divide-slate-50">
@@ -301,7 +325,7 @@ export function ClientesPage() {
                 </td>
                 <td className="px-4 py-4 text-slate-600">{c.telefone}</td>
                 <td className="px-4 py-4 font-semibold text-slate-800">{c._count?.agendamentos || 0}</td>
-                <td className="px-4 py-4"><span className="badge-blue">{c.pontosFidelidade} pts</span></td>
+                {tem('fidelidade') && <td className="px-4 py-4"><span className="badge-blue">{c.pontosFidelidade} pts</span></td>}
                 <td className="px-4 py-4"><ChevronRight size={14} className="text-slate-300"/></td>
               </tr>
             ))}
@@ -350,8 +374,24 @@ export function ClientesPage() {
             <div className="space-y-2 mb-6">
               <p className="text-sm text-slate-600">📱 {selecionado.telefone}</p>
               {selecionado.email && <p className="text-sm text-slate-600">📧 {selecionado.email}</p>}
-              <p className="text-sm"><span className="badge-blue">{selecionado.pontosFidelidade} pontos</span></p>
+              {tem('fidelidade') && (
+                <p className="text-sm flex items-center gap-2">
+                  <span className="badge-blue">{selecionado.pontosFidelidade} pontos</span>
+                  <button onClick={usarPontos} className="text-xs font-semibold text-brand-700 hover:underline">Usar pontos</button>
+                </p>
+              )}
+              {selecionado.telefone && linkWhatsApp(selecionado.telefone, `Olá ${selecionado.nome?.split(' ')[0] || ''}!`) && (
+                <a href={linkWhatsApp(selecionado.telefone, `Olá ${selecionado.nome?.split(' ')[0] || ''}!`)} target="_blank" rel="noreferrer"
+                   className="inline-block text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+                  Falar no WhatsApp
+                </a>
+              )}
             </div>
+            {selecionado.semCrm ? (
+              <Bloqueado compacto planoNecessario="PROFISSIONAL"
+                titulo="Ficha completa do cliente"
+                texto="Historial de visitas, gastos e notas de cada cliente estão no plano Profissional." />
+            ) : (<>
             <h3 className="font-semibold text-slate-700 text-sm mb-3">Historial de visitas</h3>
             <div className="space-y-2">
               {selecionado.agendamentos?.slice(0,10).map(ag => (
@@ -364,6 +404,7 @@ export function ClientesPage() {
                 </div>
               ))}
             </div>
+            </>)}
           </div>
         </div>
       )}

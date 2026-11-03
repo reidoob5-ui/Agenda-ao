@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
 const { verificarTokenGoogle, googleConfigurado } = require('../services/googleAuth');
+const { recursosDoPlano } = require('../utils/planos');
 const prisma = new PrismaClient();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -26,7 +27,9 @@ function respostaSessao(usuario, negocio) {
       slug: negocio.slug,
       plano: negocio.plano,
       planoStatus: negocio.planoStatus,
-      logo: negocio.logo
+      logo: negocio.logo,
+      corPrimaria: negocio.corPrimaria || null,
+      recursos: recursosDoPlano(negocio.plano)
     }
   };
 }
@@ -244,6 +247,8 @@ router.get('/me', require('../middleware/auth').autenticar, async (req, res) => 
       plano: req.usuario.negocio.plano,
       planoStatus: req.usuario.negocio.planoStatus,
       logo: req.usuario.negocio.logo,
+      corPrimaria: req.usuario.negocio.corPrimaria || null,
+      recursos: recursosDoPlano(req.usuario.negocio.plano),
       telefone: req.usuario.negocio.telefone,
       endereco: req.usuario.negocio.endereco
     }

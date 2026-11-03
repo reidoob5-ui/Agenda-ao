@@ -193,13 +193,20 @@ O dono partilha este link no:
 
 ## 💰 Planos e preços (configuráveis em `pagamentos.js`)
 
-| Plano        | Preço/mês | Profissionais |
-|-------------|-----------|---------------|
-| Básico      | Grátis    | 1             |
-| Profissional | 8.000 Kz | Até 5         |
-| Premium     | 19.000 Kz | Ilimitado     |
+| | Básico (grátis) | Profissional (8.000 Kz) | Premium (19.000 Kz) |
+|---|---|---|---|
+| Profissionais | 1 | até 5 | ilimitados |
+| Marcações/mês | 50 | ilimitadas | ilimitadas |
+| Página de marcação + QR | sim (com "Feito com AgendaAO") | + logotipo próprio | + cor própria, sem marca AgendaAO |
+| Clientes | lista simples | CRM (ficha + histórico) | + pontos de fidelidade |
+| Lembretes | botão WhatsApp manual | email ao cliente | WhatsApp automático (Meta) |
+| Relatórios | resumo do dia | financeiros mensais | + avançados (por profissional, horas de pico, clientes que não voltam) |
+| Lista de espera | — | — | sim |
+| Suporte | normal | normal | prioritário |
 
----
+**Onde mudar quem tem o quê:** `backend/src/utils/planos.js` (o servidor bloqueia de verdade, devolve 403 `PLANO_INSUFICIENTE`) e o espelho `frontend/src/utils/planos.js` (só decide o que mostrar). Limites numéricos (50 marcações, 1/5 profissionais) estão em `backend/src/utils/agenda.js`.
+
+Variável opcional no Vercel: `VITE_SUPORTE_EMAIL` — email para o botão "Suporte" do painel (sem ela o botão não aparece).
 
 ## 🗂️ Rotas da API
 

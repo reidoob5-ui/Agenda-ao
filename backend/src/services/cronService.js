@@ -1,6 +1,8 @@
 const cron = require('node-cron');
 const { PrismaClient } = require('@prisma/client');
 const { enviarWhatsAppAgendamento } = require('./whatsappService');
+const { enviarEmailLembrete } = require('./emailService');
+const { temRecurso } = require('../utils/planos');
 const prisma = new PrismaClient();
 
 function iniciarCrons() {
@@ -68,6 +70,13 @@ async function enviarLembrete(agendamento, tipo) {
     negocio: agendamento.negocio,
     tipo: tipo === '24h' ? 'LEMBRETE_24H' : 'LEMBRETE_2H'
   });
+  // Email ao cliente (Profissional e Premium)
+  let email = 'plano';
+  if (agendamento.negocio?.planoStatus === 'ATIVO' && temRecurso(agendamento.negocio.plano, 'emailLembretes')) {
+    const e = await enviarEmailLembrete(agendamento.negocio, agendamento, tipo);
+    email = e.enviado ? 'enviado' : `nao enviado (${e.motivo})`;
+  }
+  console.log(`[Lembrete ${tipo}] ${agendamento.id}: email ${email}`);
   console.log(`[Lembrete ${tipo}] ${agendamento.id}: ${r.enviado ? 'WhatsApp enviado' : `WhatsApp nao enviado (${r.motivo})`}`);
 }
 

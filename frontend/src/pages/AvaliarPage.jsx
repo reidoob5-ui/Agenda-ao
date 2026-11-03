@@ -5,32 +5,10 @@ import toast from 'react-hot-toast'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import { Avatar } from '../components/Depoimentos'
+import { reduzirImagem } from '../utils/imagem'
 
 const TEXTO_MIN = 10
 const TEXTO_MAX = 400
-
-// Reduz a imagem para 160x160 (JPEG) no próprio telemóvel antes de enviar
-function reduzirImagem(ficheiro, lado = 160) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(ficheiro)
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = lado; canvas.height = lado
-      const ctx = canvas.getContext('2d')
-      const min = Math.min(img.width, img.height)
-      const sx = (img.width - min) / 2
-      const sy = (img.height - min) / 2
-      ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, lado, lado)
-      ctx.drawImage(img, sx, sy, min, min, 0, 0, lado, lado)
-      URL.revokeObjectURL(url)
-      resolve(canvas.toDataURL('image/jpeg', 0.8))
-    }
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')) }
-    img.src = url
-  })
-}
 
 export default function AvaliarPage() {
   const { negocio, atualizarNegocio } = useAuthStore()

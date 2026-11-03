@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { CalendarCheck, Clock, ChevronLeft, Check, MapPin, Phone, AlertTriangle, Hourglass, PartyPopper, XCircle, ExternalLink } from 'lucide-react'
 import { format, addDays, isBefore, startOfDay } from 'date-fns'
 import { pt } from 'date-fns/locale'
+import { estiloDaMarca } from '../utils/planos'
 
 function fmtKz(v) {
   return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(v || 0)
@@ -29,6 +30,7 @@ export default function BookingPage() {
   // Estado para conflito de horário
   const [conflito, setConflito] = useState(null) // { mensagem, sugestoes[] }
   const [pendingPayload, setPendingPayload] = useState(null) // payload a re-enviar com sugestão
+  const [espera, setEspera] = useState(null) // { nome, telefone } quando o dia esta cheio
 
   useEffect(() => {
     api.get(`/public/negocio/${slug}`)
@@ -61,10 +63,10 @@ export default function BookingPage() {
       iniciarPolling(ag.id)
     } catch (err) {
       const data = err.response?.data
-      if (err.response?.status === 409 && data?.sugestoes?.length > 0) {
+      if (err.response?.status === 409 && (data?.sugestoes?.length > 0 || data?.listaEspera)) {
         // Backend detectou conflito — mostrar modal com sugestões
         setPendingPayload(payload)
-        setConflito({ mensagem: data.mensagem || 'Horário ocupado', sugestoes: data.sugestoes })
+        setConflito({ mensagem: data.mensagem || 'Horário ocupado', sugestoes: data.sugestoes, listaEspera: !!data.listaEspera })
       } else {
         toast.error(data?.mensagem || data?.erro || 'Erro ao enviar pedido')
       }
@@ -82,6 +84,42 @@ export default function BookingPage() {
       servicoId: servicoSel.id,
       dataHora
     })
+  }
+
+  // Premium: entra na lista de espera com os dados ja preenchidos
+  const entrarNaListaEspera = async () => {
+    if (!pendingPayload) return
+    setEnviando(true)
+    try {
+      const r = await api.post(`/public/negocio/${slug}/lista-espera`, {
+        nome: pendingPayload.nome,
+        telefone: pendingPayload.telefone,
+        servicoId: pendingPayload.servicoId,
+        profissionalId: pendingPayload.profissionalId,
+        dataDesejada: pendingPayload.dataHora,
+      })
+      toast.success(r.data.mensagem)
+      setConflito(null); setPendingPayload(null)
+    } catch (err) {
+      toast.error(err.response?.data?.erro || 'Não foi possível entrar na lista de espera')
+    } finally { setEnviando(false) }
+  }
+
+  // Dia cheio: pede o nome e telefone e entra na lista de espera
+  const enviarEspera = async (e) => {
+    e.preventDefault()
+    setEnviando(true)
+    try {
+      const r = await api.post(`/public/negocio/${slug}/lista-espera`, {
+        nome: espera.nome, telefone: espera.telefone,
+        servicoId: servicoSel?.id, profissionalId: profSel?.id,
+        dataDesejada: dataSel ? `${dataSel}T00:00:00` : undefined,
+      })
+      toast.success(r.data.mensagem)
+      setEspera(null)
+    } catch (err) {
+      toast.error(err.response?.data?.erro || 'Não foi possível entrar na lista de espera')
+    } finally { setEnviando(false) }
   }
 
   const aceitarSugestao = (horaStr) => {
@@ -155,7 +193,7 @@ export default function BookingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50" style={estiloDaMarca(negocio.corPrimaria)}>
       <div className="bg-white border-b border-slate-100">
         <div className="max-w-lg mx-auto px-4 py-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-brand-600 flex items-center justify-center text-white font-display font-bold text-lg shrink-0">
@@ -304,6 +342,12 @@ export default function BookingPage() {
                     {slots.filter(s => s.disponivel).length === 0 && (
                       <p className="col-span-4 text-center text-slate-400 text-sm py-6">
                         Sem horários disponíveis neste dia. Escolhe outro dia.
+                        {negocio.listaEspera && (
+                          <button type="button" onClick={() => setEspera({ nome: '', telefone: '' })}
+                            className="block mx-auto mt-3 text-brand-700 font-semibold underline">
+                            Avisem-me se abrir uma vaga
+                          </button>
+                        )}
                       </p>
                     )}
                   </div>
@@ -508,6 +552,23 @@ Confirmado!</h2>
         )}
       </div>
 
+      {espera && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <form onSubmit={enviarEspera} className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="font-display font-bold text-lg text-slate-900">Lista de espera</h3>
+            <p className="text-sm text-slate-500">Deixa o teu contacto. O negócio avisa-te se abrir uma vaga.</p>
+            <div><label className="label">Nome</label>
+              <input className="input" required value={espera.nome} onChange={e => setEspera({ ...espera, nome: e.target.value })} /></div>
+            <div><label className="label">Telefone</label>
+              <input className="input" required placeholder="923 456 789" value={espera.telefone} onChange={e => setEspera({ ...espera, telefone: e.target.value })} /></div>
+            <div className="flex gap-3">
+              <button type="button" className="btn-ghost flex-1" onClick={() => setEspera(null)}>Cancelar</button>
+              <button type="submit" className="btn-primary flex-1" disabled={enviando}>Entrar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Modal de conflito — Sugestão de horários livres */}
       {conflito && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -527,7 +588,7 @@ Confirmado!</h2>
             </p>
 
             <div className="flex gap-3 justify-center mb-5">
-              {conflito.sugestoes.map(hora => (
+              {(conflito.sugestoes || []).map(hora => (
                 <button
                   key={hora}
                   onClick={() => aceitarSugestao(hora)}
@@ -538,6 +599,14 @@ Confirmado!</h2>
               ))}
             </div>
 
+            {conflito.listaEspera && (
+              <button
+                onClick={entrarNaListaEspera}
+                disabled={enviando}
+                className="w-full py-2.5 mb-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                Avisem-me se abrir uma vaga
+              </button>
+            )}
             <button
               onClick={() => { setConflito(null); setPendingPayload(null) }}
               className="w-full py-2.5 text-sm text-slate-400 hover:text-slate-700 transition-colors">
@@ -548,12 +617,12 @@ Confirmado!</h2>
       )}
 
       {/* Footer powered by */}
-      <div className="text-center py-6">
+      {!negocio.semMarca && <div className="text-center py-6">
         <a href="/" className="text-xs text-slate-300 hover:text-slate-500 transition-colors flex items-center justify-center gap-1">
           <CalendarCheck size={12} />
-          Powered by AgendaAO
+          Feito com AgendaAO
         </a>
-      </div>
+      </div>}
     </div>
   )
 }

@@ -3,6 +3,7 @@ const clientesRouter = require('express').Router();
 const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const { limitesDoPlano, usoAgendamentos, temConflito } = require('../utils/agenda');
+const { exigirRecurso, temRecurso, pontosDaVisita } = require('../utils/planos');
 const prisma = new PrismaClient();
 
 clientesRouter.get('/', autenticar, async (req, res) => {
@@ -37,7 +38,7 @@ clientesRouter.post('/', autenticar, async (req, res) => {
   }
 });
 
-clientesRouter.get('/:id', autenticar, async (req, res) => {
+clientesRouter.get('/:id', autenticar, exigirRecurso('crm'), async (req, res) => {
   try {
     const cliente = await prisma.cliente.findFirst({
       where: { id: req.params.id, negocioId: req.negocioId },
@@ -50,6 +51,21 @@ clientesRouter.get('/:id', autenticar, async (req, res) => {
       }
     });
     if (!cliente) return res.status(404).json({ erro: 'Cliente não encontrado' });
+    res.json(cliente);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+// Usar pontos de fidelidade (Premium): desconta pontos, nunca abaixo de 0
+clientesRouter.post('/:id/pontos/usar', autenticar, exigirRecurso('fidelidade'), async (req, res) => {
+  try {
+    const pontos = parseInt(req.body.pontos);
+    if (!(pontos > 0)) return res.status(400).json({ erro: 'Indica quantos pontos usar' });
+    const r = await prisma.cliente.updateMany({
+      where: { id: req.params.id, negocioId: req.negocioId, pontosFidelidade: { gte: pontos } },
+      data: { pontosFidelidade: { decrement: pontos } }
+    });
+    if (r.count === 0) return res.status(400).json({ erro: 'Pontos insuficientes (ou cliente não encontrado)' });
+    const cliente = await prisma.cliente.findUnique({ where: { id: req.params.id } });
     res.json(cliente);
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -231,6 +247,15 @@ negociosRouter.put('/meu', autenticar, async (req, res) => {
     // Só campos de perfil. NUNCA aceitar plano, planoStatus, planoExpira, slug, etc. vindos do cliente
     const { horarios, nome, telefone, endereco, cidade, logo, ibanBancario, merchantExpress } = req.body;
     const dados = { nome, telefone, endereco, cidade, logo, ibanBancario, merchantExpress };
+    // Cor da pagina de marcacao: so Premium, e so um hex valido (#RRGGBB) ou vazio para repor
+    if (req.body.corPrimaria !== undefined) {
+      if (!temRecurso(req.usuario.negocio.plano, 'corPropria')) {
+        return res.status(403).json({ codigo: 'PLANO_INSUFICIENTE', planoNecessario: 'PREMIUM', erro: 'A cor própria está disponível no plano Premium.' });
+      }
+      const c = String(req.body.corPrimaria || '').trim();
+      if (c && !/^#[0-9a-fA-F]{6}$/.test(c)) return res.status(400).json({ erro: 'Cor inválida. Usa o formato #RRGGBB.' });
+      dados.corPrimaria = c || null;
+    }
     const negocio = await prisma.$transaction(async (tx) => {
       if (horarios) {
         await tx.horario.deleteMany({ where: { negocioId: req.negocioId } });
@@ -328,7 +353,7 @@ relatoriosRouter.get('/dashboard', autenticar, async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-relatoriosRouter.get('/mensal', autenticar, async (req, res) => {
+relatoriosRouter.get('/mensal', autenticar, exigirRecurso('relatoriosFinanceiros'), async (req, res) => {
   try {
     const { ano, mes } = req.query;
     const inicio = new Date(parseInt(ano), parseInt(mes) - 1, 1);
@@ -362,6 +387,67 @@ relatoriosRouter.get('/mensal', autenticar, async (req, res) => {
       porServico,
       porProfissional,
       porSemana
+    });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+// Relatorio avancado (Premium): ultimos 90 dias
+relatoriosRouter.get('/avancado', autenticar, exigirRecurso('relatoriosAvancados'), async (req, res) => {
+  try {
+    const desde = new Date(); desde.setDate(desde.getDate() - 90); desde.setHours(0, 0, 0, 0);
+    const ags = await prisma.agendamento.findMany({
+      where: { negocioId: req.negocioId, dataHora: { gte: desde } },
+      include: { profissional: { select: { nome: true } }, servico: { select: { nome: true } }, cliente: { select: { id: true, nome: true, telefone: true } } }
+    });
+
+    const concluidos = ags.filter(a => a.status === 'CONCLUIDO');
+    const receita = concluidos.reduce((t, a) => t + a.preco, 0);
+    const terminados = ags.filter(a => ['CONCLUIDO', 'CANCELADO', 'FALTA'].includes(a.status));
+
+    const porProfissional = {};
+    for (const a of concluidos) {
+      const k = a.profissional.nome;
+      porProfissional[k] = porProfissional[k] || { count: 0, receita: 0 };
+      porProfissional[k].count++; porProfissional[k].receita += a.preco;
+    }
+
+    const horas = {};
+    for (const a of ags.filter(x => x.status !== 'CANCELADO')) {
+      const h = parseInt(new Date(a.dataHora).toLocaleTimeString('pt-PT', { timeZone: 'Africa/Luanda', hour: '2-digit', hour12: false }));
+      horas[h] = (horas[h] || 0) + 1;
+    }
+    const horasPico = Object.entries(horas).map(([hora, total]) => ({ hora: Number(hora), total }))
+      .sort((a, b) => b.total - a.total).slice(0, 5);
+
+    // Clientes que nao voltam: ja vieram, mas a ultima visita concluida foi ha mais de 45 dias
+    const limite = new Date(); limite.setDate(limite.getDate() - 45);
+    const ultimas = await prisma.agendamento.groupBy({
+      by: ['clienteId'],
+      where: { negocioId: req.negocioId, status: 'CONCLUIDO' },
+      _max: { dataHora: true },
+      _count: { _all: true }
+    });
+    const inativos = ultimas.filter(u => u._max.dataHora < limite)
+      .sort((a, b) => b._count._all - a._count._all).slice(0, 15);
+    const clientes = await prisma.cliente.findMany({
+      where: { negocioId: req.negocioId, id: { in: inativos.map(i => i.clienteId) } },
+      select: { id: true, nome: true, telefone: true }
+    });
+    const clientesInativos = inativos.map(i => {
+      const c = clientes.find(x => x.id === i.clienteId);
+      return { id: i.clienteId, nome: c?.nome, telefone: c?.telefone, visitas: i._count._all, ultimaVisita: i._max.dataHora };
+    }).filter(c => c.nome);
+
+    res.json({
+      dias: 90,
+      concluidos: concluidos.length,
+      receita,
+      ticketMedio: concluidos.length ? Math.round(receita / concluidos.length) : 0,
+      taxaCancelamento: terminados.length ? Math.round(ags.filter(a => a.status === 'CANCELADO').length / terminados.length * 100) : 0,
+      taxaFaltas: terminados.length ? Math.round(ags.filter(a => a.status === 'FALTA').length / terminados.length * 100) : 0,
+      porProfissional,
+      horasPico,
+      clientesInativos
     });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -405,7 +491,7 @@ publicRouter.get('/negocio/:slug', async (req, res) => {
     const negocio = await prisma.negocio.findUnique({
       where: { slug: req.params.slug },
       select: {
-        id: true, nome: true, logo: true, endereco: true, cidade: true, telefone: true,
+        id: true, nome: true, logo: true, corPrimaria: true, endereco: true, cidade: true, telefone: true,
         horarios: true,
         profissionais: { where: { ativo: true }, select: { id: true, nome: true, foto: true, bio: true } },
         servicos: {
@@ -414,6 +500,11 @@ publicRouter.get('/negocio/:slug', async (req, res) => {
         }
       }
     });
+    // O que aparece na pagina publica depende do plano
+    negocio.logo = temRecurso(check.plano, 'logoPagina') ? negocio.logo : null;
+    negocio.corPrimaria = temRecurso(check.plano, 'corPropria') ? negocio.corPrimaria : null;
+    negocio.semMarca = temRecurso(check.plano, 'semMarca');
+    negocio.listaEspera = temRecurso(check.plano, 'listaEspera');
     res.json(negocio);
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -573,7 +664,8 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
         conflito: true,
         erro: 'Horário indisponível',
         mensagem: 'Este horário já está ocupado. Escolhe um dos horários sugeridos.',
-        sugestoes
+        sugestoes,
+        listaEspera: temRecurso(check.plano, 'listaEspera')
       });
     }
 
@@ -621,6 +713,46 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
+// POST /api/public/negocio/:slug/lista-espera — cliente pede para ser avisado se abrir vaga (Premium)
+publicRouter.post('/negocio/:slug/lista-espera', async (req, res) => {
+  try {
+    const check = await verificarPlanoPublico(req.params.slug, res);
+    if (!check) return;
+    if (!temRecurso(check.plano, 'listaEspera')) {
+      return res.status(403).json({ erro: 'Este negócio não tem lista de espera.' });
+    }
+    const nome = String(req.body.nome || '').trim().slice(0, 80);
+    const telefone = String(req.body.telefone || '').trim().slice(0, 30);
+    if (!nome || telefone.replace(/\D/g, '').length < 9) {
+      return res.status(400).json({ erro: 'Nome e telefone válidos são obrigatórios' });
+    }
+    // Ids opcionais, mas so aceites se forem deste negocio
+    let servicoId = null, profissionalId = null;
+    if (req.body.servicoId) {
+      const sv = await prisma.servico.findFirst({ where: { id: req.body.servicoId, negocioId: check.id }, select: { id: true } });
+      servicoId = sv?.id || null;
+    }
+    if (req.body.profissionalId) {
+      const pr = await prisma.profissional.findFirst({ where: { id: req.body.profissionalId, negocioId: check.id }, select: { id: true } });
+      profissionalId = pr?.id || null;
+    }
+    const data = req.body.dataDesejada ? new Date(req.body.dataDesejada) : null;
+
+    // Evita spam: no maximo 3 pedidos activos por telefone neste negocio
+    const activos = await prisma.listaEspera.count({ where: { negocioId: check.id, telefone, status: 'AGUARDA' } });
+    if (activos >= 3) return res.status(429).json({ erro: 'Já tens pedidos em espera neste negócio.' });
+
+    await prisma.listaEspera.create({
+      data: {
+        negocioId: check.id, nome, telefone, servicoId, profissionalId,
+        dataDesejada: data && !isNaN(data.getTime()) ? data : null,
+        nota: req.body.nota ? String(req.body.nota).slice(0, 200) : null
+      }
+    });
+    res.status(201).json({ mensagem: 'Estás na lista de espera! O negócio contacta-te se abrir uma vaga.' });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
 // GET /api/public/negocio/:slug/pendentes — lista pedidos pendentes (para a empresa aprovar)
 publicRouter.get('/negocio/:slug/pendentes', autenticar, async (req, res) => {
   try {
@@ -653,7 +785,7 @@ publicRouter.patch('/negocio/:slug/agendamento/:id/aprovar', autenticar, async (
       where: { id: req.negocioId },
       select: { nome: true, email: true }
     });
-    if (negocioObj && agendamento.cliente?.email) {
+    if (negocioObj && agendamento.cliente?.email && temRecurso(req.usuario.negocio.plano, 'emailLembretes')) {
       const { enviarEmailConfirmacao } = require('../services/emailService');
       enviarEmailConfirmacao(negocioObj, agendamento).catch(e => console.error(e.message));
     }
