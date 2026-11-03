@@ -249,3 +249,17 @@ Com `GOOGLE_CLIENT_ID` definido, as **contas novas só podem ser criadas com Goo
 ## Depoimentos
 
 Depois de 10 dias de uso, o dono do negócio é convidado a deixar um depoimento (`/avaliar`). Os depoimentos aparecem na página inicial (um de cada vez) e em `/depoimentos`. O administrador pode esconder um depoimento com `PATCH /api/admin/depoimentos/:id` (`{ "visivel": false }`).
+
+## WhatsApp automático (Meta Cloud API)
+
+Confirmação e lembretes (24h e 2h antes) por WhatsApp. Só envia para os planos em `WHATSAPP_PLANOS` (por defeito Premium) e respeita o limite `WHATSAPP_LIMITE_MES` por negócio.
+
+1. Em `business.facebook.com` cria/verifica a conta do negócio. Em `developers.facebook.com` cria uma app do tipo *Business* e adiciona o produto **WhatsApp**.
+2. Em *WhatsApp → API Setup* copia o **Phone Number ID** e gera um **token permanente** (utilizador do sistema).
+3. No Render define `WHATSAPP_TOKEN` e `WHATSAPP_PHONE_ID`.
+4. Em *Message Templates* cria 2 modelos de categoria **Utility**, idioma **Portuguese (PT)**, com estes nomes e textos:
+   - `confirmacao_marcacao`: `Olá {{1}}! A tua marcação está confirmada: {{2}} em {{3}}, no dia {{4}} às {{5}}. Até já!`
+   - `lembrete_marcacao`: `Olá {{1}}! Lembrete da tua marcação: {{2}} em {{3}}, no dia {{4}} às {{5}}. Até já!`
+5. No painel de administração (`Dashboard`), usa **1. Testar ligação** e depois **2. Testar modelo de confirmação**.
+
+As mensagens enviadas ficam registadas na tabela `mensagens_whatsapp`.

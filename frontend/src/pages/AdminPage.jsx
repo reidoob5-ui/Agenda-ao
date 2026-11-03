@@ -56,6 +56,25 @@ export default function AdminPage() {
   const [pendentes, setPendentes] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [mensagem, setMensagem] = useState(null)
+  const [waTel, setWaTel] = useState('')
+  const [waEstado, setWaEstado] = useState(null)
+  const [waResultado, setWaResultado] = useState(null)
+  const [waCarregando, setWaCarregando] = useState(false)
+
+  const verWhatsApp = async () => {
+    try { setWaEstado(await adminFetch('/whatsapp/estado', {}, segredo)) }
+    catch (err) { setWaResultado({ ok: false, texto: err.message }) }
+  }
+
+  const testarWhatsApp = async (modo) => {
+    setWaCarregando(true); setWaResultado(null)
+    try {
+      const r = await adminFetch('/whatsapp/teste', { method: 'POST', body: JSON.stringify({ telefone: waTel, modo }) }, segredo)
+      setWaResultado({ ok: true, texto: r.mensagem })
+    } catch (err) {
+      setWaResultado({ ok: false, texto: err.message })
+    } finally { setWaCarregando(false) }
+  }
   const [installPrompt, setInstallPrompt] = useState(null)
   const [instalado, setInstalado] = useState(false)
 
@@ -341,6 +360,36 @@ export default function AdminPage() {
                 <p className="font-display text-3xl font-bold text-brand-400">{fmtKz(stats.receitaMes)}</p>
                 <p className="text-xs text-slate-500 mt-1">Pagamentos confirmados</p>
               </div>
+            </div>
+            {/* WhatsApp (Meta): verificar se a ligacao esta a funcionar */}
+            <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">WhatsApp automático (Meta)</p>
+                <button onClick={verWhatsApp} className="text-xs text-brand-400 hover:underline">Ver estado</button>
+              </div>
+              {waEstado && (
+                <p className={`text-sm mb-3 ${waEstado.configurado ? 'text-green-400' : 'text-amber-400'}`}>
+                  {waEstado.configurado ? 'Configurado' : 'Não configurado (faltam WHATSAPP_TOKEN e WHATSAPP_PHONE_ID no Render)'}
+                  {' · '}planos: {waEstado.planosComWhatsApp.join(', ')} · limite: {waEstado.limiteMensalPorNegocio}/mês por negócio
+                </p>
+              )}
+              <input
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm mb-3"
+                placeholder="O teu WhatsApp para teste, ex: 923456789"
+                value={waTel} onChange={e => setWaTel(e.target.value)} inputMode="tel" />
+              <div className="flex flex-wrap gap-2">
+                <button disabled={waCarregando || !waTel} onClick={() => testarWhatsApp('hello_world')}
+                  className="px-3 py-2 rounded-xl bg-brand-600 text-white text-xs font-semibold disabled:opacity-50">
+                  1. Testar ligação
+                </button>
+                <button disabled={waCarregando || !waTel} onClick={() => testarWhatsApp('confirmacao')}
+                  className="px-3 py-2 rounded-xl bg-slate-700 text-white text-xs font-semibold disabled:opacity-50">
+                  2. Testar modelo de confirmação
+                </button>
+              </div>
+              {waResultado && (
+                <p className={`text-sm mt-3 ${waResultado.ok ? 'text-green-400' : 'text-red-400'}`}>{waResultado.texto}</p>
+              )}
             </div>
           </div>
         )}

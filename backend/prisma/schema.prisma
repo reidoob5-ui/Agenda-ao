@@ -36,6 +36,7 @@ model Negocio {
   assinaturas     Assinatura[]
   subscricoesPush SubscricaoPush[]
   depoimento      Depoimento?
+  mensagensWhatsapp MensagemWhatsapp[]
 
   @@map("negocios")
 }
@@ -255,4 +256,19 @@ model Depoimento {
   negocio      Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
 
   @@map("depoimentos")
+}
+
+model MensagemWhatsapp {
+  id            String   @id @default(uuid())
+  negocioId     String
+  agendamentoId String?
+  tipo          String
+  status        String
+  erro          String?
+  criadoEm      DateTime @default(now())
+
+  negocio       Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@index([negocioId, criadoEm])
+  @@map("mensagens_whatsapp")
 }

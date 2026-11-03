@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const { PrismaClient } = require('@prisma/client');
+const { enviarWhatsAppAgendamento } = require('./whatsappService');
 const prisma = new PrismaClient();
 
 function iniciarCrons() {
@@ -61,15 +62,13 @@ function iniciarCrons() {
 }
 
 async function enviarLembrete(agendamento, tipo) {
-  const hora = new Date(agendamento.dataHora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-  const data = new Date(agendamento.dataHora).toLocaleDateString('pt-PT');
-  const mensagem = tipo === '24h'
-    ? `Olá ${agendamento.cliente.nome}! Lembrete: tens ${agendamento.servico.nome} amanhã às ${hora} em ${agendamento.negocio.nome}. Para reagendar: ${process.env.FRONTEND_URL}/b/${agendamento.negocio.slug}`
-    : `Lembrete: ${agendamento.servico.nome} em 2 horas (${hora}) em ${agendamento.negocio.nome}. Até já!`;
-
-  // ── Integrar com Z-API ou Twilio aqui ──
-  // await enviarWhatsApp(agendamento.cliente.telefone, mensagem);
-  console.log(`[Lembrete ${tipo}] → ${agendamento.cliente.telefone}: ${mensagem}`);
+  // WhatsApp oficial (Meta). So envia se estiver configurado e o plano incluir WhatsApp.
+  const r = await enviarWhatsAppAgendamento({
+    agendamento,
+    negocio: agendamento.negocio,
+    tipo: tipo === '24h' ? 'LEMBRETE_24H' : 'LEMBRETE_2H'
+  });
+  console.log(`[Lembrete ${tipo}] ${agendamento.id}: ${r.enviado ? 'WhatsApp enviado' : `WhatsApp nao enviado (${r.motivo})`}`);
 }
 
 module.exports = { iniciarCrons };

@@ -657,6 +657,10 @@ publicRouter.patch('/negocio/:slug/agendamento/:id/aprovar', autenticar, async (
       const { enviarEmailConfirmacao } = require('../services/emailService');
       enviarEmailConfirmacao(negocioObj, agendamento).catch(e => console.error(e.message));
     }
+    // WhatsApp automatico (so planos com WhatsApp; fica desligado se nao estiver configurado)
+    require('../services/whatsappService')
+      .enviarWhatsAppAgendamento({ agendamento, negocio: req.usuario.negocio, tipo: 'CONFIRMACAO' })
+      .catch(e => console.error('[WhatsApp]', e.message));
     res.json({ mensagem: 'Agendamento aprovado!', agendamento });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });

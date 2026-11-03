@@ -94,6 +94,11 @@ router.patch('/:id/status', autenticar, async (req, res) => {
       where: { id: req.params.id },
       include: INCLUIR
     });
+    if (status === 'CONFIRMADO') {
+      require('../services/whatsappService')
+        .enviarWhatsAppAgendamento({ agendamento, negocio: req.usuario.negocio, tipo: 'CONFIRMACAO' })
+        .catch(e => console.error('[WhatsApp]', e.message));
+    }
     res.json(agendamento);
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });

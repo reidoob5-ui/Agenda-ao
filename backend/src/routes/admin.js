@@ -227,4 +227,36 @@ router.patch('/depoimentos/:id', async (req, res) => {
   }
 });
 
+// ── WHATSAPP (verificar a ligacao a Meta) ─────────────────────────────────────
+router.get('/whatsapp/estado', (req, res) => {
+  const wa = require('../services/whatsappService');
+  res.json({
+    configurado: wa.configurado(),
+    planosComWhatsApp: wa.planosPermitidos(),
+    limiteMensalPorNegocio: wa.limiteMensal(),
+  });
+});
+
+// modo "hello_world": modelo de teste que a Meta ja traz aprovado (verifica token + numero)
+// modo "confirmacao": o teu modelo real de confirmacao com dados de exemplo
+router.post('/whatsapp/teste', async (req, res) => {
+  const wa = require('../services/whatsappService');
+  if (!wa.configurado()) {
+    return res.status(400).json({ erro: 'Falta WHATSAPP_TOKEN e/ou WHATSAPP_PHONE_ID nas variáveis do Render.' });
+  }
+  const para = wa.normalizarTelefone(req.body.telefone);
+  if (!para) return res.status(400).json({ erro: 'Número inválido. Usa o formato 923456789 ou +244923456789.' });
+
+  const r = req.body.modo === 'confirmacao'
+    ? await wa.enviarTemplate({
+        para,
+        template: process.env.WHATSAPP_TEMPLATE_CONFIRMACAO || 'confirmacao_marcacao',
+        parametros: ['Ana', 'Corte de cabelo', 'AgendaAO (teste)', '10/11/2026', '10:00'],
+      })
+    : await wa.enviarTemplate({ para, template: 'hello_world', idioma: 'en_US' });
+
+  if (!r.ok) return res.status(502).json({ erro: r.erro });
+  res.json({ mensagem: 'Mensagem enviada! Verifica o WhatsApp desse número.', id: r.id });
+});
+
 module.exports = router;
