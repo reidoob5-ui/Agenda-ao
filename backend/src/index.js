@@ -53,12 +53,18 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
+// Atras do proxy do Render, sem isto todos os visitantes parecem ter o mesmo IP
+// e partilhariam o mesmo limite de pedidos.
+app.set('trust proxy', 1);
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, max: 200,
   message: { erro: 'Muitos pedidos. Tenta novamente em 15 minutos.' }
 });
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 10,
+  windowMs: 15 * 60 * 1000, max: 20,
+  skipSuccessfulRequests: true,           // so contam as tentativas falhadas
+  skip: (req) => req.path === '/config',  // pedido informativo, nao e tentativa de login
   message: { erro: 'Muitas tentativas. Tenta em 15 minutos.' }
 });
 const adminLimiter = rateLimit({

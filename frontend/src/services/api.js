@@ -15,7 +15,11 @@ const api = axios.create({
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // Sessão expirada: volta ao login. Mas NÃO em falhas do próprio login/registo,
+    // senão a página recarrega e o erro nunca chega a ser mostrado.
+    const url = err.config?.url || ''
+    const ehAutenticacao = /\/auth\/(login|registar|google)/.test(url)
+    if (err.response?.status === 401 && !ehAutenticacao) {
       localStorage.removeItem('agendaao-auth')
       window.location.href = '/login'
     }
