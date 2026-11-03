@@ -12,15 +12,18 @@ export default function LoginPage() {
   const { login, googleLogin, carregando } = useAuthStore()
   const navigate = useNavigate()
   const [googleClientId, setGoogleClientId] = useState(null)
+  const [erroForm, setErroForm] = useState('')
 
   useEffect(() => {
     api.get('/auth/config').then(r => setGoogleClientId(r.data.googleClientId)).catch(() => {})
   }, [])
 
   const entrarComGoogle = async (credential) => {
+    setErroForm('')
     const r = await googleLogin(credential)
     if (r.sucesso) { toast.success('Bem-vindo de volta!'); navigate('/dashboard') }
     else {
+      setErroForm(r.erro)
       toast.error(r.erro)
       if (r.codigo === 'NAO_REGISTADO') navigate('/criar')
     }
@@ -28,9 +31,10 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const r = await login(form.email, form.senha)
+    setErroForm('')
+    const r = await login(form.email.trim(), form.senha)
     if (r.sucesso) { toast.success('Bem-vindo de volta!'); navigate('/dashboard') }
-    else toast.error(r.erro)
+    else { setErroForm(r.erro); toast.error(r.erro) }
   }
 
   return (
@@ -75,8 +79,13 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+            {erroForm && (
+              <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                {erroForm}
+              </p>
+            )}
             <button type="submit" className="btn-primary w-full py-3" disabled={carregando}>
-              {carregando ? 'A entrar...' : 'Entrar'}
+              {carregando ? 'A entrar... (pode demorar até 1 minuto)' : 'Entrar'}
             </button>
           </form>
         </div>

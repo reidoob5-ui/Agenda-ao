@@ -91,7 +91,7 @@ router.get('/config', (req, res) => {
 // Quando o Google esta configurado, as contas novas SO podem ser criadas com Google.
 router.post('/registar', [
   body('nome').trim().notEmpty().withMessage('Nome é obrigatório'),
-  body('email').isEmail().withMessage('Email inválido'),
+  body('email').trim().isEmail().withMessage('Email inválido'),
   body('senha').isLength({ min: 6 }).withMessage('Senha mínimo 6 caracteres'),
   body('telefone').notEmpty().withMessage('Telefone é obrigatório'),
   body('nomeNegocio').notEmpty().withMessage('Nome do negócio é obrigatório'),
@@ -108,7 +108,7 @@ router.post('/registar', [
   try {
     const { nome, email, senha, telefone, nomeNegocio } = req.body;
 
-    const existe = await prisma.usuario.findUnique({ where: { email } });
+    const existe = await prisma.usuario.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } });
     if (existe) return res.status(409).json({ erro: 'Email já registado' });
 
     const senhaHash = await bcrypt.hash(senha, 12);
@@ -198,17 +198,18 @@ router.post('/google-login', [
 
 // POST /api/auth/login (email + senha, para contas existentes)
 router.post('/login', [
-  body('email').isEmail(),
+  body('email').trim().isEmail().withMessage('Email inválido'),
   body('senha').notEmpty(),
 ], async (req, res) => {
   const erros = validationResult(req);
-  if (!erros.isEmpty()) return res.status(400).json({ erros: erros.array() });
+  if (!erros.isEmpty()) return res.status(400).json({ erros: erros.array(), erro: erros.array()[0].msg });
 
   try {
     const { email, senha } = req.body;
 
-    const usuario = await prisma.usuario.findUnique({
-      where: { email },
+    // Aceita maiusculas/minusculas diferentes das usadas no registo
+    const usuario = await prisma.usuario.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
       include: { negocio: true }
     });
 

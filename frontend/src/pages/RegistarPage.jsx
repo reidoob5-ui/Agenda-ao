@@ -9,6 +9,7 @@ import GoogleButton from '../components/GoogleButton'
 export default function RegistarPage() {
   const [form, setForm] = useState({ nome: '', email: '', senha: '', telefone: '', nomeNegocio: '' })
   const [passo, setPasso] = useState(1)
+  const [erroForm, setErroForm] = useState('')
   const { registar, googleRegistar, carregando } = useAuthStore()
   const navigate = useNavigate()
   const [config, setConfig] = useState(null) // { googleClientId, exigeGoogle }
@@ -20,9 +21,11 @@ export default function RegistarPage() {
   const exigeGoogle = !!config?.exigeGoogle
 
   const criarComGoogle = async (credential) => {
+    setErroForm('')
     const r = await googleRegistar(credential, { nomeNegocio: form.nomeNegocio, telefone: form.telefone })
     if (r.sucesso) { toast.success('Conta criada! Bem-vindo 🎉'); navigate('/dashboard') }
     else {
+      setErroForm(r.erro)
       toast.error(r.erro)
       if (r.codigo === 'JA_EXISTE') navigate('/login')
     }
@@ -32,9 +35,10 @@ export default function RegistarPage() {
     e.preventDefault()
     if (passo === 1) { setPasso(2); return }
     if (exigeGoogle) return // com Google, a conta cria-se pelo botão do Google
-    const r = await registar(form)
+    setErroForm('')
+    const r = await registar({ ...form, email: form.email.trim(), nome: form.nome.trim(), nomeNegocio: form.nomeNegocio.trim(), telefone: form.telefone.trim() })
     if (r.sucesso) { toast.success('Conta criada! Bem-vindo 🎉'); navigate('/dashboard') }
-    else toast.error(r.erro)
+    else { setErroForm(r.erro); toast.error(r.erro) }
   }
 
   return (
@@ -85,9 +89,14 @@ export default function RegistarPage() {
                 <input className="input" type="password" placeholder="Mínimo 6 caracteres" value={form.senha}
                   onChange={e=>setForm({...form,senha:e.target.value})} required minLength={6}/></div>
             </>)}
+            {erroForm && (
+              <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                {erroForm}
+              </p>
+            )}
             {!(passo === 2 && exigeGoogle) && (
               <button type="submit" className="btn-primary w-full py-3" disabled={carregando}>
-                {passo===1 ? 'Continuar →' : carregando ? 'A criar...' : 'Criar conta'}
+                {passo===1 ? 'Continuar →' : carregando ? 'A criar... (pode demorar até 1 minuto)' : 'Criar conta'}
               </button>
             )}
           </form>
