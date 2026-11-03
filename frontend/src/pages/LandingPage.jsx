@@ -146,7 +146,7 @@ export default function LandingPage() {
             <CalendarCheck size={16} />
             <span className="font-display font-bold">AgendaAO</span>
           </div>
-          <AssinaturaAda comEmail />
+          <AssinaturaAda fundo="escuro" comEmail />
           <p className="text-slate-500 text-sm">© {new Date().getFullYear()} Ada Lovelace Technologies · Luanda, Angola</p>
         </div>
       </footer>
