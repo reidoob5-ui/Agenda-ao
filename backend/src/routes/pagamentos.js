@@ -3,8 +3,11 @@ const crypto = require('crypto');
 const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { PRECOS, MOEDAS_ONLINE, precoDoPlano } = require('../utils/planos');
+const paddle = require('../services/paddle');
+const { criarAssinatura, processarPagamentoAprovado } = require('../services/assinaturas');
 
-const PLANO_PRECO = { BASICO: 0, PROFISSIONAL: 8000, PREMIUM: 19000 };
+const PLANO_PRECO = { BASICO: 0, PROFISSIONAL: PRECOS.PROFISSIONAL.AOA, PREMIUM: PRECOS.PREMIUM.AOA };
 const PLANO_LABEL = { BASICO: 'Basico', PROFISSIONAL: 'Profissional', PREMIUM: 'Premium' };
 
 // ── ACTIVAR PLANO GRATIS ─────────────────────────────────────────────────────
@@ -22,6 +25,49 @@ router.post('/ativar-gratis', autenticar, async (req, res) => {
   }
 });
 
+// ── PRECOS (publico para o site mostrar a moeda certa) ───────────────────────
+router.get('/precos', (req, res) => {
+  res.json({ precos: PRECOS, moedasOnline: MOEDAS_ONLINE, paddle: paddle.configurado() });
+});
+
+// ── INICIAR PAGAMENTO ONLINE (Paddle): cartao, PayPal, Apple/Google Pay, Pix (BRL) ───
+router.post('/iniciar-paddle', autenticar, async (req, res) => {
+  try {
+    if (!paddle.configurado()) {
+      return res.status(503).json({ erro: 'O pagamento online ainda não está ativo. Contacta o suporte.' });
+    }
+    const planoPedido = req.body.plano || 'PROFISSIONAL';
+    const moeda = String(req.body.moeda || 'USD').toUpperCase();
+    if (!MOEDAS_ONLINE.includes(moeda)) return res.status(400).json({ erro: 'Moeda inválida' });
+    const valor = precoDoPlano(planoPedido, moeda);
+    if (!valor) return res.status(400).json({ erro: 'Plano inválido' });
+
+    const assinatura = await criarAssinatura(req.negocioId, planoPedido, valor);
+    const pagamento = await prisma.pagamento.create({
+      data: {
+        negocioId: req.negocioId, assinaturaId: assinatura.id, metodo: 'PADDLE',
+        valor, moeda, status: 'PENDENTE', referencia: 'PDL-' + assinatura.id.slice(0, 8).toUpperCase(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      }
+    });
+
+    const t = await paddle.criarTransacao({
+      nomePlano: PLANO_LABEL[planoPedido], valor, moeda,
+      urlPagamento: `${(process.env.FRONTEND_URL || '').replace(/\/$/, '')}/pagar`
+    });
+    if (!t.ok || !t.url) {
+      await prisma.pagamento.update({ where: { id: pagamento.id }, data: { status: 'RECUSADO' } });
+      console.error('[Paddle] criar transacao:', t.erro);
+      return res.status(502).json({ erro: 'Não foi possível iniciar o pagamento. Tenta novamente em instantes.' });
+    }
+    await prisma.pagamento.update({ where: { id: pagamento.id }, data: { transactionId: t.id } });
+    res.json({ pagamentoId: pagamento.id, checkoutUrl: t.url, valor, moeda, plano: planoPedido });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao iniciar pagamento' });
+  }
+});
+
 // ── INICIAR PAGAMENTO EXPRESS ─────────────────────────────────────────────────
 // Gera referencia unica e mostra numero Express do dono para pagamento manual
 router.post('/iniciar-express', autenticar, async (req, res) => {
@@ -33,7 +79,7 @@ router.post('/iniciar-express', autenticar, async (req, res) => {
     if (valorKz === 0) return res.status(400).json({ erro: 'Este plano e gratis, nao precisa de pagamento' });
 
     const negocio = await prisma.negocio.findUnique({ where: { id: req.negocioId } });
-    const assinatura = await criarAssinatura(req.negocioId, planoPedido);
+    const assinatura = await criarAssinatura(req.negocioId, planoPedido, valorKz);
 
     // Referencia unica para identificar o pagamento
     const referencia = 'EXP-' + assinatura.id.slice(0, 8).toUpperCase();
@@ -77,7 +123,7 @@ router.post('/iniciar-iban', autenticar, async (req, res) => {
     if (valorKz === undefined) return res.status(400).json({ erro: 'Plano invalido' });
     if (valorKz === 0) return res.status(400).json({ erro: 'Este plano e gratis, nao precisa de pagamento' });
 
-    const assinatura = await criarAssinatura(req.negocioId, planoPedido);
+    const assinatura = await criarAssinatura(req.negocioId, planoPedido, valorKz);
     const referencia = 'IBAN-' + assinatura.id.slice(0, 8).toUpperCase();
 
     const pagamento = await prisma.pagamento.create({
@@ -188,40 +234,6 @@ function validarHMAC(campos, signatureRecebida) {
     const calculada = crypto.createHmac('sha256', segredo).update(str).digest('hex');
     return crypto.timingSafeEqual(Buffer.from(calculada), Buffer.from(signatureRecebida || ''));
   } catch { return false; }
-}
-
-async function criarAssinatura(negocioId, plano) {
-  const agora = new Date();
-  const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, agora.getDate());
-  return prisma.assinatura.create({
-    data: {
-      negocioId,
-      plano,
-      valor: PLANO_PRECO[plano],
-      status: 'PENDENTE',
-      periodoInicio: agora,
-      periodoFim: fimMes
-    }
-  });
-}
-
-async function processarPagamentoAprovado(pagamentoId) {
-  const pagamento = await prisma.pagamento.findUnique({
-    where: { id: pagamentoId },
-    include: { assinatura: true }
-  });
-
-  const fimPeriodo = new Date();
-  fimPeriodo.setDate(fimPeriodo.getDate() + 30);
-
-  await prisma.$transaction([
-    prisma.pagamento.update({ where: { id: pagamentoId }, data: { status: 'APROVADO', processadoEm: new Date() } }),
-    prisma.assinatura.update({ where: { id: pagamento.assinaturaId }, data: { status: 'ATIVA', periodoFim: fimPeriodo } }),
-    prisma.negocio.update({
-      where: { id: pagamento.negocioId },
-      data: { planoStatus: 'ATIVO', plano: pagamento.assinatura?.plano || 'BASICO', planoExpira: fimPeriodo }
-    })
-  ]);
 }
 
 module.exports = router;

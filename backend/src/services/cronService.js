@@ -6,41 +6,36 @@ const { temRecurso } = require('../utils/planos');
 const prisma = new PrismaClient();
 
 function iniciarCrons() {
-  // Lembrete 24h antes — corre todos os dias às 08:00
-  cron.schedule('0 8 * * *', async () => {
-    console.log('[Cron] A verificar lembretes 24h...');
-    const amanha = new Date();
-    amanha.setDate(amanha.getDate() + 1);
-    const inicio = new Date(amanha); inicio.setHours(0,0,0,0);
-    const fim = new Date(amanha); fim.setHours(23,59,59,999);
+  // Lembretes — corre de 10 em 10 minutos e funciona em qualquer fuso horario:
+  // olha para o instante real das marcacoes, nao para a hora do servidor.
+  //  - "24h": marcacoes que comecam daqui a 12h a 24h
+  //  - "2h":  marcacoes que comecam daqui a 30 min a 2h
+  // Cada lembrete e enviado uma unica vez (flags lembrete24h / lembrete2h).
+  cron.schedule('*/10 * * * *', async () => {
+    try {
+      const agora = Date.now();
+      const H = 60 * 60 * 1000;
+      const incluir = { cliente: true, servico: true, negocio: true, profissional: true };
 
-    const agendamentos = await prisma.agendamento.findMany({
-      where: { dataHora: { gte: inicio, lte: fim }, status: 'CONFIRMADO', lembrete24h: false },
-      include: { cliente: true, servico: true, negocio: true, profissional: true }
-    });
+      const de24 = await prisma.agendamento.findMany({
+        where: { status: 'CONFIRMADO', lembrete24h: false, dataHora: { gt: new Date(agora + 12 * H), lte: new Date(agora + 24 * H) } },
+        include: incluir
+      });
+      for (const ag of de24) {
+        await enviarLembrete(ag, '24h');
+        await prisma.agendamento.update({ where: { id: ag.id }, data: { lembrete24h: true } });
+      }
 
-    for (const ag of agendamentos) {
-      await enviarLembrete(ag, '24h');
-      await prisma.agendamento.update({ where: { id: ag.id }, data: { lembrete24h: true } });
-    }
-    console.log(`[Cron] Lembretes 24h: ${agendamentos.length} enviados`);
-  });
-
-  // Lembrete 2h antes — corre de 30 em 30 minutos
-  cron.schedule('*/30 * * * *', async () => {
-    const agora = new Date();
-    const em2h = new Date(agora.getTime() + 2 * 60 * 60 * 1000);
-    const janela = new Date(em2h.getTime() + 30 * 60 * 1000);
-
-    const agendamentos = await prisma.agendamento.findMany({
-      where: { dataHora: { gte: em2h, lt: janela }, status: 'CONFIRMADO', lembrete2h: false },
-      include: { cliente: true, servico: true, negocio: true, profissional: true }
-    });
-
-    for (const ag of agendamentos) {
-      await enviarLembrete(ag, '2h');
-      await prisma.agendamento.update({ where: { id: ag.id }, data: { lembrete2h: true } });
-    }
+      const de2 = await prisma.agendamento.findMany({
+        where: { status: 'CONFIRMADO', lembrete2h: false, dataHora: { gt: new Date(agora + 0.5 * H), lte: new Date(agora + 2 * H) } },
+        include: incluir
+      });
+      for (const ag of de2) {
+        await enviarLembrete(ag, '2h');
+        await prisma.agendamento.update({ where: { id: ag.id }, data: { lembrete2h: true } });
+      }
+      if (de24.length || de2.length) console.log(`[Cron] Lembretes: ${de24.length} (24h) e ${de2.length} (2h)`);
+    } catch (e) { console.error('[Cron] lembretes:', e.message); }
   });
 
   // Expirar pagamentos — corre de 5 em 5 minutos

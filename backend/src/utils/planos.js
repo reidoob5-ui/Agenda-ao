@@ -53,4 +53,18 @@ function pontosDaVisita(preco) {
   return Math.max(1, Math.floor((preco || 0) / 1000));
 }
 
-module.exports = { RECURSOS, NOMES, nivel, temRecurso, recursosDoPlano, exigirRecurso, pontosDaVisita };
+// Precos mensais por moeda (valores inteiros). Para mudar precos, e so mexer AQUI
+// (e no espelho do site: frontend/src/utils/planos.js). AOA continua a ser pago por Multicaixa/IBAN;
+// USD, EUR e BRL sao pagos online pelo Paddle (cartao, PayPal e Pix em reais).
+const PRECOS = {
+  PROFISSIONAL: { AOA: 8000,  USD: 9,  EUR: 8,  BRL: 49 },
+  PREMIUM:      { AOA: 19000, USD: 22, EUR: 20, BRL: 119 },
+};
+const MOEDAS_ONLINE = ['USD', 'EUR', 'BRL'];
+
+function precoDoPlano(plano, moeda) {
+  return PRECOS[plano]?.[moeda];
+}
+
+module.exports = {
+  PRECOS, MOEDAS_ONLINE, precoDoPlano, RECURSOS, NOMES, nivel, temRecurso, recursosDoPlano, exigirRecurso, pontosDaVisita };

@@ -6,7 +6,15 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const FUSO = 'Africa/Luanda';
+const T = require('../utils/tempo');
+
+// Codigo de idioma dos modelos (a Meta exige o modelo aprovado NESSE idioma). pt_BR pode ser definido por env.
+const CODIGO_IDIOMA = {
+  pt: process.env.WHATSAPP_IDIOMA_PT || 'pt_PT',
+  en: process.env.WHATSAPP_IDIOMA_EN || 'en',
+  es: process.env.WHATSAPP_IDIOMA_ES || 'es',
+  fr: process.env.WHATSAPP_IDIOMA_FR || 'fr',
+};
 
 function configurado() {
   return !!(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID);
@@ -36,12 +44,8 @@ function limparParametro(valor) {
   return (t || '-').slice(0, 200);
 }
 
-function formatarQuando(dataHora) {
-  const d = new Date(dataHora);
-  return {
-    data: d.toLocaleDateString('pt-PT', { timeZone: FUSO, day: '2-digit', month: '2-digit', year: 'numeric' }),
-    hora: d.toLocaleTimeString('pt-PT', { timeZone: FUSO, hour: '2-digit', minute: '2-digit' }),
-  };
+function formatarQuando(dataHora, fuso, idioma) {
+  return T.formatarQuando(dataHora, fuso || T.FUSO_PADRAO, idioma || 'pt');
 }
 
 // Chama a API da Meta. Nunca lanca erro: devolve { ok, id } ou { ok:false, erro }
@@ -111,12 +115,13 @@ async function enviarWhatsAppAgendamento({ agendamento, negocio, tipo }) {
     const template = tipo === 'CONFIRMACAO'
       ? (process.env.WHATSAPP_TEMPLATE_CONFIRMACAO || 'confirmacao_marcacao')
       : (process.env.WHATSAPP_TEMPLATE_LEMBRETE || 'lembrete_marcacao');
-    const { data, hora } = formatarQuando(agendamento.dataHora);
+    const { data, hora } = formatarQuando(agendamento.dataHora, negocio.fusoHorario, negocio.idioma);
     const primeiroNome = String(agendamento.cliente?.nome || '').trim().split(/\s+/)[0];
 
     const r = await enviarTemplate({
       para,
       template,
+      idioma: CODIGO_IDIOMA[negocio.idioma] || CODIGO_IDIOMA.pt,
       parametros: [primeiroNome, agendamento.servico?.nome, negocio.nome, data, hora],
     });
     await registar(negocio.id, agendamento.id, tipo, r.ok ? 'ENVIADA' : 'FALHOU', r.erro);

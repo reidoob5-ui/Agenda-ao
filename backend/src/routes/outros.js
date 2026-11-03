@@ -2,7 +2,9 @@
 const clientesRouter = require('express').Router();
 const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
-const { limitesDoPlano, usoAgendamentos, temConflito } = require('../utils/agenda');
+const { limitesDoPlano, usoAgendamentos, temConflito, slotsDoDia } = require('../utils/agenda');
+const T = require('../utils/tempo');
+const { gerarLinkSessao } = require('../utils/sessao');
 const { exigirRecurso, temRecurso, pontosDaVisita } = require('../utils/planos');
 const prisma = new PrismaClient();
 
@@ -105,7 +107,7 @@ servicosRouter.get('/', autenticar, async (req, res) => {
 
 servicosRouter.post('/', autenticar, async (req, res) => {
   try {
-    const { nome, descricao, duracaoMin, preco, profissionalIds } = req.body;
+    const { nome, descricao, duracaoMin, preco, profissionalIds, online } = req.body;
     // Só aceitar profissionais deste negócio
     let idsValidos;
     if (profissionalIds) {
@@ -117,7 +119,7 @@ servicosRouter.post('/', autenticar, async (req, res) => {
     const servico = await prisma.servico.create({
       data: {
         negocioId: req.negocioId,
-        nome, descricao, duracaoMin, preco,
+        nome, descricao, duracaoMin, preco, online: !!online,
         profissionais: idsValidos ? {
           create: idsValidos.map(id => ({ profissionalId: id }))
         } : undefined
@@ -130,8 +132,9 @@ servicosRouter.post('/', autenticar, async (req, res) => {
 
 servicosRouter.put('/:id', autenticar, async (req, res) => {
   try {
-    const { profissionalIds, nome, descricao, duracaoMin, preco, ativo } = req.body;
+    const { profissionalIds, nome, descricao, duracaoMin, preco, ativo, online } = req.body;
     const dados = { nome, descricao, duracaoMin, preco, ativo };
+    if (online !== undefined) dados.online = !!online;
 
     // O serviço tem de ser deste negócio
     const existente = await prisma.servico.findFirst({ where: { id: req.params.id, negocioId: req.negocioId } });
@@ -232,6 +235,9 @@ module.exports.profissionaisRouter = profissionaisRouter;
 // ===== NEGÓCIOS =====
 const negociosRouter = require('express').Router();
 
+const MOEDAS = ['AOA', 'USD', 'EUR', 'BRL', 'GBP', 'MZN', 'CVE', 'ZAR', 'MXN', 'CAD'];
+const IDIOMAS = ['pt', 'en', 'es', 'fr'];
+
 negociosRouter.get('/meu', autenticar, async (req, res) => {
   try {
     const negocio = await prisma.negocio.findUnique({
@@ -247,6 +253,30 @@ negociosRouter.put('/meu', autenticar, async (req, res) => {
     // Só campos de perfil. NUNCA aceitar plano, planoStatus, planoExpira, slug, etc. vindos do cliente
     const { horarios, nome, telefone, endereco, cidade, logo, ibanBancario, merchantExpress } = req.body;
     const dados = { nome, telefone, endereco, cidade, logo, ibanBancario, merchantExpress };
+    // Mundo todo: fuso horario, moeda, idioma, link das consultas online e chave Pix
+    if (req.body.fusoHorario !== undefined) {
+      if (!T.fusoValido(req.body.fusoHorario)) return res.status(400).json({ erro: 'Fuso horário inválido' });
+      dados.fusoHorario = req.body.fusoHorario;
+    }
+    if (req.body.moeda !== undefined) {
+      const m = String(req.body.moeda).toUpperCase();
+      if (!MOEDAS.includes(m)) return res.status(400).json({ erro: 'Moeda não suportada' });
+      dados.moeda = m;
+    }
+    if (req.body.idioma !== undefined) {
+      if (!IDIOMAS.includes(req.body.idioma)) return res.status(400).json({ erro: 'Idioma não suportado' });
+      dados.idioma = req.body.idioma;
+    }
+    if (req.body.linkSessaoPadrao !== undefined) {
+      const l = String(req.body.linkSessaoPadrao || '').trim();
+      if (l && !/^https:\/\/[^\s]+$/i.test(l)) return res.status(400).json({ erro: 'O link da sessão tem de começar por https://' });
+      dados.linkSessaoPadrao = l || null;
+    }
+    if (req.body.chavePix !== undefined) {
+      const c = String(req.body.chavePix || '').trim().slice(0, 77);
+      if (/[^\w@.+\-\s]/.test(c)) return res.status(400).json({ erro: 'Chave Pix inválida' });
+      dados.chavePix = c || null;
+    }
     // Cor da pagina de marcacao: so Premium, e so um hex valido (#RRGGBB) ou vazio para repor
     if (req.body.corPrimaria !== undefined) {
       if (!temRecurso(req.usuario.negocio.plano, 'corPropria')) {
@@ -312,10 +342,12 @@ const relatoriosRouter = require('express').Router();
 
 relatoriosRouter.get('/dashboard', autenticar, async (req, res) => {
   try {
-    const hoje = new Date(); hoje.setHours(0,0,0,0);
-    const amanha = new Date(hoje); amanha.setDate(amanha.getDate() + 1);
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+    const fuso = req.usuario.negocio.fusoHorario || T.FUSO_PADRAO;
+    const hojeStr = T.hojeNoFuso(fuso);
+    const { inicio: hoje, fim: amanha } = T.limitesDoDia(hojeStr, fuso);
+    const [anoH, mesH] = hojeStr.split('-').map(Number);
+    const inicioMes = T.paraInstante(`${anoH}-${String(mesH).padStart(2, '0')}-01`, '00:00', fuso);
+    const fimMes = new Date(T.paraInstante(`${mesH === 12 ? anoH + 1 : anoH}-${String(mesH === 12 ? 1 : mesH + 1).padStart(2, '0')}-01`, '00:00', fuso).getTime() - 1000);
 
     const planoActual = req.usuario.negocio.plano;
     const [agHoje, agMes, receitaMes, novosClientes, uso] = await Promise.all([
@@ -356,8 +388,10 @@ relatoriosRouter.get('/dashboard', autenticar, async (req, res) => {
 relatoriosRouter.get('/mensal', autenticar, exigirRecurso('relatoriosFinanceiros'), async (req, res) => {
   try {
     const { ano, mes } = req.query;
-    const inicio = new Date(parseInt(ano), parseInt(mes) - 1, 1);
-    const fim = new Date(parseInt(ano), parseInt(mes), 0, 23, 59, 59);
+    const fuso = req.usuario.negocio.fusoHorario || T.FUSO_PADRAO;
+    const a = parseInt(ano), m = parseInt(mes);
+    const inicio = T.paraInstante(`${a}-${String(m).padStart(2, '0')}-01`, '00:00', fuso);
+    const fim = new Date(T.paraInstante(`${m === 12 ? a + 1 : a}-${String(m === 12 ? 1 : m + 1).padStart(2, '0')}-01`, '00:00', fuso).getTime() - 1000);
 
     const agendamentos = await prisma.agendamento.findMany({
       where: { negocioId: req.negocioId, dataHora: { gte: inicio, lte: fim }, status: 'CONCLUIDO' },
@@ -377,7 +411,7 @@ relatoriosRouter.get('/mensal', autenticar, exigirRecurso('relatoriosFinanceiros
       porProfissional[a.profissional.nome].count++;
       porProfissional[a.profissional.nome].receita += a.preco;
 
-      const semana = Math.ceil(new Date(a.dataHora).getDate() / 7);
+      const semana = Math.ceil(parseInt(T.hojeNoFuso(fuso, new Date(a.dataHora)).slice(8, 10)) / 7);
       porSemana[Math.min(semana, 5)] += a.preco;
     });
 
@@ -413,7 +447,7 @@ relatoriosRouter.get('/avancado', autenticar, exigirRecurso('relatoriosAvancados
 
     const horas = {};
     for (const a of ags.filter(x => x.status !== 'CANCELADO')) {
-      const h = parseInt(new Date(a.dataHora).toLocaleTimeString('pt-PT', { timeZone: 'Africa/Luanda', hour: '2-digit', hour12: false }));
+      const h = Math.floor(T.minutosDoDia(a.dataHora, req.usuario.negocio.fusoHorario || T.FUSO_PADRAO) / 60);
       horas[h] = (horas[h] || 0) + 1;
     }
     const horasPico = Object.entries(horas).map(([hora, total]) => ({ hora: Number(hora), total }))
@@ -462,7 +496,7 @@ const publicRouter = require('express').Router();
 const verificarPlanoPublico = async (slug, res) => {
   const negocio = await prisma.negocio.findUnique({
     where: { slug },
-    select: { id: true, plano: true, planoStatus: true, planoExpira: true }
+    select: { id: true, plano: true, planoStatus: true, planoExpira: true, fusoHorario: true, linkSessaoPadrao: true }
   });
   
   if (!negocio) {
@@ -491,12 +525,12 @@ publicRouter.get('/negocio/:slug', async (req, res) => {
     const negocio = await prisma.negocio.findUnique({
       where: { slug: req.params.slug },
       select: {
-        id: true, nome: true, logo: true, corPrimaria: true, endereco: true, cidade: true, telefone: true,
+        id: true, nome: true, logo: true, corPrimaria: true, fusoHorario: true, moeda: true, idioma: true, chavePix: true, endereco: true, cidade: true, telefone: true,
         horarios: true,
         profissionais: { where: { ativo: true }, select: { id: true, nome: true, foto: true, bio: true } },
         servicos: {
           where: { ativo: true },
-          select: { id: true, nome: true, descricao: true, duracaoMin: true, preco: true, profissionais: { include: { profissional: { select: { id: true, nome: true } } } } }
+          select: { id: true, nome: true, descricao: true, duracaoMin: true, preco: true, online: true, profissionais: { include: { profissional: { select: { id: true, nome: true } } } } }
         }
       }
     });
@@ -515,104 +549,30 @@ publicRouter.get('/negocio/:slug/disponibilidade', async (req, res) => {
     if (!check) return;
 
     const { profissionalId, servicoId, data } = req.query;
-    const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
-    const diaSemana = new Date(data).getDay();
-    const horario = await prisma.horario.findFirst({
-      where: { negocioId: check.id, diaSemana, ativo: true }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data))) return res.status(400).json({ erro: 'Data inválida' });
+    const servico = await prisma.servico.findFirst({ where: { id: servicoId, negocioId: check.id } });
+    if (!servico) return res.json({ slots: [] });
+    const slots = await slotsDoDia({
+      negocioId: check.id, fuso: check.fusoHorario || T.FUSO_PADRAO,
+      profissionalId, duracaoMin: servico.duracaoMin, dataStr: data
     });
-    if (!horario) return res.json({ slots: [] });
-
-    const agendamentos = await prisma.agendamento.findMany({
-      where: {
-        negocioId: check.id,
-        profissionalId,
-        status: { in: ['PENDENTE', 'CONFIRMADO'] },
-        dataHora: {
-          gte: new Date(`${data}T00:00:00`),
-          lte: new Date(`${data}T23:59:59`)
-        }
-      }
-    });
-
-    const slots = [];
-    const [hIni, mIni] = horario.horaInicio.split(':').map(Number);
-    const [hFim, mFim] = horario.horaFim.split(':').map(Number);
-    let cursor = hIni * 60 + mIni;
-    const fim = hFim * 60 + mFim;
-
-    while (cursor + (servico?.duracaoMin || 30) <= fim) {
-      const h = String(Math.floor(cursor / 60)).padStart(2, '0');
-      const m = String(cursor % 60).padStart(2, '0');
-      const slotInicio = new Date(`${data}T${h}:${m}:00`);
-      const slotFim = new Date(slotInicio.getTime() + (servico?.duracaoMin || 30) * 60000);
-
-      const ocupado = agendamentos.some(a => {
-        const aFim = new Date(new Date(a.dataHora).getTime() + a.duracaoMin * 60000);
-        return new Date(a.dataHora) < slotFim && aFim > slotInicio;
-      });
-
-      slots.push({ hora: `${h}:${m}`, disponivel: !ocupado });
-      cursor += 30;
-    }
-    res.json({ slots });
+    res.json({ slots: slots.map(({ hora, disponivel }) => ({ hora, disponivel })) });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
 // Helper: calcular horários livres mais próximos do slot pedido
-async function calcularSugestoes(negocioId, profissionalId, servicoId, dataHoraDesejada) {
+async function calcularSugestoes(negocioId, profissionalId, servicoId, dataHoraDesejada, fuso = T.FUSO_PADRAO) {
   const servico = await prisma.servico.findUnique({ where: { id: servicoId } });
   if (!servico) return [];
-  const duracaoMs = servico.duracaoMin * 60000;
-
-  const dataStr = dataHoraDesejada.toISOString().split('T')[0];
-  const diaSemana = dataHoraDesejada.getDay();
-  const horario = await prisma.horario.findFirst({
-    where: { negocioId, diaSemana, ativo: true }
-  });
-  if (!horario) return [];
-
-  const agendamentosNoDia = await prisma.agendamento.findMany({
-    where: {
-      negocioId,
-      profissionalId,
-      status: { in: ['PENDENTE', 'CONFIRMADO'] },
-      dataHora: {
-        gte: new Date(`${dataStr}T00:00:00`),
-        lte: new Date(`${dataStr}T23:59:59`)
-      }
-    }
-  });
-
-  const [hIni, mIni] = horario.horaInicio.split(':').map(Number);
-  const [hFim, mFim] = horario.horaFim.split(':').map(Number);
-  const inicioExpediente = hIni * 60 + mIni;
-  const fimExpediente = hFim * 60 + mFim;
-  const duracaoMin = servico.duracaoMin;
-
-  // Gerar todos os slots do dia
-  const todosSlots = [];
-  let cursor = inicioExpediente;
-  while (cursor + duracaoMin <= fimExpediente) {
-    const h = String(Math.floor(cursor / 60)).padStart(2, '0');
-    const m = String(cursor % 60).padStart(2, '0');
-    const slotInicio = new Date(`${dataStr}T${h}:${m}:00`);
-    const slotFim = new Date(slotInicio.getTime() + duracaoMs);
-    const ocupado = agendamentosNoDia.some(a => {
-      const aFim = new Date(new Date(a.dataHora).getTime() + a.duracaoMin * 60000);
-      return new Date(a.dataHora) < slotFim && aFim > slotInicio;
-    });
-    todosSlots.push({ hora: `${h}:${m}`, minutos: cursor, disponivel: !ocupado });
-    cursor += 30;
-  }
-
-  // Encontrar slots livres: os 2 mais próximos (antes + depois) do solicitado
-  const minutosDesejados = dataHoraDesejada.getHours() * 60 + dataHoraDesejada.getMinutes();
-  const livres = todosSlots.filter(s => s.disponivel);
+  const dataStr = T.hojeNoFuso(fuso, dataHoraDesejada);
+  const slots = await slotsDoDia({ negocioId, fuso, profissionalId, duracaoMin: servico.duracaoMin, dataStr });
+  const livres = slots.filter(s => s.disponivel);
   if (!livres.length) return [];
 
-  const anterior = [...livres].reverse().find(s => s.minutos < minutosDesejados);
-  const proximo = livres.find(s => s.minutos > minutosDesejados);
-
+  // Os 2 mais proximos (antes e depois) da hora pedida
+  const desejados = T.minutosDoDia(dataHoraDesejada, fuso);
+  const anterior = [...livres].reverse().find(s => s.minutos < desejados);
+  const proximo = livres.find(s => s.minutos > desejados);
   return [anterior, proximo].filter(Boolean).map(s => s.hora);
 }
 
@@ -625,7 +585,7 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
     if (!nome || !String(nome).trim() || !telefone || !String(telefone).trim()) {
       return res.status(400).json({ erro: 'Nome e telefone são obrigatórios' });
     }
-    const dataHoraObj = new Date(dataHora);
+    const dataHoraObj = T.interpretarDataHora(dataHora, check.fusoHorario || T.FUSO_PADRAO);
     if (isNaN(dataHoraObj.getTime())) return res.status(400).json({ erro: 'Data/hora inválida' });
     if (dataHoraObj.getTime() < Date.now() - 5 * 60000) {
       return res.status(400).json({ erro: 'Não é possível marcar no passado' });
@@ -659,7 +619,7 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
 
     if (conflito) {
       // Calcular sugestões de horários livres mais próximos
-      const sugestoes = await calcularSugestoes(check.id, profissionalId, servicoId, dataHoraObj);
+      const sugestoes = await calcularSugestoes(check.id, profissionalId, servicoId, dataHoraObj, check.fusoHorario || T.FUSO_PADRAO);
       return res.status(409).json({
         conflito: true,
         erro: 'Horário indisponível',
@@ -688,6 +648,7 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
         dataHora: dataHoraObj,
         duracaoMin: servico.duracaoMin,
         preco: servico.preco,
+        linkSessao: gerarLinkSessao(check, servico),
         status: 'PENDENTE'
       },
       include: { cliente: true, servico: true, profissional: true }
@@ -696,7 +657,7 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
     // Notificações assíncronas (não bloqueiam a resposta)
     prisma.negocio.findUnique({
       where: { id: check.id },
-      select: { nome: true, email: true }
+      select: { nome: true, email: true, telefone: true, fusoHorario: true, moeda: true, idioma: true }
     }).then(async (negocioObj) => {
       if (negocioObj) {
         const { enviarEmailNovoAgendamento } = require('../services/emailService');
@@ -708,7 +669,8 @@ publicRouter.post('/negocio/:slug/agendar', async (req, res) => {
 
     res.status(201).json({
       mensagem: 'Pedido de agendamento enviado! Aguarda a aprovação do negócio.',
-      agendamento
+      // o link da consulta online so e mostrado depois de o negocio confirmar
+      agendamento: { ...agendamento, linkSessao: null }
     });
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
@@ -783,7 +745,7 @@ publicRouter.patch('/negocio/:slug/agendamento/:id/aprovar', autenticar, async (
     // Notificar cliente por email
     const negocioObj = await prisma.negocio.findUnique({
       where: { id: req.negocioId },
-      select: { nome: true, email: true }
+      select: { nome: true, email: true, telefone: true, fusoHorario: true, moeda: true, idioma: true }
     });
     if (negocioObj && agendamento.cliente?.email && temRecurso(req.usuario.negocio.plano, 'emailLembretes')) {
       const { enviarEmailConfirmacao } = require('../services/emailService');
@@ -821,13 +783,16 @@ publicRouter.get('/agendamento/:id/status', async (req, res) => {
         dataHora: true,
         duracaoMin: true,
         preco: true,
-        servico:      { select: { nome: true } },
+        linkSessao: true,
+        servico:      { select: { nome: true, online: true } },
         profissional: { select: { nome: true } },
         cliente:      { select: { nome: true } },
-        negocio:      { select: { nome: true, telefone: true, endereco: true, cidade: true } },
+        negocio:      { select: { nome: true, telefone: true, endereco: true, cidade: true, fusoHorario: true, moeda: true, idioma: true, chavePix: true } },
       }
     });
     if (!agendamento) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    // O link da consulta so aparece depois de o negocio confirmar
+    if (agendamento.status !== 'CONFIRMADO') agendamento.linkSessao = null;
     res.json(agendamento);
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });

@@ -16,6 +16,11 @@ model Negocio {
   cidade          String    @default("Luanda")
   logo            String?
   corPrimaria     String?
+  fusoHorario     String    @default("Africa/Luanda")
+  moeda           String    @default("AOA")
+  idioma          String    @default("pt")
+  linkSessaoPadrao String?
+  chavePix        String?
   slug            String    @unique
   plano           String     @default("BASICO")
   planoStatus     String     @default("INATIVO")
@@ -87,6 +92,7 @@ model Servico {
   descricao    String?
   duracaoMin   Int
   preco        Int
+  online       Boolean   @default(false)
   ativo        Boolean   @default(true)
   criadoEm     DateTime  @default(now())
 
@@ -137,6 +143,7 @@ model Agendamento {
   status          String @default("PENDENTE")
   notaCliente     String?
   notaInterna     String?
+  linkSessao      String?
   lembrete24h     Boolean   @default(false)
   lembrete2h      Boolean   @default(false)
   criadoEm        DateTime  @default(now())
@@ -157,6 +164,7 @@ model Pagamento {
   transactionId   String?   @unique
   metodo          String
   valor           Int
+  moeda           String    @default("AOA")
   status          String @default("PENDENTE")
   referencia      String?
   webhookPayload  String?

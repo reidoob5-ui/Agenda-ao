@@ -45,6 +45,7 @@ app.use(cors({
 
 // Webhook precisa de body raw para validar HMAC
 app.use('/api/pagamentos/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/webhooks/paddle', express.raw({ type: '*/*', limit: '1mb' }), require('./routes/paddleWebhook'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

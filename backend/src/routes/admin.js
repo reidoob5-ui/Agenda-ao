@@ -18,12 +18,14 @@ router.get('/stats', async (req, res) => {
       prisma.negocio.count(),
       prisma.negocio.count({ where: { planoStatus: 'ATIVO' } }),
       prisma.pagamento.count({ where: { status: 'PENDENTE' } }),
-      prisma.pagamento.aggregate({ where: { status: 'APROVADO' }, _sum: { valor: true } }),
+      prisma.pagamento.aggregate({ where: { status: 'APROVADO', moeda: 'AOA' }, _sum: { valor: true } }),
     ]);
+    // Receita internacional (cartao/Pix/PayPal) separada por moeda, para nao somar Kz com dolares
+    const porMoeda = await prisma.pagamento.groupBy({ by: ['moeda'], where: { status: 'APROVADO' }, _sum: { valor: true } });
 
     const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const receitaMes = await prisma.pagamento.aggregate({
-      where: { status: 'APROVADO', criadoEm: { gte: inicioMes } },
+      where: { status: 'APROVADO', moeda: 'AOA', criadoEm: { gte: inicioMes } },
       _sum: { valor: true }
     });
 
@@ -37,6 +39,7 @@ router.get('/stats', async (req, res) => {
       negociosSuspensos: totalNegocios - negociosActivos,
       pagamentosPendentes,
       receitaTotal: receitaTotal._sum.valor || 0,
+      receitaPorMoeda: Object.fromEntries(porMoeda.map(m => [m.moeda, m._sum.valor || 0])),
       receitaMes: receitaMes._sum.valor || 0,
       novosNegociosMes,
     });

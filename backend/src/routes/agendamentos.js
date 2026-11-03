@@ -3,6 +3,8 @@ const { autenticar } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const { temConflito, usoAgendamentos } = require('../utils/agenda');
 const { temRecurso, pontosDaVisita } = require('../utils/planos');
+const T = require('../utils/tempo');
+const { gerarLinkSessao } = require('../utils/sessao');
 const prisma = new PrismaClient();
 
 const STATUS_VALIDOS = ['PENDENTE', 'CONFIRMADO', 'CONCLUIDO', 'CANCELADO', 'FALTA'];
@@ -16,9 +18,9 @@ router.get('/', autenticar, async (req, res) => {
     if (profissionalId) where.profissionalId = profissionalId;
     if (status) where.status = status;
     if (data) {
-      const inicio = new Date(data); inicio.setHours(0,0,0,0);
-      const fim = new Date(data); fim.setHours(23,59,59,999);
-      where.dataHora = { gte: inicio, lte: fim };
+      if (!/^\d{4}-\d{2}-\d{2}/.test(String(data))) return res.status(400).json({ erro: 'Data inválida' });
+      const { inicio, fim } = T.limitesDoDia(String(data).slice(0, 10), req.usuario.negocio.fusoHorario || T.FUSO_PADRAO);
+      where.dataHora = { gte: inicio, lt: fim };
     }
     const agendamentos = await prisma.agendamento.findMany({
       where,
@@ -44,7 +46,7 @@ router.post('/', autenticar, async (req, res) => {
     if (!profissional) return res.status(404).json({ erro: 'Profissional não encontrado' });
     if (!cliente) return res.status(404).json({ erro: 'Cliente não encontrado' });
 
-    const inicio = new Date(dataHora);
+    const inicio = T.interpretarDataHora(dataHora, req.usuario.negocio.fusoHorario || T.FUSO_PADRAO);
     if (isNaN(inicio.getTime())) return res.status(400).json({ erro: 'Data/hora inválida' });
     const fim = new Date(inicio.getTime() + servico.duracaoMin * 60000);
 
@@ -69,6 +71,7 @@ router.post('/', autenticar, async (req, res) => {
         dataHora: inicio,
         duracaoMin: servico.duracaoMin,
         preco: servico.preco,
+        linkSessao: gerarLinkSessao(req.usuario.negocio, servico),
         notaCliente,
         status: 'PENDENTE'
       },

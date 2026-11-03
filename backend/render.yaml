@@ -29,6 +29,14 @@ services:
         value: PREMIUM
       - key: WHATSAPP_LIMITE_MES
         value: 500
+      - key: PADDLE_API_KEY
+        sync: false
+      - key: PADDLE_WEBHOOK_SECRET
+        sync: false
+      - key: PADDLE_ENV
+        value: sandbox
+      - key: EMAIL_SUPORTE
+        value: agendaaosuporte@gmail.com
       - key: MULTICAIXA_EXPRESS_NUMERO
         sync: false
       - key: MULTICAIXA_EXPRESS_NOME
