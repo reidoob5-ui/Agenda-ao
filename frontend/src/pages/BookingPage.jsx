@@ -6,6 +6,7 @@ import { CalendarCheck, Clock, ChevronLeft, Check, MapPin, Phone, AlertTriangle,
 import { format, addDays, isBefore, startOfDay } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { estiloDaMarca } from '../utils/planos'
+import AssinaturaAda from '../components/AssinaturaAda'
 
 function fmtKz(v) {
   return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(v || 0)
@@ -622,6 +623,7 @@ Confirmado!</h2>
           <CalendarCheck size={12} />
           Feito com AgendaAO
         </a>
+        <AssinaturaAda tamanho="sm" className="mt-4" />
       </div>}
     </div>
   )

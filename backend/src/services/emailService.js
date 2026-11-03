@@ -1,5 +1,9 @@
 const nodemailer = require('nodemailer');
 
+// Assinatura da empresa dona do AgendaAO (email de suporte pode ser trocado com EMAIL_SUPORTE no Render)
+const EMAIL_SUPORTE = process.env.EMAIL_SUPORTE || 'agendaaosuporte@gmail.com';
+const RODAPE = `<p style="text-align:center;font-size:11px;color:#94a3b8;margin:24px 0 0;border-top:1px solid #f1f5f9;padding-top:12px;">Enviado por <strong>AgendaAO</strong> · um produto da <strong>Ada Lovelace Technologies</strong><br>Suporte: ${EMAIL_SUPORTE}</p>`;
+
 // Configurar o transporter
 const obterTransporter = () => {
   return nodemailer.createTransport({
@@ -67,6 +71,7 @@ async function enviarEmailNovoAgendamento(negocio, agendamento) {
       <div style="text-align: center; margin-top: 24px;">
         <a href="${process.env.FRONTEND_URL}/dashboard" style="background-color: #4f46e5; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Ver no Painel</a>
       </div>
+      ${RODAPE}
     </div>
   `;
 
@@ -110,6 +115,7 @@ async function enviarEmailConfirmacao(negocio, agendamento) {
         </table>
       </div>
       <p style="font-size: 13px; color: #64748b;">Em caso de dúvida, contacta o negócio: <strong>${negocio.email || ''}</strong></p>
+      ${RODAPE}
     </div>
   `;
 
@@ -152,6 +158,7 @@ async function enviarEmailLembrete(negocio, agendamento, tipo) {
         ${agendamento.profissional?.nome ? `<p style="margin: 4px 0; color: #64748b; font-size: 13px;">Com ${escapar(agendamento.profissional.nome)}</p>` : ''}
       </div>
       <p style="font-size: 13px; color: #64748b;">Não podes ir? Avisa o negócio${negocio.telefone ? `: <strong>${escapar(negocio.telefone)}</strong>` : ''}.</p>
+      ${RODAPE}
     </div>`;
 
   try {

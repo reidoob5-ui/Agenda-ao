@@ -1,13 +1,12 @@
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import PlanoGuard from './PlanoGuard'
+import AssinaturaAda from '../AssinaturaAda'
+import { EMAIL_SUPORTE } from '../../utils/marca'
 import {
   LayoutDashboard, Calendar, Users, Scissors,
   BarChart2, Settings, CreditCard, LogOut, CalendarCheck, ShieldCheck, User, Star, Hourglass, LifeBuoy
 } from 'lucide-react'
-
-// Email de suporte definido no Vercel (VITE_SUPORTE_EMAIL); sem ele o botao nao aparece
-const EMAIL_SUPORTE = import.meta.env.VITE_SUPORTE_EMAIL || ''
 
 const nav = [
   { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
@@ -105,6 +104,7 @@ export default function Layout() {
             <LogOut size={15} />
             Sair
           </button>
+          <AssinaturaAda tamanho="sm" className="mt-3 pt-3 border-t border-slate-100" />
         </div>
       </aside>
 

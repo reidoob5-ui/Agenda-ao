@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { DepoimentosRotativos } from '../components/Depoimentos'
+import AssinaturaAda from '../components/AssinaturaAda'
 import { CalendarCheck, Bell, CreditCard, BarChart2, Smartphone, Star, ArrowRight, Check } from 'lucide-react'
 
 const planos = [
@@ -139,13 +140,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-slate-900 py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <footer className="bg-slate-900 py-10">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2 text-white">
             <CalendarCheck size={16} />
             <span className="font-display font-bold">AgendaAO</span>
           </div>
-          <p className="text-slate-500 text-sm">© 2025 AgendaAO · Luanda, Angola</p>
+          <AssinaturaAda comEmail />
+          <p className="text-slate-500 text-sm">© {new Date().getFullYear()} Ada Lovelace Technologies · Luanda, Angola</p>
         </div>
       </footer>
     </div>

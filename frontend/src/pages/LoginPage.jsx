@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AssinaturaAda from '../components/AssinaturaAda'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
@@ -93,6 +94,7 @@ export default function LoginPage() {
           Ainda não tens conta?{' '}
           <Link to="/criar" className="text-brand-600 font-semibold hover:underline">Criar conta grátis</Link>
         </p>
+        <AssinaturaAda tamanho="sm" className="mt-8" />
       </div>
     </div>
   )

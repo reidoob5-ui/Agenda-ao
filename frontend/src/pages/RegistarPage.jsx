@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AssinaturaAda from '../components/AssinaturaAda'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
@@ -103,6 +104,7 @@ export default function RegistarPage() {
         </div>
         {passo===2 && <button onClick={()=>setPasso(1)} className="block text-center text-sm text-slate-500 mt-3 hover:text-slate-700">← Voltar</button>}
         <p className="text-center text-sm text-slate-500 mt-4">Já tens conta? <Link to="/login" className="text-brand-600 font-semibold hover:underline">Entrar</Link></p>
+        <AssinaturaAda tamanho="sm" className="mt-8" />
       </div>
     </div>
   )

@@ -206,7 +206,7 @@ O dono partilha este link no:
 
 **Onde mudar quem tem o quê:** `backend/src/utils/planos.js` (o servidor bloqueia de verdade, devolve 403 `PLANO_INSUFICIENTE`) e o espelho `frontend/src/utils/planos.js` (só decide o que mostrar). Limites numéricos (50 marcações, 1/5 profissionais) estão em `backend/src/utils/agenda.js`.
 
-Variável opcional no Vercel: `VITE_SUPORTE_EMAIL` — email para o botão "Suporte" do painel (sem ela o botão não aparece).
+Marca da empresa: o logotipo está em `frontend/public/ada-lovelace-logo.png` e o texto/email em `frontend/src/utils/marca.js`. O email de suporte pode ser trocado com `VITE_SUPORTE_EMAIL` (Vercel) e `EMAIL_SUPORTE` (Render, para os emails enviados).
 
 ## 🗂️ Rotas da API
 
