@@ -2,6 +2,8 @@ import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import PlanoGuard from './PlanoGuard'
 import AssinaturaAda from '../AssinaturaAda'
+import SeletorIdioma from '../SeletorIdioma'
+import { useT } from '../../i18n'
 import { EMAIL_SUPORTE } from '../../utils/marca'
 import {
   LayoutDashboard, Calendar, Users, Scissors,
@@ -9,16 +11,16 @@ import {
 } from 'lucide-react'
 
 const nav = [
-  { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/agenda',     icon: Calendar,        label: 'Agenda' },
-  { to: '/clientes',   icon: Users,           label: 'Clientes' },
-  { to: '/servicos',   icon: Scissors,        label: 'Serviços' },
-  { to: '/profissionais', icon: User,         label: 'Profissionais' },
-  { to: '/relatorios', icon: BarChart2,       label: 'Relatórios' },
-  { to: '/lista-espera', icon: Hourglass,     label: 'Lista de espera' },
-  { to: '/config',     icon: Settings,        label: 'Configurações' },
-  { to: '/faturacao',  icon: CreditCard,      label: 'Faturação' },
-  { to: '/avaliar',    icon: Star,            label: 'Depoimento' },
+  { to: '/dashboard',  icon: LayoutDashboard, label: 'nav.dashboard' },
+  { to: '/agenda',     icon: Calendar,        label: 'nav.agenda' },
+  { to: '/clientes',   icon: Users,           label: 'nav.clientes' },
+  { to: '/servicos',   icon: Scissors,        label: 'nav.servicos' },
+  { to: '/profissionais', icon: User,         label: 'nav.profissionais' },
+  { to: '/relatorios', icon: BarChart2,       label: 'nav.relatorios' },
+  { to: '/lista-espera', icon: Hourglass,     label: 'nav.listaEspera' },
+  { to: '/config',     icon: Settings,        label: 'nav.config' },
+  { to: '/faturacao',  icon: CreditCard,      label: 'nav.faturacao' },
+  { to: '/avaliar',    icon: Star,            label: 'nav.depoimento' },
 ]
 
 const PLANO_BADGE = {
@@ -28,6 +30,7 @@ const PLANO_BADGE = {
 }
 
 export default function Layout() {
+  const { t } = useT()
   const { negocio, usuario, logout } = useAuthStore()
   const navigate = useNavigate()
 
@@ -61,7 +64,7 @@ export default function Layout() {
             ${isTrial
               ? 'bg-amber-100 text-amber-800 border border-amber-200'
               : PLANO_BADGE[negocio?.plano] || PLANO_BADGE.BASICO}`}>
-            {isTrial ? `TESTE - ${diasRestantes}d` : (negocio?.plano || 'BASICO')}
+            {isTrial ? t('nav.teste', { n: diasRestantes }) : t(`plano.${negocio?.plano || 'BASICO'}`)}
           </span>
         </div>
 
@@ -75,7 +78,7 @@ export default function Layout() {
                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`
             }>
               <Icon size={17} />
-              {label}
+              {t(label)}
             </NavLink>
           ))}
         </nav>
@@ -86,7 +89,7 @@ export default function Layout() {
             <a href={`mailto:${EMAIL_SUPORTE}?subject=${encodeURIComponent(`${negocio?.plano === 'PREMIUM' ? '[PRIORITÁRIO] ' : ''}Suporte AgendaAO — ${negocio?.nome || ''}`)}`}
               className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all">
               <LifeBuoy size={15} />
-              {negocio?.plano === 'PREMIUM' ? 'Suporte prioritário' : 'Suporte'}
+              {negocio?.plano === 'PREMIUM' ? t('nav.suportePrio') : t('nav.suporte')}
             </a>
           )}
           <div className="flex items-center gap-2.5 px-2 mb-2">
@@ -102,8 +105,9 @@ export default function Layout() {
             className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-slate-500
                        hover:bg-red-50 hover:text-red-600 transition-all">
             <LogOut size={15} />
-            Sair
+            {t('nav.sair')}
           </button>
+          <SeletorIdioma className="mt-2 px-3" />
           <AssinaturaAda tamanho="sm" className="mt-3 pt-3 border-t border-slate-100" />
         </div>
       </aside>

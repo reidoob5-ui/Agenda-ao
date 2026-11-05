@@ -6,8 +6,9 @@ import { pt } from 'date-fns/locale'
 import { linkWhatsApp } from '../utils/whatsapp'
 import { usePlano } from '../utils/planos'
 import Bloqueado from '../components/Bloqueado'
+import { fmtDinheiro } from '../utils/moeda'
 
-function fmtKz(v){return new Intl.NumberFormat('pt-AO',{style:'currency',currency:'AOA',minimumFractionDigits:0}).format(v||0)}
+function fmtKz(v){return fmtDinheiro(v)}
 
 // Premium: ultimos 90 dias — por profissional, horas de pico, clientes que nao voltam
 function RelatorioAvancado() {

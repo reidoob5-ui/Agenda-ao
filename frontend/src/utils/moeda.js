@@ -1,3 +1,6 @@
+import { useAuthStore } from '../store/authStore'
+import { LOCALES } from '../i18n'
+
 export const MOEDAS = [
   { codigo: 'AOA', nome: 'Kwanza (Kz)' }, { codigo: 'USD', nome: 'US Dollar ($)' }, { codigo: 'EUR', nome: 'Euro (€)' },
   { codigo: 'BRL', nome: 'Real (R$)' }, { codigo: 'GBP', nome: 'Pound (£)' }, { codigo: 'MZN', nome: 'Metical (MT)' },
@@ -23,4 +26,10 @@ export function moedaSugerida() {
   if (/-AO$/i.test(lang)) return 'AOA'
   if (/-BR$/i.test(lang)) return 'BRL'
   return 'USD'
+}
+
+// Dinheiro no painel do dono: usa a moeda configurada no negocio (por defeito Kz)
+export function fmtDinheiro(v) {
+  const n = useAuthStore.getState().negocio
+  return fmtMoeda(v, n?.moeda || 'AOA', LOCALES[n?.idioma] || 'pt-PT')
 }

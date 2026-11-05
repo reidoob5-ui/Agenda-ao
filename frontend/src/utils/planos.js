@@ -18,6 +18,14 @@ export const RECURSOS = {
   suportePrioritario: 'PREMIUM',
 }
 
+// Precos mensais por moeda (espelho de backend/src/utils/planos.js)
+export const PRECOS = {
+  PROFISSIONAL: { AOA: 8000, USD: 9, EUR: 8, BRL: 49 },
+  PREMIUM: { AOA: 19000, USD: 22, EUR: 20, BRL: 119 },
+}
+export const MOEDAS_PRECO = ['USD', 'EUR', 'BRL', 'AOA']
+export const MOEDAS_ONLINE = ['USD', 'EUR', 'BRL']
+
 export const NOMES_PLANO = { BASICO: 'Básico', PROFISSIONAL: 'Profissional', PREMIUM: 'Premium' }
 
 export function temRecurso(plano, recurso) {

@@ -66,4 +66,9 @@ export default {
   'book.pixTitulo': 'Pay with Pix', 'book.pixTexto': 'Copy the code and paste it in your bank app, or scan the QR code.', 'book.pixCopiar': 'Copy Pix code', 'book.pixCopiado': 'Code copied!',
   'book.pixAviso': 'Payment goes directly to the business.',
   'book.erroNegocio': 'Business not found',
+  'fat.moedaPag': 'Pay in:', 'fat.pagarOnline': 'Pay {valor} by card, PayPal or Pix', 'fat.aAbrir': 'Opening secure payment...',
+  'fat.metodos': 'Card, PayPal, Apple Pay, Google Pay', 'fat.metodosBRL': 'Pix, card, PayPal, Apple Pay, Google Pay', 'fat.seguro': 'Secure payment processed by Paddle. Invoice sent by email.',
+  'fat.erroOnline': 'Could not open the payment',
+  'pagar.titulo': 'Secure payment', 'pagar.aCarregar': 'Loading payment...', 'pagar.erro': 'Invalid or expired payment link. Go back to Billing and try again.',
+  'pagar.pago': 'Payment received! Activating your plan...', 'pagar.voltar': 'Back to Billing',
 }

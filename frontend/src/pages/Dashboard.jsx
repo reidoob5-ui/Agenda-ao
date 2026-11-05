@@ -8,13 +8,13 @@ import { format } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { QRCodeCanvas } from 'qrcode.react'
 import PedidoDepoimento from '../components/PedidoDepoimento'
+import { fmtDinheiro } from '../utils/moeda'
+import { fmtHora, FUSO_PADRAO } from '../utils/tempo'
 
 const statusBadge = { PENDENTE: 'badge-yellow', CONFIRMADO: 'badge-green', CONCLUIDO: 'badge-gray', CANCELADO: 'badge-red', FALTA: 'badge-red' }
 const statusLabel = { PENDENTE: 'Pendente', CONFIRMADO: 'Confirmado', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado', FALTA: 'Falta' }
 
-function fmtKz(v) {
-  return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(v || 0)
-}
+function fmtKz(v) { return fmtDinheiro(v) }
 
 // Converter string VAPID para Uint8Array para o Web Push
 function urlBase64ToUint8Array(base64String) {
@@ -242,7 +242,7 @@ export default function Dashboard() {
               <div key={ag.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
                 <div className="text-center min-w-[52px]">
                   <p className="font-display font-bold text-slate-800 text-sm">
-                    {format(new Date(ag.dataHora), 'HH:mm')}
+                    {fmtHora(ag.dataHora, useAuthStore.getState().negocio?.fusoHorario || FUSO_PADRAO, 'en-GB')}
                   </p>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold shrink-0">

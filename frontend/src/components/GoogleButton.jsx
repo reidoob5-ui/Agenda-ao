@@ -45,7 +45,7 @@ export default function GoogleButton({ clientId, onCredential, texto = 'continue
         text: texto,
         shape: 'pill',
         width: Math.min(340, ref.current.parentElement?.clientWidth || 320),
-        locale: 'pt-PT',
+        locale: document.documentElement.lang || 'pt-PT',
       })
     }).catch(() => setErro(true))
     return () => { cancelado = true }

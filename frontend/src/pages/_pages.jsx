@@ -4,7 +4,10 @@ import api from '../services/api'
 import toast from 'react-hot-toast'
 import { format, addDays, subDays, parseISO } from 'date-fns'
 import { pt } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, X, Check, Clock, User, Scissors, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Check, Clock, User, Scissors, Plus, Video } from 'lucide-react'
+import { fmtDinheiro } from '../utils/moeda'
+import { fmtHora, FUSO_PADRAO } from '../utils/tempo'
+const hhmm = (v) => fmtHora(v, useAuthStore.getState().negocio?.fusoHorario || FUSO_PADRAO, 'en-GB')
 import { useAuthStore } from '../store/authStore'
 import { linkWhatsApp } from '../utils/whatsapp'
 import { usePlano } from '../utils/planos'
@@ -12,7 +15,7 @@ import Bloqueado from '../components/Bloqueado'
 
 const STATUS_BADGE = { PENDENTE:'badge-yellow',CONFIRMADO:'badge-green',CONCLUIDO:'badge-gray',CANCELADO:'badge-red' }
 const STATUS_LABEL = { PENDENTE:'Pendente',CONFIRMADO:'Confirmado',CONCLUIDO:'Concluído',CANCELADO:'Cancelado' }
-function fmtKz(v){return new Intl.NumberFormat('pt-AO',{style:'currency',currency:'AOA',minimumFractionDigits:0}).format(v||0)}
+function fmtKz(v){return fmtDinheiro(v)}
 
 export function AgendaPage() {
   const { negocio } = useAuthStore()
@@ -25,7 +28,7 @@ export function AgendaPage() {
 
   // Mensagem de WhatsApp para o cliente (abre o WhatsApp com o texto pronto)
   const linkMensagem = (ag) => {
-    const quando = `${format(parseISO(ag.dataHora), "d 'de' MMMM", { locale: pt })} às ${format(parseISO(ag.dataHora), 'HH:mm')}`
+    const quando = `${format(parseISO(ag.dataHora), "d 'de' MMMM", { locale: pt })} às ${hhmm(ag.dataHora)}`
     const texto = ag.status === 'PENDENTE'
       ? `Olá ${ag.cliente?.nome}! Recebemos o teu pedido de marcação em ${negocio?.nome}: ${ag.servico?.nome}, ${quando}. Já te confirmamos!`
       : `Olá ${ag.cliente?.nome}! A tua marcação em ${negocio?.nome} está confirmada: ${ag.servico?.nome} com ${ag.profissional?.nome}, ${quando}. Até já!`
@@ -136,7 +139,7 @@ export function AgendaPage() {
               <tbody className="divide-y divide-slate-50">
                 {agendamentos.map(ag => (
                   <tr key={ag.id} className="hover:bg-slate-50/50">
-                    <td className="px-6 py-4 font-display font-bold text-slate-800">{format(parseISO(ag.dataHora),'HH:mm')}</td>
+                    <td className="px-6 py-4 font-display font-bold text-slate-800">{hhmm(ag.dataHora)}</td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
@@ -151,6 +154,12 @@ export function AgendaPage() {
                     <td className="px-4 py-4"><span className={STATUS_BADGE[ag.status]}>{STATUS_LABEL[ag.status]}</span></td>
                     <td className="px-4 py-4">
                       <div className="flex gap-1">
+                        {ag.status === 'CONFIRMADO' && ag.linkSessao && (
+                          <a href={ag.linkSessao} target="_blank" rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 text-xs font-medium px-2 flex items-center gap-1">
+                            <Video size={12}/> Entrar na consulta
+                          </a>
+                        )}
                         {['PENDENTE','CONFIRMADO'].includes(ag.status) && linkMensagem(ag) && (
                           <a href={linkMensagem(ag)} target="_blank" rel="noopener noreferrer"
                             className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 text-xs font-medium px-2">
@@ -190,7 +199,7 @@ export function AgendaPage() {
             <div className="space-y-3">
               {pendentes.map(ag => {
                 const dataFmt = format(parseISO(ag.dataHora), "d 'de' MMMM 'de' yyyy", { locale: pt })
-                const horaFmt = format(parseISO(ag.dataHora), 'HH:mm')
+                const horaFmt = hhmm(ag.dataHora)
                 return (
                   <div key={ag.id} className="card p-5 border-l-4 border-amber-400">
                     <div className="flex items-start justify-between gap-4">
@@ -417,7 +426,7 @@ export function ServicosPage() {
   const [servicos, setServicos] = useState([])
   const [profissionais, setProfissionais] = useState([])
   const [modal, setModal] = useState(false)
-  const [form, setForm] = useState({ nome:'',descricao:'',duracaoMin:30,preco:0,profissionalIds:[] })
+  const [form, setForm] = useState({ nome:'',descricao:'',duracaoMin:30,preco:0,online:false,profissionalIds:[] })
 
   const carregar = async () => {
     const [s,p] = await Promise.all([api.get('/servicos'),api.get('/profissionais')])
@@ -458,7 +467,7 @@ export function ServicosPage() {
           <tbody className="divide-y divide-slate-50">
             {servicos.map(s => (
               <tr key={s.id} className="hover:bg-slate-50/50">
-                <td className="px-6 py-4 font-medium text-slate-800">{s.nome}</td>
+                <td className="px-6 py-4 font-medium text-slate-800">{s.nome}{s.online && <span className="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 font-semibold"><Video size={10}/> Online</span>}</td>
                 <td className="px-4 py-4 text-slate-600">{s.duracaoMin} min</td>
                 <td className="px-4 py-4 font-semibold text-slate-800">{fmtKz(s.preco)}</td>
                 <td className="px-4 py-4">
@@ -495,10 +504,15 @@ export function ServicosPage() {
                 <div><label className="label">Duração (min)</label>
                   <input className="input" type="number" min="5" step="5" value={form.duracaoMin}
                     onChange={e=>setForm({...form,duracaoMin:parseInt(e.target.value)})}/></div>
-                <div><label className="label">Preço (Kz)</label>
-                  <input className="input" type="number" min="0" value={form.preco}
-                    onChange={e=>setForm({...form,preco:parseInt(e.target.value)})}/></div>
+                <div><label className="label">Preço ({useAuthStore.getState().negocio?.moeda || 'AOA'})</label>
+                  <input className="input" type="number" min="0" step="0.01" value={form.preco}
+                    onChange={e=>setForm({...form,preco:parseFloat(e.target.value)||0})}/></div>
               </div>
+              <label className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-teal-300">
+                <input type="checkbox" className="mt-0.5" checked={form.online} onChange={e=>setForm({...form,online:e.target.checked})}/>
+                <span><span className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5"><Video size={14} className="text-teal-600"/> Sessão online (videochamada)</span>
+                <span className="block text-xs text-slate-400">O cliente recebe o link da consulta quando confirmares a marcação.</span></span>
+              </label>
               <div><label className="label">Profissionais</label>
                 <div className="flex flex-wrap gap-2">
                   {profissionais.map(p => (

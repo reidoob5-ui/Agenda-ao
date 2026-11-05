@@ -6,8 +6,11 @@ import toast from 'react-hot-toast'
 import { CalendarCheck, ShieldCheck } from 'lucide-react'
 import api from '../services/api'
 import GoogleButton from '../components/GoogleButton'
+import SeletorIdioma from '../components/SeletorIdioma'
+import { useT } from '../i18n'
 
 export default function RegistarPage() {
+  const { t } = useT()
   const [form, setForm] = useState({ nome: '', email: '', senha: '', telefone: '', nomeNegocio: '' })
   const [passo, setPasso] = useState(1)
   const [erroForm, setErroForm] = useState('')
@@ -24,7 +27,7 @@ export default function RegistarPage() {
   const criarComGoogle = async (credential) => {
     setErroForm('')
     const r = await googleRegistar(credential, { nomeNegocio: form.nomeNegocio, telefone: form.telefone })
-    if (r.sucesso) { toast.success('Conta criada! Bem-vindo 🎉'); navigate('/dashboard') }
+    if (r.sucesso) { toast.success(t('reg.ok')); navigate('/dashboard') }
     else {
       setErroForm(r.erro)
       toast.error(r.erro)
@@ -38,12 +41,13 @@ export default function RegistarPage() {
     if (exigeGoogle) return // com Google, a conta cria-se pelo botão do Google
     setErroForm('')
     const r = await registar({ ...form, email: form.email.trim(), nome: form.nome.trim(), nomeNegocio: form.nomeNegocio.trim(), telefone: form.telefone.trim() })
-    if (r.sucesso) { toast.success('Conta criada! Bem-vindo 🎉'); navigate('/dashboard') }
+    if (r.sucesso) { toast.success(t('reg.ok')); navigate('/dashboard') }
     else { setErroForm(r.erro); toast.error(r.erro) }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
+      <div className="absolute top-4 right-4"><SeletorIdioma /></div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -52,42 +56,39 @@ export default function RegistarPage() {
             </div>
             <span className="font-display font-bold text-2xl">AgendaAO</span>
           </Link>
-          <h1 className="font-display text-2xl font-bold">Criar conta</h1>
+          <h1 className="font-display text-2xl font-bold">{t('reg.titulo')}</h1>
           <div className="flex items-center justify-center gap-2 mt-3">
             {[1,2].map(n => <div key={n} className={`h-1.5 w-12 rounded-full ${n<=passo?'bg-brand-500':'bg-slate-200'}`}/>)}
           </div>
-          <p className="text-xs text-slate-400 mt-2">Passo {passo} de 2</p>
+          <p className="text-xs text-slate-400 mt-2">{t('reg.passo', { n: passo })}</p>
         </div>
         <div className="card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {passo === 1 ? (<>
-              <div><label className="label">Nome do negócio</label>
-                <input className="input" placeholder="Ex: Salão Beleza Luanda" value={form.nomeNegocio}
+              <div><label className="label">{t('reg.nomeNegocio')}</label>
+                <input className="input" placeholder={t('reg.nomeNegocioEx')} value={form.nomeNegocio}
                   onChange={e=>setForm({...form,nomeNegocio:e.target.value})} required/></div>
-              <div><label className="label">Telefone</label>
-                <input className="input" placeholder="+244 923 456 789" value={form.telefone}
+              <div><label className="label">{t('reg.telefone')}</label>
+                <input className="input" placeholder={t('reg.telefoneEx')} value={form.telefone}
                   onChange={e=>setForm({...form,telefone:e.target.value})} required/></div>
             </>) : exigeGoogle ? (
               <div className="text-center space-y-4 py-2">
                 <div className="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mx-auto">
                   <ShieldCheck size={24} className="text-brand-600" />
                 </div>
-                <p className="text-sm text-slate-600">
-                  Para a tua segurança, a conta é criada e confirmada com o teu <strong>Google</strong>.
-                  Não precisas de criar palavra-passe.
-                </p>
+                <p className="text-sm text-slate-600">{t('reg.googleTexto')}</p>
                 <GoogleButton clientId={config.googleClientId} texto="signup_with" onCredential={criarComGoogle} />
-                {carregando && <p className="text-xs text-slate-400">A criar a tua conta...</p>}
+                {carregando && <p className="text-xs text-slate-400">{t('reg.googleCriando')}</p>}
               </div>
             ) : (<>
-              <div><label className="label">O teu nome</label>
-                <input className="input" placeholder="Nome completo" value={form.nome}
+              <div><label className="label">{t('reg.nome')}</label>
+                <input className="input" placeholder={t('reg.nomeEx')} value={form.nome}
                   onChange={e=>setForm({...form,nome:e.target.value})} required/></div>
-              <div><label className="label">Email</label>
+              <div><label className="label">{t('auth.email')}</label>
                 <input className="input" type="email" placeholder="teu@email.com" value={form.email}
                   onChange={e=>setForm({...form,email:e.target.value})} required/></div>
-              <div><label className="label">Palavra-passe</label>
-                <input className="input" type="password" placeholder="Mínimo 6 caracteres" value={form.senha}
+              <div><label className="label">{t('auth.senha')}</label>
+                <input className="input" type="password" placeholder={t('reg.senhaMin')} value={form.senha}
                   onChange={e=>setForm({...form,senha:e.target.value})} required minLength={6}/></div>
             </>)}
             {erroForm && (
@@ -97,13 +98,13 @@ export default function RegistarPage() {
             )}
             {!(passo === 2 && exigeGoogle) && (
               <button type="submit" className="btn-primary w-full py-3" disabled={carregando}>
-                {passo===1 ? 'Continuar →' : carregando ? 'A criar... (pode demorar até 1 minuto)' : 'Criar conta'}
+                {passo===1 ? t('comum.continuar') : carregando ? t('reg.criando') : t('reg.criar')}
               </button>
             )}
           </form>
         </div>
-        {passo===2 && <button onClick={()=>setPasso(1)} className="block text-center text-sm text-slate-500 mt-3 hover:text-slate-700">← Voltar</button>}
-        <p className="text-center text-sm text-slate-500 mt-4">Já tens conta? <Link to="/login" className="text-brand-600 font-semibold hover:underline">Entrar</Link></p>
+        {passo===2 && <button onClick={()=>setPasso(1)} className="block text-center text-sm text-slate-500 mt-3 hover:text-slate-700">← {t('comum.voltar')}</button>}
+        <p className="text-center text-sm text-slate-500 mt-4">{t('reg.jaTens')} <Link to="/login" className="text-brand-600 font-semibold hover:underline">{t('comum.entrar')}</Link></p>
         <AssinaturaAda tamanho="sm" className="mt-8" />
       </div>
     </div>

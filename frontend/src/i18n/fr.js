@@ -66,4 +66,9 @@ export default {
   'book.pixTitulo': 'Payer avec Pix', 'book.pixTexto': 'Copiez le code et collez-le dans l’app de votre banque, ou scannez le QR code.', 'book.pixCopiar': 'Copier le code Pix', 'book.pixCopiado': 'Code copié !',
   'book.pixAviso': 'Le paiement est effectué directement à l’établissement.',
   'book.erroNegocio': 'Établissement introuvable',
+  'fat.moedaPag': 'Payer en :', 'fat.pagarOnline': 'Payer {valor} par carte, PayPal ou Pix', 'fat.aAbrir': 'Ouverture du paiement sécurisé...',
+  'fat.metodos': 'Carte, PayPal, Apple Pay, Google Pay', 'fat.metodosBRL': 'Pix, carte, PayPal, Apple Pay, Google Pay', 'fat.seguro': 'Paiement sécurisé traité par Paddle. Facture envoyée par email.',
+  'fat.erroOnline': "Impossible d'ouvrir le paiement",
+  'pagar.titulo': 'Paiement sécurisé', 'pagar.aCarregar': 'Chargement du paiement...', 'pagar.erro': 'Lien de paiement invalide ou expiré. Retourne à la Facturation et réessaie.',
+  'pagar.pago': 'Paiement reçu ! Activation de ton plan...', 'pagar.voltar': 'Retour à la Facturation',
 }

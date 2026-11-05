@@ -22,6 +22,7 @@ import DepoimentosPage from './pages/DepoimentosPage'
 import AvaliarPage from './pages/AvaliarPage'
 import CartazPage from './pages/CartazPage'
 import ListaEsperaPage from './pages/ListaEsperaPage'
+import PagarPage from './pages/PagarPage'
 
 export default function App() {
   const inicializar = useAuthStore(s => s.inicializar)
@@ -43,6 +44,7 @@ export default function App() {
       <Route element={<RotaProtegida />}>
         {/* Cartaz fora do Layout para imprimir sem o menu lateral */}
         <Route path="/cartaz" element={<CartazPage />} />
+        <Route path="/pagar" element={<PagarPage />} />
         <Route element={<Layout />}>
           <Route path="/dashboard"   element={<Dashboard />} />
           <Route path="/agenda"      element={<AgendaPage />} />

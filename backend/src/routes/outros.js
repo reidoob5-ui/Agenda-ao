@@ -107,7 +107,9 @@ servicosRouter.get('/', autenticar, async (req, res) => {
 
 servicosRouter.post('/', autenticar, async (req, res) => {
   try {
-    const { nome, descricao, duracaoMin, preco, profissionalIds, online } = req.body;
+    const { nome, descricao, duracaoMin, profissionalIds, online } = req.body;
+    const preco = Math.round(Number(req.body.preco) * 100) / 100;
+    if (!Number.isFinite(preco) || preco < 0) return res.status(400).json({ erro: 'Preço inválido' });
     // Só aceitar profissionais deste negócio
     let idsValidos;
     if (profissionalIds) {
@@ -132,8 +134,13 @@ servicosRouter.post('/', autenticar, async (req, res) => {
 
 servicosRouter.put('/:id', autenticar, async (req, res) => {
   try {
-    const { profissionalIds, nome, descricao, duracaoMin, preco, ativo, online } = req.body;
-    const dados = { nome, descricao, duracaoMin, preco, ativo };
+    const { profissionalIds, nome, descricao, duracaoMin, ativo, online } = req.body;
+    const dados = { nome, descricao, duracaoMin, ativo };
+    if (req.body.preco !== undefined) {
+      const preco = Math.round(Number(req.body.preco) * 100) / 100;
+      if (!Number.isFinite(preco) || preco < 0) return res.status(400).json({ erro: 'Preço inválido' });
+      dados.preco = preco;
+    }
     if (online !== undefined) dados.online = !!online;
 
     // O serviço tem de ser deste negócio

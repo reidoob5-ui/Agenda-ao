@@ -91,7 +91,7 @@ model Servico {
   nome         String
   descricao    String?
   duracaoMin   Int
-  preco        Int
+  preco        Float
   online       Boolean   @default(false)
   ativo        Boolean   @default(true)
   criadoEm     DateTime  @default(now())
@@ -139,7 +139,7 @@ model Agendamento {
   servicoId       String
   dataHora        DateTime
   duracaoMin      Int
-  preco           Int
+  preco           Float
   status          String @default("PENDENTE")
   notaCliente     String?
   notaInterna     String?

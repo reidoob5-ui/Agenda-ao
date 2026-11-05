@@ -270,3 +270,26 @@ Confirmação e lembretes (24h e 2h antes) por WhatsApp. Só envia para os plano
 5. No painel de administração (`Dashboard`), usa **1. Testar ligação** e depois **2. Testar modelo de confirmação**.
 
 As mensagens enviadas ficam registadas na tabela `mensagens_whatsapp`.
+
+## 🌍 Versão global (Ada Lovelace Technologies)
+
+- **Idiomas**: português, inglês, espanhol e francês. A página escolhe pelo idioma do navegador (ou pelo idioma do negócio) e o visitante troca quando quiser.
+- **Fuso horário**: cada negócio tem o seu (`Negocio.fusoHorario`). Os horários são sempre os do negócio; o cliente vê também a hora no fuso dele.
+- **Moeda**: AOA, USD, EUR, BRL, GBP, MZN, CVE, ZAR, MXN, CAD (`Negocio.moeda`). Preços dos planos em `backend/src/utils/planos.js` (`PRECOS`) e `frontend/src/utils/planos.js` — são valores por defeito, ajusta-os.
+- **Consultas online**: marca um serviço como "Sessão online". Ao confirmar, o cliente recebe o link (sala Jitsi grátis ou o link fixo do negócio) por email e na página.
+- **Pix (Brasil)**: negócios em BRL com `chavePix` mostram QR code/copia-e-cola com o valor. O pagamento vai direto ao negócio.
+
+### Pagamentos internacionais dos planos (Paddle)
+Paddle é o "merchant of record": cobra cartão, PayPal, Apple/Google Pay e **Pix (clientes brasileiros)** e paga à Ada Lovelace. Angola continua com Multicaixa Express/IBAN (manual).
+
+1. Criar conta em paddle.com (precisa de aprovação) e, primeiro, testar no **sandbox**.
+2. Em Paddle → Checkout settings: aprovar o domínio do frontend e definir o *default payment link* `https://SEU-FRONTEND/pagar`.
+3. Notifications → webhook para `https://SEU-BACKEND/api/webhooks/paddle` com o evento `transaction.completed`.
+4. **Render** (backend): `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_ENV=sandbox|live`, `FRONTEND_URL`.
+5. **Vercel** (frontend): `VITE_PADDLE_CLIENT_TOKEN` (token do cliente, público) e `VITE_PADDLE_ENV=sandbox|live`.
+6. A Paddle exige páginas de Termos e Privacidade no site.
+
+Nunca coloques chaves no código nem no chat — só nas variáveis de ambiente.
+
+### WhatsApp em vários idiomas
+Cada idioma precisa do seu modelo aprovado na Meta: `WHATSAPP_IDIOMA_PT/EN/ES/FR`.

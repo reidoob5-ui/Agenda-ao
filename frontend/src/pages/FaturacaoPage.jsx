@@ -4,8 +4,11 @@ import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
 import {
   CreditCard, Smartphone, Building2, Check, Clock,
-  X, RefreshCw, AlertTriangle, Shield, ChevronDown, ChevronUp
+  X, RefreshCw, AlertTriangle, Shield, ChevronDown, ChevronUp, Globe
 } from 'lucide-react'
+import { useT } from '../i18n'
+import { fmtMoeda, moedaSugerida } from '../utils/moeda'
+import { PRECOS, MOEDAS_PRECO } from '../utils/planos'
 import { format, parseISO } from 'date-fns'
 import { pt } from 'date-fns/locale'
 
@@ -44,6 +47,8 @@ const PLANOS = [
   },
 ]
 
+const precoEm = (plano, moeda) => (plano === 'BASICO' ? 0 : PRECOS[plano]?.[moeda] ?? 0)
+
 const STATUS_BADGE = {
   APROVADO: 'badge-green',
   PENDENTE: 'badge-yellow',
@@ -64,6 +69,9 @@ export default function FaturacaoPage() {
   const [carregando, setCarregando] = useState(false)
   const [polling, setPolling] = useState(false)
   const [mostrarPlanos, setMostrarPlanos] = useState(false)
+  const { t, locale } = useT()
+  const [moedaPag, setMoedaPag] = useState(() => moedaSugerida())
+  const fmtP = (plano) => (precoEm(plano, moedaPag) === 0 ? t('comum.gratis') : fmtMoeda(precoEm(plano, moedaPag), moedaPag, locale))
 
   const carregarHistorico = async () => {
     try {
@@ -73,6 +81,22 @@ export default function FaturacaoPage() {
   }
 
   useEffect(() => { carregarHistorico() }, [])
+
+  // Voltou do pagamento online: o webhook ativa o plano em segundos; vamos atualizando
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has('pago')) return
+    let n = 0
+    const id = setInterval(async () => {
+      n++
+      try {
+        const me = await api.get('/auth/me')
+        atualizarNegocio(me.data.negocio)
+        carregarHistorico()
+        if (me.data.negocio?.plano !== 'BASICO' || n >= 12) clearInterval(id)
+      } catch { if (n >= 12) clearInterval(id) }
+    }, 5000)
+    return () => clearInterval(id)
+  }, [])
 
   // Polling para verificar status do pagamento
   useEffect(() => {
@@ -105,6 +129,18 @@ export default function FaturacaoPage() {
     } catch (err) {
       toast.error(err.response?.data?.erro || 'Erro ao gerar pedido')
     } finally { setCarregando(false) }
+  }
+
+  // Cartao / PayPal / Apple Pay / Google Pay / Pix (BRL) via Paddle
+  const iniciarOnline = async () => {
+    setCarregando(true)
+    try {
+      const r = await api.post('/pagamentos/iniciar-paddle', { plano: planoSelecionado, moeda: moedaPag })
+      window.location.href = r.data.checkoutUrl
+    } catch (err) {
+      toast.error(err.response?.data?.erro || t('fat.erroOnline'))
+      setCarregando(false)
+    }
   }
 
   const iniciarIban = async () => {
@@ -207,6 +243,16 @@ export default function FaturacaoPage() {
 
         {mostrarPlanos && (
           <div className="mt-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Globe size={14} className="text-slate-400" />
+              <span className="text-xs text-slate-500">{t('fat.moedaPag')}</span>
+              <div className="flex gap-1">
+                {MOEDAS_PRECO.map(m => (
+                  <button key={m} onClick={() => setMoedaPag(m)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${moedaPag === m ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-500 border-slate-200 hover:border-brand-300'}`}>{m}</button>
+                ))}
+              </div>
+            </div>
             <div className="grid md:grid-cols-3 gap-4 mb-5">
               {PLANOS.map(p => (
                 <button
@@ -231,7 +277,7 @@ export default function FaturacaoPage() {
                     )}
                   </div>
                   <p className="font-display font-bold text-slate-900 text-xl">
-                    {fmtKz(p.preco)}{p.preco !== 0 && <span className="text-xs font-normal text-slate-400">/mes</span>}
+                    {fmtP(p.key)}{p.preco !== 0 && <span className="text-xs font-normal text-slate-400">{t('comum.porMes')}</span>}
                   </p>
                   <p className="text-xs text-slate-400 mb-3">{p.profissionais}</p>
                   <ul className="space-y-1">
@@ -258,7 +304,7 @@ export default function FaturacaoPage() {
                 </p>
               </div>
               <p className="font-display font-bold text-2xl text-slate-900">
-                {fmtKz(PLANOS.find(p => p.key === planoSelecionado)?.preco ?? 0)}
+                {fmtP(planoSelecionado)}
               </p>
             </div>
 
@@ -272,6 +318,19 @@ export default function FaturacaoPage() {
               </button>
             ) : (<>
             {/* Metodos de pagamento */}
+            {moedaPag !== 'AOA' ? (
+              <div>
+                <button onClick={iniciarOnline} disabled={carregando}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-brand-500 bg-brand-50 hover:bg-brand-100 transition-all text-left">
+                  <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shrink-0"><CreditCard size={20} className="text-white" /></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800">{carregando ? t('fat.aAbrir') : t('fat.pagarOnline', { valor: fmtP(planoSelecionado) })}</p>
+                    <p className="text-xs text-slate-500">{moedaPag === 'BRL' ? t('fat.metodosBRL') : t('fat.metodos')}</p>
+                  </div>
+                </button>
+                <p className="text-[11px] text-slate-400 mt-3 flex items-center gap-1.5"><Shield size={12} /> {t('fat.seguro')}</p>
+              </div>
+            ) : (<>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
               Escolhe o metodo de pagamento
             </p>
@@ -315,6 +374,7 @@ export default function FaturacaoPage() {
               </p>
             </div>
             </>)}
+            </>)}
           </div>
         )}
       </div>
@@ -354,11 +414,11 @@ export default function FaturacaoPage() {
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-1.5 text-slate-500">
-                      {p.metodo === 'EXPRESS' ? <Smartphone size={13} /> : <Building2 size={13} />}
-                      <span className="text-xs">{p.metodo === 'EXPRESS' ? 'Express' : 'IBAN'}</span>
+                      {p.metodo === 'EXPRESS' ? <Smartphone size={13} /> : p.metodo === 'PADDLE' ? <CreditCard size={13} /> : <Building2 size={13} />}
+                      <span className="text-xs">{p.metodo === 'EXPRESS' ? 'Express' : p.metodo === 'PADDLE' ? 'Online' : 'IBAN'}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-4 font-semibold text-slate-800">{fmtKz(p.valor)}</td>
+                  <td className="px-4 py-4 font-semibold text-slate-800">{fmtMoeda(p.valor, p.moeda || 'AOA', locale)}</td>
                   <td className="px-4 py-4">
                     <span className={STATUS_BADGE[p.status]}>{STATUS_LABEL[p.status]}</span>
                   </td>

@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
-import { Save, ImagePlus, Lock } from 'lucide-react'
+import { Save, ImagePlus, Lock, Globe } from 'lucide-react'
+import { MOEDAS } from '../utils/moeda'
+import { listaDeFusos, fusoDoNavegador, FUSO_PADRAO } from '../utils/tempo'
+import { IDIOMAS } from '../i18n'
 import { Link } from 'react-router-dom'
 import { usePlano } from '../utils/planos'
 import { reduzirImagem } from '../utils/imagem'
@@ -14,7 +17,7 @@ export default function ConfigPage() {
   const { tem } = usePlano()
   const [logo, setLogo] = useState(undefined) // undefined = ainda a carregar (nao enviar)
   const [cor, setCor] = useState(undefined)
-  const [form, setForm] = useState({ nome:'',telefone:'',endereco:'',cidade:'Luanda',ibanBancario:'',merchantExpress:'' })
+  const [form, setForm] = useState({ nome:'',telefone:'',endereco:'',cidade:'Luanda',ibanBancario:'',merchantExpress:'',fusoHorario:FUSO_PADRAO,moeda:'AOA',idioma:'pt',linkSessaoPadrao:'',chavePix:'' })
   const [horarios, setHorarios] = useState(
     Array.from({length:7},(_,i)=>({ diaSemana:i, horaInicio:'08:00', horaFim:'18:00', ativo: i>=1&&i<=5 }))
   )
@@ -24,7 +27,7 @@ export default function ConfigPage() {
     api.get('/negocios/meu').then(r => {
       const n = r.data
       setLogo(n.logo || null); setCor(n.corPrimaria || '')
-      setForm({ nome:n.nome||'', telefone:n.telefone||'', endereco:n.endereco||'', cidade:n.cidade||'Luanda', ibanBancario:n.ibanBancario||'', merchantExpress:n.merchantExpress||'' })
+      setForm({ nome:n.nome||'', telefone:n.telefone||'', endereco:n.endereco||'', cidade:n.cidade||'Luanda', ibanBancario:n.ibanBancario||'', merchantExpress:n.merchantExpress||'', fusoHorario:n.fusoHorario||FUSO_PADRAO, moeda:n.moeda||'AOA', idioma:n.idioma||'pt', linkSessaoPadrao:n.linkSessaoPadrao||'', chavePix:n.chavePix||'' })
       if (n.horarios?.length) {
         const h = [...horarios]
         n.horarios.forEach(nh => { h[nh.diaSemana] = nh })
@@ -62,10 +65,46 @@ export default function ConfigPage() {
               <input className="input" placeholder="Ex: Rua da Samba, 123" value={form.endereco}
                 onChange={e=>setForm({...form,endereco:e.target.value})}/></div>
             <div><label className="label">Cidade</label>
-              <select className="input" value={form.cidade} onChange={e=>setForm({...form,cidade:e.target.value})}>
-                {['Luanda','Benguela','Huambo','Lubango','Cabinda','Malanje','Namibe'].map(c=><option key={c}>{c}</option>)}
-              </select>
+              <input className="input" placeholder="Luanda, São Paulo, Lisbon, New York..." value={form.cidade} onChange={e=>setForm({...form,cidade:e.target.value})}/>
             </div>
+          </div>
+        </div>
+
+        {/* Internacional */}
+        <div className="card p-6">
+          <h2 className="font-semibold text-slate-800 mb-1 flex items-center gap-2"><Globe size={16} className="text-brand-600" /> Internacional / International</h2>
+          <p className="text-xs text-slate-400 mb-4">Fuso horário, moeda e idioma da tua página de marcação. Os clientes veem as horas também no fuso deles.</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div><label className="label">Fuso horário</label>
+              <select className="input" value={form.fusoHorario} onChange={e=>setForm({...form,fusoHorario:e.target.value})}>
+                {[...new Set([form.fusoHorario, ...listaDeFusos()])].map(f=><option key={f} value={f}>{f.replace(/_/g,' ')}</option>)}
+              </select>
+              {fusoDoNavegador() && fusoDoNavegador() !== form.fusoHorario && (
+                <button type="button" className="text-xs text-brand-600 underline mt-1" onClick={()=>setForm({...form,fusoHorario:fusoDoNavegador()})}>Usar o deste dispositivo ({fusoDoNavegador()})</button>
+              )}
+            </div>
+            <div><label className="label">Moeda dos preços</label>
+              <select className="input" value={form.moeda} onChange={e=>setForm({...form,moeda:e.target.value})}>
+                {MOEDAS.map(m=><option key={m.codigo} value={m.codigo}>{m.codigo} — {m.nome}</option>)}
+              </select>
+              <p className="text-xs text-slate-400 mt-1">Os preços dos serviços passam a ser mostrados nesta moeda.</p>
+            </div>
+            <div><label className="label">Idioma da página e dos emails</label>
+              <select className="input" value={form.idioma} onChange={e=>setForm({...form,idioma:e.target.value})}>
+                {IDIOMAS.map(i=><option key={i.codigo} value={i.codigo}>{i.nome}</option>)}
+              </select>
+              <p className="text-xs text-slate-400 mt-1">Os clientes podem trocar o idioma na própria página.</p>
+            </div>
+            <div><label className="label">Link das consultas online (opcional)</label>
+              <input className="input" type="url" placeholder="https://meet.google.com/..." value={form.linkSessaoPadrao} onChange={e=>setForm({...form,linkSessaoPadrao:e.target.value})}/>
+              <p className="text-xs text-slate-400 mt-1">Se ficar vazio, criamos uma sala de vídeo grátis (Jitsi) para cada consulta.</p>
+            </div>
+            {form.moeda === 'BRL' && (
+              <div className="md:col-span-2"><label className="label">Chave Pix (Brasil)</label>
+                <input className="input" placeholder="CPF/CNPJ, email, telefone ou chave aleatória" value={form.chavePix} onChange={e=>setForm({...form,chavePix:e.target.value})}/>
+                <p className="text-xs text-slate-400 mt-1">Os clientes veem um QR code Pix com o valor da marcação. O pagamento vai direto para ti.</p>
+              </div>
+            )}
           </div>
         </div>
 
