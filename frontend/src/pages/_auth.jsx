@@ -25,7 +25,7 @@ export function LoginPage() {
             <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
               <CalendarCheck size={20} className="text-white" />
             </div>
-            <span className="font-display font-bold text-2xl">AgendaAO</span>
+            <span className="font-display font-bold text-2xl">Agenda Aqui</span>
           </Link>
           <h1 className="font-display text-2xl font-bold text-slate-900">Entrar na conta</h1>
           <p className="text-sm text-slate-500 mt-1">Acede ao teu painel de gestão</p>
@@ -75,7 +75,7 @@ export function RegistarPage() {
     e.preventDefault()
     if (passo === 1) { setPasso(2); return }
     const r = await registar(form)
-    if (r.sucesso) { toast.success('Conta criada! Bem-vindo ao AgendaAO 🎉'); navigate('/dashboard') }
+    if (r.sucesso) { toast.success('Conta criada! Bem-vindo ao Agenda Aqui 🎉'); navigate('/dashboard') }
     else toast.error(r.erro)
   }
 
@@ -87,7 +87,7 @@ export function RegistarPage() {
             <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
               <CalendarCheck size={20} className="text-white" />
             </div>
-            <span className="font-display font-bold text-2xl">AgendaAO</span>
+            <span className="font-display font-bold text-2xl">Agenda Aqui</span>
           </Link>
           <h1 className="font-display text-2xl font-bold text-slate-900">Criar conta</h1>
           <div className="flex items-center justify-center gap-2 mt-3">

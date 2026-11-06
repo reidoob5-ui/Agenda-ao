@@ -50,7 +50,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
               <CalendarCheck size={20} className="text-white" />
             </div>
-            <span className="font-display font-bold text-2xl">AgendaAO</span>
+            <span className="font-display font-bold text-2xl">Agenda Aqui</span>
           </Link>
           <h1 className="font-display text-2xl font-bold text-slate-900">{t('auth.entrarTitulo')}</h1>
           <p className="text-sm text-slate-500 mt-1">{t('auth.entrarSub')}</p>

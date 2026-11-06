@@ -53,7 +53,7 @@ export default function Layout() {
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
               <CalendarCheck size={16} className="text-white" />
             </div>
-            <span className="font-display font-bold text-slate-900 text-lg leading-none">AgendaAO</span>
+            <span className="font-display font-bold text-slate-900 text-lg leading-none">Agenda Aqui</span>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default function Layout() {
         {/* Rodape sidebar */}
         <div className="p-3 border-t border-slate-100">
           {EMAIL_SUPORTE && (
-            <a href={`mailto:${EMAIL_SUPORTE}?subject=${encodeURIComponent(`${negocio?.plano === 'PREMIUM' ? '[PRIORITÁRIO] ' : ''}Suporte AgendaAO — ${negocio?.nome || ''}`)}`}
+            <a href={`mailto:${EMAIL_SUPORTE}?subject=${encodeURIComponent(`${negocio?.plano === 'PREMIUM' ? '[PRIORITÁRIO] ' : ''}Suporte Agenda Aqui — ${negocio?.nome || ''}`)}`}
               className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all">
               <LifeBuoy size={15} />
               {negocio?.plano === 'PREMIUM' ? t('nav.suportePrio') : t('nav.suporte')}

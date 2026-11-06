@@ -30,7 +30,7 @@ export default {
   'plano.prof1': '1 professional', 'plano.prof5': 'Up to 5 professionals', 'plano.profIlim': 'Unlimited',
   'plano.b1': '1 professional', 'plano.b2': '50 bookings/month', 'plano.b3': 'Booking page with QR code', 'plano.b4': 'Manual WhatsApp button', 'plano.b5': 'Simple client list',
   'plano.p0': 'Everything in Basic', 'plano.p1': 'Up to 5 professionals', 'plano.p2': 'Unlimited bookings', 'plano.p3': 'Email reminders', 'plano.p4': 'Client records and history (CRM)', 'plano.p5': 'Monthly financial reports', 'plano.p6': 'Your logo on the booking page',
-  'plano.m0': 'Everything in Professional', 'plano.m1': 'Unlimited professionals', 'plano.m2': 'Automatic WhatsApp', 'plano.m3': 'Loyalty points', 'plano.m4': 'Advanced reports', 'plano.m5': 'Waitlist', 'plano.m6': 'Your own color, no AgendaAO branding', 'plano.m7': 'Priority support',
+  'plano.m0': 'Everything in Professional', 'plano.m1': 'Unlimited professionals', 'plano.m2': 'Automatic WhatsApp', 'plano.m3': 'Loyalty points', 'plano.m4': 'Advanced reports', 'plano.m5': 'Waitlist', 'plano.m6': 'Your own color, no Agenda Aqui branding', 'plano.m7': 'Priority support',
 
   'auth.entrarTitulo': 'Log in', 'auth.entrarSub': 'Access your dashboard', 'auth.ouEmail': 'or with email',
   'auth.email': 'Email', 'auth.senha': 'Password', 'auth.entrando': 'Logging in... (may take up to 1 minute)',
@@ -62,7 +62,7 @@ export default {
   'book.recusado': 'Request not accepted', 'book.recusadoTexto': 'The business could not accept your request. Try another time or contact them directly.', 'book.tentarOutro': 'Try another time',
   'book.ocupado': 'Time slot taken', 'book.maisProximos': 'Closest free times', 'book.outraData': 'Choose another date',
   'book.avisemMe': 'Notify me if a spot opens up', 'book.listaEspera': 'Waitlist', 'book.listaEsperaTexto': 'Leave your contact. The business will let you know if a spot opens up.',
-  'book.entrarLista': 'Join', 'book.feitoCom': 'Made with AgendaAO',
+  'book.entrarLista': 'Join', 'book.feitoCom': 'Made with Agenda Aqui',
   'book.pixTitulo': 'Pay with Pix', 'book.pixTexto': 'Copy the code and paste it in your bank app, or scan the QR code.', 'book.pixCopiar': 'Copy Pix code', 'book.pixCopiado': 'Code copied!',
   'book.pixAviso': 'Payment goes directly to the business.',
   'book.erroNegocio': 'Business not found',
@@ -71,4 +71,5 @@ export default {
   'fat.erroOnline': 'Could not open the payment',
   'pagar.titulo': 'Secure payment', 'pagar.aCarregar': 'Loading payment...', 'pagar.erro': 'Invalid or expired payment link. Go back to Billing and try again.',
   'pagar.pago': 'Payment received! Activating your plan...', 'pagar.voltar': 'Back to Billing',
+  'legal.atualizado': 'Last updated', 'legal.termos': 'Terms of Use', 'legal.privacidade': 'Privacy Policy', 'legal.aceito': 'By continuing you accept the',
 }

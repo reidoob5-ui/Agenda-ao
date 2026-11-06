@@ -13,7 +13,7 @@ const RECURSOS = {
   relatoriosAvancados:   'PREMIUM',
   listaEspera:           'PREMIUM',
   corPropria:            'PREMIUM',      // cor da pagina de marcacao
-  semMarca:              'PREMIUM',      // sem "Feito com AgendaAO"
+  semMarca:              'PREMIUM',      // sem "Feito com Agenda Aqui"
   suportePrioritario:    'PREMIUM',
 };
 

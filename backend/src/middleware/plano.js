@@ -40,7 +40,7 @@ const verificarPlano = async (req, res, next) => {
       return res.status(403).json({
         erro: 'Plano expirado',
         codigo: 'PLANO_EXPIRADO',
-        mensagem: 'O teu plano de assinatura expirou. Renova em Faturacao para continuar a usar o AgendaAO.'
+        mensagem: 'O teu plano de assinatura expirou. Renova em Faturacao para continuar a usar o Agenda Aqui.'
       });
     }
 

@@ -38,7 +38,7 @@ export default function PedidoDepoimento() {
         <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
           <Star size={28} className="text-amber-400 fill-amber-400" />
         </div>
-        <h2 className="font-display text-xl font-bold text-slate-900 mb-2">Já usas o AgendaAO há 10 dias!</h2>
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-2">Já usas o Agenda Aqui há 10 dias!</h2>
         <p className="text-sm text-slate-500 mb-6">
           Como está a correr? O teu depoimento demora 1 minuto e ajuda outros negócios a decidir.
         </p>

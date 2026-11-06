@@ -146,7 +146,7 @@ router.post('/google-registar', [
       where: { email: { equals: google.email, mode: 'insensitive' } }
     });
     if (existe) {
-      return res.status(409).json({ codigo: 'JA_EXISTE', erro: 'Esta conta Google já tem conta no AgendaAO. Usa "Entrar".' });
+      return res.status(409).json({ codigo: 'JA_EXISTE', erro: 'Esta conta Google já tem conta no Agenda Aqui. Usa "Entrar".' });
     }
 
     // Conta criada com Google: sem senha utilizavel (hash de valor aleatorio)

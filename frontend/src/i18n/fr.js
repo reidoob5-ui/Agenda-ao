@@ -30,7 +30,7 @@ export default {
   'plano.prof1': '1 professionnel', 'plano.prof5': 'Jusqu’à 5 professionnels', 'plano.profIlim': 'Illimité',
   'plano.b1': '1 professionnel', 'plano.b2': '50 réservations/mois', 'plano.b3': 'Page de réservation avec QR code', 'plano.b4': 'Bouton WhatsApp manuel', 'plano.b5': 'Liste de clients simple',
   'plano.p0': 'Tout le Basique', 'plano.p1': 'Jusqu’à 5 professionnels', 'plano.p2': 'Réservations illimitées', 'plano.p3': 'Rappels par email', 'plano.p4': 'Fiche et historique client (CRM)', 'plano.p5': 'Rapports financiers mensuels', 'plano.p6': 'Votre logo sur la page',
-  'plano.m0': 'Tout le Professionnel', 'plano.m1': 'Professionnels illimités', 'plano.m2': 'WhatsApp automatique', 'plano.m3': 'Points de fidélité', 'plano.m4': 'Rapports avancés', 'plano.m5': 'Liste d’attente', 'plano.m6': 'Votre couleur, sans marque AgendaAO', 'plano.m7': 'Support prioritaire',
+  'plano.m0': 'Tout le Professionnel', 'plano.m1': 'Professionnels illimités', 'plano.m2': 'WhatsApp automatique', 'plano.m3': 'Points de fidélité', 'plano.m4': 'Rapports avancés', 'plano.m5': 'Liste d’attente', 'plano.m6': 'Votre couleur, sans marque Agenda Aqui', 'plano.m7': 'Support prioritaire',
 
   'auth.entrarTitulo': 'Se connecter', 'auth.entrarSub': 'Accédez à votre tableau de bord', 'auth.ouEmail': 'ou par email',
   'auth.email': 'Email', 'auth.senha': 'Mot de passe', 'auth.entrando': 'Connexion... (peut prendre jusqu’à 1 minute)',
@@ -62,7 +62,7 @@ export default {
   'book.recusado': 'Demande non acceptée', 'book.recusadoTexto': 'L’établissement n’a pas pu accepter votre demande. Essayez un autre horaire ou contactez-le directement.', 'book.tentarOutro': 'Essayer un autre horaire',
   'book.ocupado': 'Créneau occupé', 'book.maisProximos': 'Créneaux libres les plus proches', 'book.outraData': 'Choisir une autre date',
   'book.avisemMe': 'Prévenez-moi si une place se libère', 'book.listaEspera': 'Liste d’attente', 'book.listaEsperaTexto': 'Laissez vos coordonnées. L’établissement vous préviendra si une place se libère.',
-  'book.entrarLista': 'M’inscrire', 'book.feitoCom': 'Créé avec AgendaAO',
+  'book.entrarLista': 'M’inscrire', 'book.feitoCom': 'Créé avec Agenda Aqui',
   'book.pixTitulo': 'Payer avec Pix', 'book.pixTexto': 'Copiez le code et collez-le dans l’app de votre banque, ou scannez le QR code.', 'book.pixCopiar': 'Copier le code Pix', 'book.pixCopiado': 'Code copié !',
   'book.pixAviso': 'Le paiement est effectué directement à l’établissement.',
   'book.erroNegocio': 'Établissement introuvable',
@@ -71,4 +71,5 @@ export default {
   'fat.erroOnline': "Impossible d'ouvrir le paiement",
   'pagar.titulo': 'Paiement sécurisé', 'pagar.aCarregar': 'Chargement du paiement...', 'pagar.erro': 'Lien de paiement invalide ou expiré. Retourne à la Facturation et réessaie.',
   'pagar.pago': 'Paiement reçu ! Activation de ton plan...', 'pagar.voltar': 'Retour à la Facturation',
+  'legal.atualizado': 'Mis à jour le', 'legal.termos': "Conditions d'utilisation", 'legal.privacidade': 'Politique de confidentialité', 'legal.aceito': 'En continuant tu acceptes les',
 }

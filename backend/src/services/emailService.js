@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const { tr, escapar } = require('../utils/textos');
 const T = require('../utils/tempo');
 
-// Assinatura da empresa dona do AgendaAO (email de suporte pode ser trocado com EMAIL_SUPORTE no Render)
+// Assinatura da empresa dona do Agenda Aqui (email de suporte pode ser trocado com EMAIL_SUPORTE no Render)
 const EMAIL_SUPORTE = process.env.EMAIL_SUPORTE || 'agendaaosuporte@gmail.com';
 
 const smtpConfigurado = () => !!(process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -14,7 +14,7 @@ const obterTransporter = () => nodemailer.createTransport({
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 });
 
-const remetente = () => process.env.EMAIL_FROM || `"AgendaAO" <${process.env.SMTP_USER}>`;
+const remetente = () => process.env.EMAIL_FROM || `"Agenda Aqui" <${process.env.SMTP_USER}>`;
 
 function rodape(idioma) {
   return `<p style="text-align:center;font-size:11px;color:#94a3b8;margin:24px 0 0;border-top:1px solid #f1f5f9;padding-top:12px;">${tr(idioma, 'rodape')}<br>${tr(idioma, 'suporte')}: ${escapar(EMAIL_SUPORTE)}</p>`;

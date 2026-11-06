@@ -104,7 +104,7 @@ router.post('/iniciar-express', autenticar, async (req, res) => {
       plano: planoPedido,
       // Dados de pagamento do dono (quem recebe o dinheiro)
       numerExpress: process.env.MULTICAIXA_EXPRESS_NUMERO,
-      nomeRecebedor: process.env.MULTICAIXA_EXPRESS_NOME || 'AgendaAO',
+      nomeRecebedor: process.env.MULTICAIXA_EXPRESS_NOME || 'Agenda Aqui',
       instrucoes: `Faz Multicaixa Express para ${process.env.MULTICAIXA_EXPRESS_NUMERO}. No campo descricao coloca a referencia: ${referencia}`,
     });
   } catch (err) {
@@ -153,7 +153,7 @@ router.post('/iniciar-iban', autenticar, async (req, res) => {
       referencia,
       valor: valorKz,
       plano: planoPedido,
-      titular: process.env.IBAN_TITULAR || 'AgendaAO',
+      titular: process.env.IBAN_TITULAR || 'Agenda Aqui',
       ibans,
       ibanPrincipal: ibanAtlantico,
       bancoPrincipal: 'Atlantico',

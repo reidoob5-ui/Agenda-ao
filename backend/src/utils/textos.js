@@ -10,7 +10,7 @@ const TEXTOS = {
     lemTitulo: '⏰ Lembrete da tua marcação', lemIntro24: 'Olá <strong>{cliente}</strong>, a tua marcação em <strong>{negocio}</strong> é amanhã.',
     lemIntro2: 'Olá <strong>{cliente}</strong>, a tua marcação em <strong>{negocio}</strong> é daqui a pouco.',
     com: 'Com', naoPodes: 'Não podes ir? Avisa o negócio', assuntoLem: '⏰ Lembrete — {negocio} — {data} {hora}',
-    fuso: 'Hora de {fuso}', rodape: 'Enviado por <strong>AgendaAO</strong> · um produto da <strong>Ada Lovelace Technologies</strong>', suporte: 'Suporte',
+    fuso: 'Hora de {fuso}', rodape: 'Enviado por <strong>Agenda Aqui</strong> · um produto da <strong>Ada Lovelace Technologies</strong>', suporte: 'Suporte',
   },
   en: {
     novoTitulo: 'New booking!', novoIntro: 'You have a new booking in the <strong>{negocio}</strong> dashboard.',
@@ -22,7 +22,7 @@ const TEXTOS = {
     lemTitulo: '⏰ Your booking reminder', lemIntro24: 'Hi <strong>{cliente}</strong>, your booking at <strong>{negocio}</strong> is tomorrow.',
     lemIntro2: 'Hi <strong>{cliente}</strong>, your booking at <strong>{negocio}</strong> is coming up soon.',
     com: 'With', naoPodes: "Can't make it? Let the business know", assuntoLem: '⏰ Reminder — {negocio} — {data} {hora}',
-    fuso: '{fuso} time', rodape: 'Sent by <strong>AgendaAO</strong> · a product of <strong>Ada Lovelace Technologies</strong>', suporte: 'Support',
+    fuso: '{fuso} time', rodape: 'Sent by <strong>Agenda Aqui</strong> · a product of <strong>Ada Lovelace Technologies</strong>', suporte: 'Support',
   },
   es: {
     novoTitulo: '¡Nueva reserva!', novoIntro: 'Tienes una nueva reserva en el panel de <strong>{negocio}</strong>.',
@@ -34,7 +34,7 @@ const TEXTOS = {
     lemTitulo: '⏰ Recordatorio de tu reserva', lemIntro24: 'Hola <strong>{cliente}</strong>, tu reserva en <strong>{negocio}</strong> es mañana.',
     lemIntro2: 'Hola <strong>{cliente}</strong>, tu reserva en <strong>{negocio}</strong> es muy pronto.',
     com: 'Con', naoPodes: '¿No puedes ir? Avisa al negocio', assuntoLem: '⏰ Recordatorio — {negocio} — {data} {hora}',
-    fuso: 'Hora de {fuso}', rodape: 'Enviado por <strong>AgendaAO</strong> · un producto de <strong>Ada Lovelace Technologies</strong>', suporte: 'Soporte',
+    fuso: 'Hora de {fuso}', rodape: 'Enviado por <strong>Agenda Aqui</strong> · un producto de <strong>Ada Lovelace Technologies</strong>', suporte: 'Soporte',
   },
   fr: {
     novoTitulo: 'Nouvelle réservation !', novoIntro: 'Vous avez une nouvelle réservation dans le tableau de bord de <strong>{negocio}</strong>.',
@@ -46,7 +46,7 @@ const TEXTOS = {
     lemTitulo: '⏰ Rappel de votre réservation', lemIntro24: 'Bonjour <strong>{cliente}</strong>, votre réservation chez <strong>{negocio}</strong> est demain.',
     lemIntro2: 'Bonjour <strong>{cliente}</strong>, votre réservation chez <strong>{negocio}</strong> approche.',
     com: 'Avec', naoPodes: 'Vous ne pouvez pas venir ? Prévenez l’établissement', assuntoLem: '⏰ Rappel — {negocio} — {data} {hora}',
-    fuso: 'Heure de {fuso}', rodape: 'Envoyé par <strong>AgendaAO</strong> · un produit de <strong>Ada Lovelace Technologies</strong>', suporte: 'Support',
+    fuso: 'Heure de {fuso}', rodape: 'Envoyé par <strong>Agenda Aqui</strong> · un produit de <strong>Ada Lovelace Technologies</strong>', suporte: 'Support',
   },
 };
 

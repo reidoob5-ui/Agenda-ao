@@ -23,6 +23,7 @@ import AvaliarPage from './pages/AvaliarPage'
 import CartazPage from './pages/CartazPage'
 import ListaEsperaPage from './pages/ListaEsperaPage'
 import PagarPage from './pages/PagarPage'
+import LegalPage from './pages/LegalPage'
 
 export default function App() {
   const inicializar = useAuthStore(s => s.inicializar)
@@ -36,6 +37,8 @@ export default function App() {
       <Route path="/criar"   element={<RegistarPage />} />
       <Route path="/b/:slug" element={<BookingPage />} />
       <Route path="/depoimentos" element={<DepoimentosPage />} />
+      <Route path="/termos" element={<LegalPage tipo="termos" />} />
+      <Route path="/privacidade" element={<LegalPage tipo="privacidade" />} />
 
       {/* Painel Admin do Dono do Sistema — rota secreta, nao partilhar */}
       <Route path="/gestao-x7k3m9" element={<AdminPage />} />

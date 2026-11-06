@@ -609,6 +609,7 @@ export default function BookingPage() {
         </div>
       )}
 
+      <p className="text-center text-[11px] text-slate-300 pb-2"><a href="/privacidade" className="hover:text-slate-500">{t('legal.privacidade')}</a></p>
       {!negocio.semMarca && (
         <div className="text-center py-6">
           <a href="/" className="text-xs text-slate-300 hover:text-slate-500 transition-colors flex items-center justify-center gap-1">

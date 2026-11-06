@@ -31,7 +31,7 @@ export default {
   'plano.prof1': '1 profissional', 'plano.prof5': 'Até 5 profissionais', 'plano.profIlim': 'Ilimitado',
   'plano.b1': '1 profissional', 'plano.b2': '50 marcações/mês', 'plano.b3': 'Página de marcação com QR code', 'plano.b4': 'Botão de WhatsApp manual', 'plano.b5': 'Lista simples de clientes',
   'plano.p0': 'Tudo do Básico', 'plano.p1': 'Até 5 profissionais', 'plano.p2': 'Marcações ilimitadas', 'plano.p3': 'Lembretes por email', 'plano.p4': 'Ficha e histórico do cliente (CRM)', 'plano.p5': 'Relatórios financeiros mensais', 'plano.p6': 'O teu logotipo na página',
-  'plano.m0': 'Tudo do Profissional', 'plano.m1': 'Profissionais ilimitados', 'plano.m2': 'WhatsApp automático', 'plano.m3': 'Pontos de fidelidade', 'plano.m4': 'Relatórios avançados', 'plano.m5': 'Lista de espera', 'plano.m6': 'Cor própria, sem marca AgendaAO', 'plano.m7': 'Suporte prioritário',
+  'plano.m0': 'Tudo do Profissional', 'plano.m1': 'Profissionais ilimitados', 'plano.m2': 'WhatsApp automático', 'plano.m3': 'Pontos de fidelidade', 'plano.m4': 'Relatórios avançados', 'plano.m5': 'Lista de espera', 'plano.m6': 'Cor própria, sem marca Agenda Aqui', 'plano.m7': 'Suporte prioritário',
 
   'auth.entrarTitulo': 'Entrar na conta', 'auth.entrarSub': 'Acede ao teu painel de gestão', 'auth.ouEmail': 'ou com email',
   'auth.email': 'Email', 'auth.senha': 'Palavra-passe', 'auth.entrando': 'A entrar... (pode demorar até 1 minuto)',
@@ -63,7 +63,7 @@ export default {
   'book.recusado': 'Pedido não aceite', 'book.recusadoTexto': 'O negócio não pôde aceitar o teu pedido. Tenta outro horário ou contacta-os diretamente.', 'book.tentarOutro': 'Tentar outro horário',
   'book.ocupado': 'Horário ocupado', 'book.maisProximos': 'Horários livres mais próximos', 'book.outraData': 'Escolher outra data',
   'book.avisemMe': 'Avisem-me se abrir uma vaga', 'book.listaEspera': 'Lista de espera', 'book.listaEsperaTexto': 'Deixa o teu contacto. O negócio avisa-te se abrir uma vaga.',
-  'book.entrarLista': 'Entrar', 'book.feitoCom': 'Feito com AgendaAO',
+  'book.entrarLista': 'Entrar', 'book.feitoCom': 'Feito com Agenda Aqui',
   'book.pixTitulo': 'Pagar com Pix', 'book.pixTexto': 'Copia o código e cola na app do teu banco, ou lê o QR code.', 'book.pixCopiar': 'Copiar código Pix', 'book.pixCopiado': 'Código copiado!',
   'book.pixAviso': 'O pagamento é feito diretamente ao negócio.',
   'book.erroNegocio': 'Negócio não encontrado',
@@ -72,4 +72,5 @@ export default {
   'fat.erroOnline': 'Não foi possível abrir o pagamento',
   'pagar.titulo': 'Pagamento seguro', 'pagar.aCarregar': 'A carregar o pagamento...', 'pagar.erro': 'Link de pagamento inválido ou expirado. Volta à Faturação e tenta de novo.',
   'pagar.pago': 'Pagamento recebido! A ativar o teu plano...', 'pagar.voltar': 'Voltar à Faturação',
+  'legal.atualizado': 'Atualizado em', 'legal.termos': 'Termos de Uso', 'legal.privacidade': 'Política de Privacidade', 'legal.aceito': 'Ao continuar aceitas os',
 }

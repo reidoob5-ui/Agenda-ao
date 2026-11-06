@@ -40,7 +40,7 @@ services:
       - key: MULTICAIXA_EXPRESS_NUMERO
         sync: false
       - key: MULTICAIXA_EXPRESS_NOME
-        value: AgendaAO
+        value: Agenda Aqui
       - key: IBAN_ATLANTICO
         sync: false
       - key: IBAN_ATLANTICO_BANCO
@@ -50,7 +50,7 @@ services:
       - key: IBAN_BAI_BANCO
         value: BAI
       - key: IBAN_TITULAR
-        value: AgendaAO
+        value: Agenda Aqui
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT

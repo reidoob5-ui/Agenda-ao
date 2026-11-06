@@ -83,7 +83,7 @@ export default function AvaliarPage() {
         {estado.depoimento ? 'O teu depoimento' : 'Deixar depoimento'}
       </h1>
       <p className="text-sm text-slate-500 mb-5">
-        Conta a outros negócios como o AgendaAO te ajuda. Aparece na página inicial e na página de{' '}
+        Conta a outros negócios como o Agenda Aqui te ajuda. Aparece na página inicial e na página de{' '}
         <Link to="/depoimentos" className="text-brand-600 font-semibold hover:underline">depoimentos</Link>.
       </p>
 

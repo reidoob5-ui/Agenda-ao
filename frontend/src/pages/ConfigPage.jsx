@@ -137,11 +137,11 @@ export default function ConfigPage() {
               {tem('corPropria') ? (
                 <div className="flex items-center gap-3">
                   <input type="color" value={cor || '#ea580c'} onChange={e => setCor(e.target.value)} className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5 bg-white" />
-                  <span className="text-sm text-slate-500 font-mono">{cor || 'Cor AgendaAO'}</span>
+                  <span className="text-sm text-slate-500 font-mono">{cor || 'Cor Agenda Aqui'}</span>
                   {cor && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setCor('')}>Repor</button>}
                 </div>
               ) : (
-                <p className="text-xs text-amber-700 flex items-center gap-1"><Lock size={11}/> Cor própria e página sem a marca AgendaAO: <Link to="/faturacao" className="underline">plano Premium</Link>.</p>
+                <p className="text-xs text-amber-700 flex items-center gap-1"><Lock size={11}/> Cor própria e página sem a marca Agenda Aqui: <Link to="/faturacao" className="underline">plano Premium</Link>.</p>
               )}
             </div>
           </div>

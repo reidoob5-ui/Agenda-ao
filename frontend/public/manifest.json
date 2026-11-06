@@ -1,7 +1,7 @@
 {
-  "name": "AgendaAO Admin",
+  "name": "Agenda Aqui Admin",
   "short_name": "Admin AO",
-  "description": "Painel de administração do sistema AgendaAO",
+  "description": "Painel de administração do sistema Agenda Aqui",
   "start_url": "/gestao-x7k3m9",
   "scope": "/",
   "display": "standalone",

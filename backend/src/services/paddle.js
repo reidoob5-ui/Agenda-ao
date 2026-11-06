@@ -12,10 +12,10 @@ async function criarTransacao({ nomePlano, valor, moeda, urlPagamento }) {
     items: [{
       quantity: 1,
       price: {
-        description: `AgendaAO ${nomePlano} — 1 mês`,
-        name: `AgendaAO ${nomePlano}`,
+        description: `Agenda Aqui ${nomePlano} — 1 mês`,
+        name: `Agenda Aqui ${nomePlano}`,
         unit_price: { amount: String(Math.round(valor * 100)), currency_code: moeda },
-        product: { name: `AgendaAO ${nomePlano}`, tax_category: 'saas' },
+        product: { name: `Agenda Aqui ${nomePlano}`, tax_category: 'saas' },
       },
     }],
     currency_code: moeda,

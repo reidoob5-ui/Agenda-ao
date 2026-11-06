@@ -29,6 +29,8 @@ const origens = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
   'http://localhost:5173',
   'http://localhost:4173',
+  'https://agendaaqui.com',
+  'https://www.agendaaqui.com',
 ];
 
 app.use(cors({
@@ -112,7 +114,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 AgendaAO backend iniciado na porta ${PORT}`);
+  console.log(`\n🚀 Agenda Aqui backend iniciado na porta ${PORT}`);
   console.log(`   Ambiente: ${process.env.NODE_ENV}`);
   console.log(`   API: http://localhost:${PORT}/api/health\n`);
   iniciarCrons();

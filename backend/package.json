@@ -1,7 +1,7 @@
 {
   "name": "agendaao-backend",
   "version": "1.0.0",
-  "description": "Backend do sistema de agendamento AgendaAO",
+  "description": "Backend do sistema de agendamento Agenda Aqui",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

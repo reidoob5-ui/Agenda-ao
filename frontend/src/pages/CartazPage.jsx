@@ -54,7 +54,7 @@ export default function CartazPage() {
         </div>
 
         <div className="flex items-center gap-2 text-slate-400 text-sm">
-          <CalendarCheck size={14} /> Agendamento online · AgendaAO
+          <CalendarCheck size={14} /> Agendamento online · Agenda Aqui
         </div>
       </div>
     </div>

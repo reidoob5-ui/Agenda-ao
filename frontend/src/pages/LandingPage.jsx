@@ -26,7 +26,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
               <CalendarCheck size={16} className="text-white" />
             </div>
-            <span className="font-display font-bold text-xl">AgendaAO</span>
+            <span className="font-display font-bold text-xl">Agenda Aqui</span>
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm text-slate-600">
             <a href="#funcionalidades" className="hover:text-slate-900 transition-colors">{t('land.funcionalidades')}</a>
@@ -159,10 +159,13 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2 text-white">
             <CalendarCheck size={16} />
-            <span className="font-display font-bold">AgendaAO</span>
+            <span className="font-display font-bold">Agenda Aqui</span>
           </div>
           <AssinaturaAda fundo="escuro" comEmail />
-          <p className="text-slate-500 text-sm">{t('land.rodape', { ano: new Date().getFullYear() })}</p>
+          <div className="text-center md:text-right">
+            <p className="text-slate-500 text-sm">{t('land.rodape', { ano: new Date().getFullYear() })}</p>
+            <p className="text-xs mt-1.5 space-x-3"><Link to="/termos" className="text-slate-400 hover:text-slate-200">{t('legal.termos')}</Link><Link to="/privacidade" className="text-slate-400 hover:text-slate-200">{t('legal.privacidade')}</Link></p>
+          </div>
         </div>
       </footer>
     </div>

@@ -201,7 +201,7 @@ export default function AdminPage() {
               <CalendarCheck size={20} className="text-white" />
             </div>
             <div>
-              <p className="font-display font-bold text-white text-lg leading-none">AgendaAO</p>
+              <p className="font-display font-bold text-white text-lg leading-none">Agenda Aqui</p>
               <p className="text-slate-400 text-xs">Painel Admin</p>
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function AdminPage() {
               <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
                 <CalendarCheck size={14} className="text-white" />
               </div>
-              <span className="font-display font-bold text-sm">AgendaAO Admin</span>
+              <span className="font-display font-bold text-sm">Agenda Aqui Admin</span>
             </div>
             <nav className="flex gap-1">
               {[

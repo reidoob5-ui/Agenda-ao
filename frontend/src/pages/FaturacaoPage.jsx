@@ -41,7 +41,7 @@ const PLANOS = [
     label: 'Premium',
     preco: 19000,
     profissionais: 'Ilimitado',
-    features: ['Tudo do Profissional', 'Profissionais ilimitados', 'WhatsApp automatico', 'Pontos de fidelidade', 'Relatorios avancados', 'Lista de espera', 'Cor propria, sem marca AgendaAO', 'Suporte prioritario'],
+    features: ['Tudo do Profissional', 'Profissionais ilimitados', 'WhatsApp automatico', 'Pontos de fidelidade', 'Relatorios avancados', 'Lista de espera', 'Cor propria, sem marca Agenda Aqui', 'Suporte prioritario'],
     cor: 'border-slate-200 hover:border-slate-300',
     destaque: false,
   },
@@ -370,7 +370,7 @@ export default function FaturacaoPage() {
               <p className="text-xs text-blue-700">
                 <strong>Confirmacao em ate 24h.</strong> Apos o pagamento, envia o comprovativo para{' '}
                 <strong>agendaaosuporte@gmail.com</strong> com o assunto{' '}
-                <strong>"Pagamento AgendaAO - [teu nome de negocio]"</strong> para agilizar a activacao.
+                <strong>"Pagamento Agenda Aqui - [teu nome de negocio]"</strong> para agilizar a activacao.
               </p>
             </div>
             </>)}
@@ -454,7 +454,7 @@ export default function FaturacaoPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Nome</span>
-                <span className="text-slate-700 text-sm font-medium">AgendaAO</span>
+                <span className="text-slate-700 text-sm font-medium">Agenda Aqui</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Valor</span>
@@ -495,7 +495,7 @@ export default function FaturacaoPage() {
             <div className="space-y-2.5 mb-5">
               {[
                 { label: 'Numero Express', valor: '925 856 294', mono: true },
-                { label: 'Nome do recebedor', valor: 'AgendaAO', mono: false },
+                { label: 'Nome do recebedor', valor: 'Agenda Aqui', mono: false },
                 { label: 'Valor a pagar', valor: fmtKz(infoExpress.valor), mono: false },
                 { label: 'Referencia (obrigatoria)', valor: infoExpress.referencia, mono: true },
               ].map(({ label, valor, mono }) => (

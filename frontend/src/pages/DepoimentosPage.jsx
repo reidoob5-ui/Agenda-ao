@@ -42,7 +42,7 @@ export default function DepoimentosPage() {
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
               <CalendarCheck size={16} className="text-white" />
             </div>
-            <span className="font-display font-bold text-xl">AgendaAO</span>
+            <span className="font-display font-bold text-xl">Agenda Aqui</span>
           </Link>
           <Link to="/criar" className="btn-primary">Começar grátis →</Link>
         </div>
@@ -50,7 +50,7 @@ export default function DepoimentosPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-10">
         <h1 className="font-display text-3xl font-bold text-slate-900 mb-1">O que dizem os nossos clientes</h1>
-        <p className="text-slate-500 mb-8">Depoimentos de negócios que já usam o AgendaAO.</p>
+        <p className="text-slate-500 mb-8">Depoimentos de negócios que já usam o Agenda Aqui.</p>
 
         {carregando && <p className="text-slate-400 text-center py-16">A carregar...</p>}
         {erro && <p className="text-slate-500 text-center py-16">Não foi possível carregar os depoimentos. Tenta novamente daqui a pouco.</p>}

@@ -19,7 +19,7 @@ async function main() {
   const negocio = await prisma.negocio.create({
     data: {
       nome: 'Salão Beleza Luanda',
-      email: 'demo@agendaao.ao',
+      email: 'demo@agendaaqui.com',
       telefone: '+244 923 456 789',
       endereco: 'Rua da Samba, 123, Miramar',
       cidade: 'Luanda',
@@ -36,7 +36,7 @@ async function main() {
     data: {
       negocioId: negocio.id,
       nome: 'Carlos Administrador',
-      email: 'demo@agendaao.ao',
+      email: 'demo@agendaaqui.com',
       senha: senhaHash,
       role: 'DONO'
     }
@@ -147,7 +147,7 @@ async function main() {
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('🎉 Base de dados populada com sucesso!')
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-  console.log(`📧 Email:  demo@agendaao.ao`)
+  console.log(`📧 Email:  demo@agendaaqui.com`)
   console.log(`🔑 Senha:  demo123`)
   console.log(`🔗 Booking: /b/salao-beleza-luanda-demo`)
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')

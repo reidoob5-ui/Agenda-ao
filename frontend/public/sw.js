@@ -1,5 +1,5 @@
 // ============================================================
-// AgendaAO Admin — Service Worker
+// Agenda Aqui Admin — Service Worker
 // Cache offline + Notificações de pagamentos pendentes
 // ============================================================
 

@@ -1,12 +1,12 @@
 #!/bin/bash
 # ============================================================
-# AgendaAO — Script de arranque rápido
+# Agenda Aqui — Script de arranque rápido
 # Corre: chmod +x start.sh && ./start.sh
 # ============================================================
 
 echo ""
 echo "╔═══════════════════════════════════╗"
-echo "║       AgendaAO — Arranque         ║"
+echo "║       Agenda Aqui — Arranque         ║"
 echo "╚═══════════════════════════════════╝"
 echo ""
 

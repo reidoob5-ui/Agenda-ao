@@ -254,7 +254,7 @@ router.post('/whatsapp/teste', async (req, res) => {
     ? await wa.enviarTemplate({
         para,
         template: process.env.WHATSAPP_TEMPLATE_CONFIRMACAO || 'confirmacao_marcacao',
-        parametros: ['Ana', 'Corte de cabelo', 'AgendaAO (teste)', '10/11/2026', '10:00'],
+        parametros: ['Ana', 'Corte de cabelo', 'Agenda Aqui (teste)', '10/11/2026', '10:00'],
       })
     : await wa.enviarTemplate({ para, template: 'hello_world', idioma: 'en_US' });
 

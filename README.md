@@ -1,4 +1,4 @@
-# 🗓️ AgendaAO — Sistema de Agendamento para Angola
+# 🗓️ Agenda Aqui — Agendamentos online para o mundo inteiro
 
 Sistema completo de agendamentos online para salões de beleza, barbearias e clínicas em Angola.
 Pagamentos via **Multicaixa Express** e **transferência IBAN** bancária.
@@ -180,7 +180,7 @@ async function enviarWhatsApp(telefone, mensagem) {
 
 Cada negócio tem um link único:
 ```
-https://agendaao.ao/b/nome-do-salao-abc123
+https://agendaaqui.com/b/nome-do-salao-abc123
 ```
 
 O dono partilha este link no:
@@ -197,7 +197,7 @@ O dono partilha este link no:
 |---|---|---|---|
 | Profissionais | 1 | até 5 | ilimitados |
 | Marcações/mês | 50 | ilimitadas | ilimitadas |
-| Página de marcação + QR | sim (com "Feito com AgendaAO") | + logotipo próprio | + cor própria, sem marca AgendaAO |
+| Página de marcação + QR | sim (com "Feito com Agenda Aqui") | + logotipo próprio | + cor própria, sem marca Agenda Aqui |
 | Clientes | lista simples | CRM (ficha + histórico) | + pontos de fidelidade |
 | Lembretes | botão WhatsApp manual | email ao cliente | WhatsApp automático (Meta) |
 | Relatórios | resumo do dia | financeiros mensais | + avançados (por profissional, horas de pico, clientes que não voltam) |

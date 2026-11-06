@@ -54,7 +54,7 @@ export default function RegistarPage() {
             <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
               <CalendarCheck size={20} className="text-white" />
             </div>
-            <span className="font-display font-bold text-2xl">AgendaAO</span>
+            <span className="font-display font-bold text-2xl">Agenda Aqui</span>
           </Link>
           <h1 className="font-display text-2xl font-bold">{t('reg.titulo')}</h1>
           <div className="flex items-center justify-center gap-2 mt-3">
@@ -100,6 +100,9 @@ export default function RegistarPage() {
               <button type="submit" className="btn-primary w-full py-3" disabled={carregando}>
                 {passo===1 ? t('comum.continuar') : carregando ? t('reg.criando') : t('reg.criar')}
               </button>
+            )}
+            {passo===2 && (
+              <p className="text-[11px] text-slate-400 text-center">{t('legal.aceito')} <Link to="/termos" target="_blank" className="underline">{t('legal.termos')}</Link> · <Link to="/privacidade" target="_blank" className="underline">{t('legal.privacidade')}</Link></p>
             )}
           </form>
         </div>
