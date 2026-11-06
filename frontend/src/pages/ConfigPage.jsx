@@ -5,15 +5,16 @@ import toast from 'react-hot-toast'
 import { Save, ImagePlus, Lock, Globe } from 'lucide-react'
 import { MOEDAS } from '../utils/moeda'
 import { listaDeFusos, fusoDoNavegador, FUSO_PADRAO } from '../utils/tempo'
-import { IDIOMAS } from '../i18n'
+import { IDIOMAS, useT } from '../i18n'
 import { Link } from 'react-router-dom'
 import { usePlano } from '../utils/planos'
 import { reduzirImagem } from '../utils/imagem'
 
-const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+const DIAS = ['ct.dia0','ct.dia1','ct.dia2','ct.dia3','ct.dia4','ct.dia5','ct.dia6']
 
 export default function ConfigPage() {
   const { atualizarNegocio } = useAuthStore()
+  const { t } = useT()
   const { tem } = usePlano()
   const [logo, setLogo] = useState(undefined) // undefined = ainda a carregar (nao enviar)
   const [cor, setCor] = useState(undefined)
@@ -44,65 +45,65 @@ export default function ConfigPage() {
       if (tem('corPropria') && cor !== undefined) dados.corPrimaria = cor
       const r = await api.put('/negocios/meu', dados)
       atualizarNegocio(r.data)
-      toast.success('Configurações guardadas!')
-    } catch { toast.error('Erro ao guardar') }
+      toast.success(t('ct.cfg.ok'))
+    } catch { toast.error(t('ct.cfg.erro')) }
     finally { setGuardando(false) }
   }
 
   return (
     <div className="p-6 max-w-3xl">
-      <h1 className="font-display text-2xl font-bold mb-6">Configurações</h1>
+      <h1 className="font-display text-2xl font-bold mb-6">{t('ct.cfg.titulo')}</h1>
       <form onSubmit={guardar} className="space-y-5">
         {/* Dados do negócio */}
         <div className="card p-6">
-          <h2 className="font-semibold text-slate-800 mb-4">Dados do negócio</h2>
+          <h2 className="font-semibold text-slate-800 mb-4">{t('ct.cfg.dadosNeg')}</h2>
           <div className="grid md:grid-cols-2 gap-4">
-            <div><label className="label">Nome do negócio</label>
+            <div><label className="label">{t('ct.cfg.nomeNeg')}</label>
               <input className="input" value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})}/></div>
-            <div><label className="label">Telefone</label>
+            <div><label className="label">{t('ct.cfg.telefone')}</label>
               <input className="input" value={form.telefone} onChange={e=>setForm({...form,telefone:e.target.value})}/></div>
-            <div><label className="label">Endereço</label>
-              <input className="input" placeholder="Ex: Rua da Samba, 123" value={form.endereco}
+            <div><label className="label">{t('ct.cfg.endereco')}</label>
+              <input className="input" placeholder={t('ct.cfg.enderecoEx')} value={form.endereco}
                 onChange={e=>setForm({...form,endereco:e.target.value})}/></div>
-            <div><label className="label">Cidade</label>
-              <input className="input" placeholder="Luanda, São Paulo, Lisbon, New York..." value={form.cidade} onChange={e=>setForm({...form,cidade:e.target.value})}/>
+            <div><label className="label">{t('ct.cfg.cidade')}</label>
+              <input className="input" placeholder={t('ct.cfg.cidadeEx')} value={form.cidade} onChange={e=>setForm({...form,cidade:e.target.value})}/>
             </div>
           </div>
         </div>
 
         {/* Internacional */}
         <div className="card p-6">
-          <h2 className="font-semibold text-slate-800 mb-1 flex items-center gap-2"><Globe size={16} className="text-brand-600" /> Internacional / International</h2>
-          <p className="text-xs text-slate-400 mb-4">Fuso horário, moeda e idioma da tua página de marcação. Os clientes veem as horas também no fuso deles.</p>
+          <h2 className="font-semibold text-slate-800 mb-1 flex items-center gap-2"><Globe size={16} className="text-brand-600" /> {t('ct.cfg.internacional')}</h2>
+          <p className="text-xs text-slate-400 mb-4">{t('ct.cfg.intSub')}</p>
           <div className="grid md:grid-cols-2 gap-4">
-            <div><label className="label">Fuso horário</label>
+            <div><label className="label">{t('ct.cfg.fuso')}</label>
               <select className="input" value={form.fusoHorario} onChange={e=>setForm({...form,fusoHorario:e.target.value})}>
                 {[...new Set([form.fusoHorario, ...listaDeFusos()])].map(f=><option key={f} value={f}>{f.replace(/_/g,' ')}</option>)}
               </select>
               {fusoDoNavegador() && fusoDoNavegador() !== form.fusoHorario && (
-                <button type="button" className="text-xs text-brand-600 underline mt-1" onClick={()=>setForm({...form,fusoHorario:fusoDoNavegador()})}>Usar o deste dispositivo ({fusoDoNavegador()})</button>
+                <button type="button" className="text-xs text-brand-600 underline mt-1" onClick={()=>setForm({...form,fusoHorario:fusoDoNavegador()})}>{t('ct.cfg.usarFuso', { fuso: fusoDoNavegador() })}</button>
               )}
             </div>
-            <div><label className="label">Moeda dos preços</label>
+            <div><label className="label">{t('ct.cfg.moeda')}</label>
               <select className="input" value={form.moeda} onChange={e=>setForm({...form,moeda:e.target.value})}>
                 {MOEDAS.map(m=><option key={m.codigo} value={m.codigo}>{m.codigo} — {m.nome}</option>)}
               </select>
-              <p className="text-xs text-slate-400 mt-1">Os preços dos serviços passam a ser mostrados nesta moeda.</p>
+              <p className="text-xs text-slate-400 mt-1">{t('ct.cfg.moedaAjuda')}</p>
             </div>
-            <div><label className="label">Idioma da página e dos emails</label>
+            <div><label className="label">{t('ct.cfg.idioma')}</label>
               <select className="input" value={form.idioma} onChange={e=>setForm({...form,idioma:e.target.value})}>
                 {IDIOMAS.map(i=><option key={i.codigo} value={i.codigo}>{i.nome}</option>)}
               </select>
-              <p className="text-xs text-slate-400 mt-1">Os clientes podem trocar o idioma na própria página.</p>
+              <p className="text-xs text-slate-400 mt-1">{t('ct.cfg.idiomaAjuda')}</p>
             </div>
-            <div><label className="label">Link das consultas online (opcional)</label>
+            <div><label className="label">{t('ct.cfg.linkOnline')}</label>
               <input className="input" type="url" placeholder="https://meet.google.com/..." value={form.linkSessaoPadrao} onChange={e=>setForm({...form,linkSessaoPadrao:e.target.value})}/>
-              <p className="text-xs text-slate-400 mt-1">Se ficar vazio, criamos uma sala de vídeo grátis (Jitsi) para cada consulta.</p>
+              <p className="text-xs text-slate-400 mt-1">{t('ct.cfg.linkAjuda')}</p>
             </div>
             {form.moeda === 'BRL' && (
-              <div className="md:col-span-2"><label className="label">Chave Pix (Brasil)</label>
-                <input className="input" placeholder="CPF/CNPJ, email, telefone ou chave aleatória" value={form.chavePix} onChange={e=>setForm({...form,chavePix:e.target.value})}/>
-                <p className="text-xs text-slate-400 mt-1">Os clientes veem um QR code Pix com o valor da marcação. O pagamento vai direto para ti.</p>
+              <div className="md:col-span-2"><label className="label">{t('ct.cfg.pix')}</label>
+                <input className="input" placeholder={t('ct.cfg.pixEx')} value={form.chavePix} onChange={e=>setForm({...form,chavePix:e.target.value})}/>
+                <p className="text-xs text-slate-400 mt-1">{t('ct.cfg.pixAjuda')}</p>
               </div>
             )}
           </div>
@@ -110,38 +111,38 @@ export default function ConfigPage() {
 
         {/* Aparência da página de marcação */}
         <div className="card p-6">
-          <h2 className="font-semibold text-slate-800 mb-1">Aparência da página de marcação</h2>
-          <p className="text-xs text-slate-400 mb-4">O que os teus clientes veem quando abrem o teu QR code</p>
+          <h2 className="font-semibold text-slate-800 mb-1">{t('ct.cfg.aparencia')}</h2>
+          <p className="text-xs text-slate-400 mb-4">{t('ct.cfg.aparenciaSub')}</p>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="label">Logotipo</label>
+              <label className="label">{t('ct.cfg.logotipo')}</label>
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-slate-300">
                   {logo ? <img src={logo} alt="" className="w-full h-full object-cover" /> : <ImagePlus size={20} />}
                 </div>
                 <label className="btn-ghost cursor-pointer">
-                  {logo ? 'Mudar' : 'Escolher imagem'}
+                  {logo ? t('ct.cfg.mudar') : t('ct.cfg.escolherImg')}
                   <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                     const f = e.target.files?.[0]; if (!f) return
-                    try { setLogo(await reduzirImagem(f, 256)) } catch { toast.error('Não consegui ler essa imagem') }
+                    try { setLogo(await reduzirImagem(f, 256)) } catch { toast.error(t('ct.cfg.erroImg')) }
                   }} />
                 </label>
-                {logo && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setLogo(null)}>Remover</button>}
+                {logo && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setLogo(null)}>{t('ct.cfg.remover')}</button>}
               </div>
               {!tem('logoPagina') && (
-                <p className="text-xs text-amber-700 mt-2 flex items-center gap-1"><Lock size={11}/> No plano Básico o logotipo só aparece nos depoimentos. Na página de marcação: <Link to="/faturacao" className="underline">plano Profissional</Link>.</p>
+                <p className="text-xs text-amber-700 mt-2 flex items-center gap-1"><Lock size={11}/> {t('ct.cfg.logoLock')} <Link to="/faturacao" className="underline">{t('ct.cfg.planoProf')}</Link>.</p>
               )}
             </div>
             <div>
-              <label className="label">Cor da página</label>
+              <label className="label">{t('ct.cfg.corPagina')}</label>
               {tem('corPropria') ? (
                 <div className="flex items-center gap-3">
                   <input type="color" value={cor || '#ea580c'} onChange={e => setCor(e.target.value)} className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5 bg-white" />
-                  <span className="text-sm text-slate-500 font-mono">{cor || 'Cor Agenda Aqui'}</span>
-                  {cor && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setCor('')}>Repor</button>}
+                  <span className="text-sm text-slate-500 font-mono">{cor || t('ct.cfg.corAgenda')}</span>
+                  {cor && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setCor('')}>{t('ct.cfg.repor')}</button>}
                 </div>
               ) : (
-                <p className="text-xs text-amber-700 flex items-center gap-1"><Lock size={11}/> Cor própria e página sem a marca Agenda Aqui: <Link to="/faturacao" className="underline">plano Premium</Link>.</p>
+                <p className="text-xs text-amber-700 flex items-center gap-1"><Lock size={11}/> {t('ct.cfg.corLock')} <Link to="/faturacao" className="underline">{t('ct.cfg.planoPremium')}</Link>.</p>
               )}
             </div>
           </div>
@@ -149,31 +150,31 @@ export default function ConfigPage() {
 
         {/* Pagamentos */}
         <div className="card p-6">
-          <h2 className="font-semibold text-slate-800 mb-1">Pagamentos</h2>
-          <p className="text-xs text-slate-400 mb-4">Para receber dos teus clientes nos agendamentos</p>
+          <h2 className="font-semibold text-slate-800 mb-1">{t('ct.cfg.pagamentos')}</h2>
+          <p className="text-xs text-slate-400 mb-4">{t('ct.cfg.pagSub')}</p>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="label">IBAN Bancário</label>
+              <label className="label">{t('ct.cfg.iban')}</label>
               <input className="input font-mono text-sm" placeholder="AO06.0000.0000.0000.0000.0000.0"
                 value={form.ibanBancario} onChange={e=>setForm({...form,ibanBancario:e.target.value})}/>
-              <p className="text-xs text-slate-400 mt-1">BFA, BAI, BIC, BDA — qualquer banco angolano</p>
+              <p className="text-xs text-slate-400 mt-1">{t('ct.cfg.ibanAjuda')}</p>
             </div>
             <div>
-              <label className="label">Número Multicaixa Express</label>
-              <input className="input" placeholder="Merchant ID do EMIS"
+              <label className="label">{t('ct.cfg.express')}</label>
+              <input className="input" placeholder={t('ct.cfg.expressEx')}
                 value={form.merchantExpress} onChange={e=>setForm({...form,merchantExpress:e.target.value})}/>
-              <p className="text-xs text-slate-400 mt-1">Obtém em emis.co.ao ou no teu banco</p>
+              <p className="text-xs text-slate-400 mt-1">{t('ct.cfg.expressAjuda')}</p>
             </div>
           </div>
         </div>
 
         {/* Horários */}
         <div className="card p-6">
-          <h2 className="font-semibold text-slate-800 mb-4">Horários de funcionamento</h2>
+          <h2 className="font-semibold text-slate-800 mb-4">{t('ct.cfg.horarios')}</h2>
           <div className="space-y-2">
             {horarios.map((h, i) => (
               <div key={i} className="flex items-center gap-4">
-                <span className="w-8 text-sm font-medium text-slate-500">{DIAS[i]}</span>
+                <span className="w-8 text-sm font-medium text-slate-500">{t(DIAS[i])}</span>
                 <button type="button"
                   onClick={()=>{ const hs=[...horarios]; hs[i]={...hs[i],ativo:!hs[i].ativo}; setHorarios(hs) }}
                   className={`relative w-9 h-5 rounded-full transition-all ${h.ativo?'bg-brand-500':'bg-slate-200'}`}>
@@ -188,7 +189,7 @@ export default function ConfigPage() {
                       onChange={e=>{ const hs=[...horarios]; hs[i]={...hs[i],horaFim:e.target.value}; setHorarios(hs) }}/>
                   </div>
                 ) : (
-                  <span className="text-sm text-slate-400 italic">Fechado</span>
+                  <span className="text-sm text-slate-400 italic">{t('ct.cfg.fechado')}</span>
                 )}
               </div>
             ))}
@@ -196,7 +197,7 @@ export default function ConfigPage() {
         </div>
 
         <button type="submit" className="btn-primary flex items-center gap-2 px-6" disabled={guardando}>
-          <Save size={16}/> {guardando ? 'A guardar...' : 'Guardar configurações'}
+          <Save size={16}/> {guardando ? t('ct.cfg.guardando') : t('ct.cfg.guardar')}
         </button>
       </form>
     </div>

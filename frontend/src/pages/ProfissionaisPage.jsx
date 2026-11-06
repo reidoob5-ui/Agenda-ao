@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import toast from 'react-hot-toast'
 import { Plus, X, Phone, Mail, FileText, ToggleLeft, ToggleRight, User } from 'lucide-react'
+import { useT } from '../i18n'
 
 export default function ProfissionaisPage() {
+  const { t } = useT()
   const [profissionais, setProfissionais] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [modal, setModal] = useState(false)
@@ -15,7 +17,7 @@ export default function ProfissionaisPage() {
       const r = await api.get('/profissionais')
       setProfissionais(r.data)
     } catch (err) {
-      toast.error('Erro ao carregar profissionais')
+      toast.error(t('gs.prof.erroCarregar'))
     } finally {
       setCarregando(false)
     }
@@ -48,25 +50,25 @@ export default function ProfissionaisPage() {
     try {
       if (editando) {
         await api.put(`/profissionais/${editando.id}`, form)
-        toast.success('Profissional actualizado!')
+        toast.success(t('gs.prof.atualizado'))
       } else {
         await api.post('/profissionais', form)
-        toast.success('Profissional cadastrado!')
+        toast.success(t('gs.prof.cadastrado'))
       }
       setModal(false)
       carregar()
     } catch (err) {
-      toast.error(err.response?.data?.erro || 'Erro ao guardar dados')
+      toast.error(err.response?.data?.erro || t('gs.prof.erroGuardar'))
     }
   }
 
   const toggleAtivo = async (p) => {
     try {
       await api.put(`/profissionais/${p.id}`, { ativo: !p.ativo })
-      toast.success(p.ativo ? 'Profissional desactivado' : 'Profissional activado')
+      toast.success(p.ativo ? t('gs.prof.desativado') : t('gs.prof.ativado'))
       carregar()
     } catch (err) {
-      toast.error('Erro ao mudar estado')
+      toast.error(t('gs.prof.erroEstado'))
     }
   }
 
@@ -80,11 +82,11 @@ export default function ProfissionaisPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-display text-2xl font-bold text-slate-900">Profissionais</h1>
-          <p className="text-slate-500 text-sm">Gere a equipa e especialistas do teu negócio</p>
+          <h1 className="font-display text-2xl font-bold text-slate-900">{t('gs.prof.titulo')}</h1>
+          <p className="text-slate-500 text-sm">{t('gs.prof.subtitulo')}</p>
         </div>
         <button onClick={abrirNovo} className="btn-primary flex items-center gap-2">
-          <Plus size={16} /> Novo profissional
+          <Plus size={16} /> {t('gs.prof.novoBtn')}
         </button>
       </div>
 
@@ -103,7 +105,7 @@ export default function ProfissionaisPage() {
                 <div className="min-w-0">
                   <h3 className="font-semibold text-slate-800 text-lg truncate leading-snug">{p.nome}</h3>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1 ${p.ativo ? 'bg-green-100 text-green-800' : 'bg-slate-200 text-slate-600'}`}>
-                    {p.ativo ? 'Activo' : 'Inactivo'}
+                    {p.ativo ? t('gs.prof.ativo') : t('gs.prof.inativo')}
                   </span>
                 </div>
               </div>
@@ -132,16 +134,16 @@ export default function ProfissionaisPage() {
               <button onClick={() => toggleAtivo(p)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">
                 {p.ativo ? (
                   <>
-                    <ToggleRight size={20} className="text-green-500" /> Desactivar
+                    <ToggleRight size={20} className="text-green-500" /> {t('gs.prof.desativar')}
                   </>
                 ) : (
                   <>
-                    <ToggleLeft size={20} className="text-slate-300" /> Activar
+                    <ToggleLeft size={20} className="text-slate-300" /> {t('gs.prof.ativar')}
                   </>
                 )}
               </button>
               <button onClick={() => abrirEditar(p)} className="btn-ghost py-1 px-3 text-xs font-bold border border-slate-200 rounded-lg">
-                Editar
+                {t('gs.prof.editar')}
               </button>
             </div>
           </div>
@@ -150,10 +152,10 @@ export default function ProfissionaisPage() {
         {profissionais.length === 0 && (
           <div className="col-span-full card py-16 text-center">
             <User size={40} className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-400 font-medium">Nenhum profissional cadastrado</p>
-            <p className="text-slate-300 text-sm mt-1">Cria profissionais para que os clientes os possam escolher ao agendar</p>
+            <p className="text-slate-400 font-medium">{t('gs.prof.nenhum')}</p>
+            <p className="text-slate-300 text-sm mt-1">{t('gs.prof.nenhumDica')}</p>
             <button onClick={abrirNovo} className="btn-primary mt-4 inline-flex items-center gap-2 text-sm">
-              <Plus size={14} /> Adicionar primeiro
+              <Plus size={14} /> {t('gs.prof.addPrimeiro')}
             </button>
           </div>
         )}
@@ -165,7 +167,7 @@ export default function ProfissionaisPage() {
           <div className="card w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display font-bold text-lg text-slate-900">
-                {editando ? 'Editar Profissional' : 'Novo Profissional'}
+                {editando ? t('gs.prof.modalEditar') : t('gs.prof.modalNovo')}
               </h2>
               <button onClick={() => setModal(false)}>
                 <X size={18} className="text-slate-400 hover:text-slate-700 transition-colors" />
@@ -174,42 +176,42 @@ export default function ProfissionaisPage() {
 
             <form onSubmit={submeter} className="space-y-4">
               <div>
-                <label className="label">Nome completo</label>
-                <input className="input" placeholder="Ex: João Silva" value={form.nome}
+                <label className="label">{t('gs.prof.nome')}</label>
+                <input className="input" placeholder={t('gs.prof.nomeEx')} value={form.nome}
                   onChange={e => setForm({ ...form, nome: e.target.value })} required />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Telemóvel</label>
-                  <input className="input" placeholder="+244 923..." value={form.telefone}
+                  <label className="label">{t('gs.prof.telemovel')}</label>
+                  <input className="input" placeholder={t('gs.prof.telefoneEx')} value={form.telefone}
                     onChange={e => setForm({ ...form, telefone: e.target.value })} />
                 </div>
                 <div>
-                  <label className="label">Email</label>
-                  <input className="input" type="email" placeholder="joao@exemplo.com" value={form.email}
+                  <label className="label">{t('gs.prof.email')}</label>
+                  <input className="input" type="email" placeholder={t('gs.prof.emailEx')} value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })} />
                 </div>
               </div>
 
               <div>
-                <label className="label">URL da Foto (opcional)</label>
-                <input className="input" placeholder="https://exemplo.com/foto.jpg" value={form.foto}
+                <label className="label">{t('gs.prof.foto')}</label>
+                <input className="input" placeholder={t('gs.prof.fotoEx')} value={form.foto}
                   onChange={e => setForm({ ...form, foto: e.target.value })} />
               </div>
 
               <div>
-                <label className="label">Biografia / Especialidade (opcional)</label>
-                <textarea className="input min-h-[80px] py-2" placeholder="Ex: Cabeleireiro especialista em cortes masculinos e barba."
+                <label className="label">{t('gs.prof.bio')}</label>
+                <textarea className="input min-h-[80px] py-2" placeholder={t('gs.prof.bioEx')}
                   value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} />
               </div>
 
               <div className="flex gap-3 pt-3 border-t border-slate-100">
                 <button type="button" onClick={() => setModal(false)} className="btn-ghost flex-1 py-2.5">
-                  Cancelar
+                  {t('gs.prof.cancelar')}
                 </button>
                 <button type="submit" className="btn-primary flex-1 py-2.5">
-                  {editando ? 'Guardar' : 'Cadastrar'}
+                  {editando ? t('gs.prof.guardar') : t('gs.prof.cadastrar')}
                 </button>
               </div>
             </form>

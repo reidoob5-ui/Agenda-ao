@@ -4,7 +4,10 @@ import en from './en'
 import es from './es'
 import fr from './fr'
 
-const DICIONARIOS = { pt, en, es, fr }
+// Textos do painel ficam em i18n/painel/*.js (cada ficheiro: export default { pt:{}, en:{}, es:{}, fr:{} })
+const extras = Object.values(import.meta.glob('./painel/*.js', { eager: true })).map((m) => m.default)
+const juntar = (l, base) => Object.assign({}, base, ...extras.map((x) => x?.[l] || {}))
+const DICIONARIOS = { pt: juntar('pt', pt), en: juntar('en', en), es: juntar('es', es), fr: juntar('fr', fr) }
 export const IDIOMAS = [
   { codigo: 'pt', nome: 'Português' },
   { codigo: 'en', nome: 'English' },

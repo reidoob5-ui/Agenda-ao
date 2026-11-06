@@ -3,10 +3,12 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Printer, ArrowLeft, CalendarCheck } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { Avatar } from '../components/Depoimentos'
+import { useT } from '../i18n'
 
 // Cartaz A4 pronto a imprimir: logótipo, nome do negócio e QR grande para marcar
 export default function CartazPage() {
   const { negocio } = useAuthStore()
+  const { t } = useT()
   const link = `${window.location.origin}/b/${negocio?.slug}`
 
   return (
@@ -22,10 +24,10 @@ export default function CartazPage() {
 
       <div className="no-print max-w-[210mm] mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/dashboard" className="btn-ghost inline-flex items-center gap-2 text-sm">
-          <ArrowLeft size={15} /> Voltar
+          <ArrowLeft size={15} /> {t('comum.voltar')}
         </Link>
         <button onClick={() => window.print()} className="btn-primary inline-flex items-center gap-2 text-sm">
-          <Printer size={15} /> Imprimir / Guardar PDF
+          <Printer size={15} /> {t('ct.cz.imprimir')}
         </button>
       </div>
 
@@ -42,19 +44,19 @@ export default function CartazPage() {
 
         <div className="flex flex-col items-center gap-6">
           <p className="font-display font-bold text-brand-600" style={{ fontSize: '40px', lineHeight: 1.1 }}>
-            Marca a tua hora aqui
+            {t('ct.cz.marca')}
           </p>
           <div className="p-4 border-4 border-slate-900 rounded-3xl">
             <QRCodeSVG value={link} size={300} level="M" includeMargin={false} />
           </div>
           <p className="text-slate-600" style={{ fontSize: '20px' }}>
-            Aponta a câmara do telemóvel ao QR Code
+            {t('ct.cz.aponta')}
           </p>
           <p className="text-slate-400 font-mono break-all" style={{ fontSize: '13px' }}>{link}</p>
         </div>
 
         <div className="flex items-center gap-2 text-slate-400 text-sm">
-          <CalendarCheck size={14} /> Agendamento online · Agenda Aqui
+          <CalendarCheck size={14} /> {t('ct.cz.rodape')}
         </div>
       </div>
     </div>

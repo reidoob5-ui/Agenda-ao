@@ -22,8 +22,8 @@ const PLANOS = [
     key: 'BASICO',
     label: 'Basico',
     preco: 0,
-    profissionais: '1 profissional',
-    features: ['50 marcacoes/mes', 'Pagina de marcacao com QR code', 'Botao de WhatsApp manual', 'Lista simples de clientes'],
+    profissionais: 'plano.prof1',
+    features: ['plano.b2', 'plano.b3', 'plano.b4', 'plano.b5'],
     cor: 'border-slate-200 hover:border-slate-300',
     destaque: false,
   },
@@ -31,8 +31,8 @@ const PLANOS = [
     key: 'PROFISSIONAL',
     label: 'Profissional',
     preco: 8000,
-    profissionais: 'Ate 5 profissionais',
-    features: ['Marcacoes ilimitadas', 'Lembretes por email', 'Ficha e historico do cliente (CRM)', 'Relatorios financeiros mensais', 'O teu logotipo na pagina'],
+    profissionais: 'plano.prof5',
+    features: ['plano.p2', 'plano.p3', 'plano.p4', 'plano.p5', 'plano.p6'],
     cor: 'border-brand-500 shadow-lg',
     destaque: true,
   },
@@ -40,8 +40,8 @@ const PLANOS = [
     key: 'PREMIUM',
     label: 'Premium',
     preco: 19000,
-    profissionais: 'Ilimitado',
-    features: ['Tudo do Profissional', 'Profissionais ilimitados', 'WhatsApp automatico', 'Pontos de fidelidade', 'Relatorios avancados', 'Lista de espera', 'Cor propria, sem marca Agenda Aqui', 'Suporte prioritario'],
+    profissionais: 'plano.profIlim',
+    features: ['plano.m0', 'plano.m1', 'plano.m2', 'plano.m3', 'plano.m4', 'plano.m5', 'plano.m6', 'plano.m7'],
     cor: 'border-slate-200 hover:border-slate-300',
     destaque: false,
   },
@@ -55,7 +55,6 @@ const STATUS_BADGE = {
   RECUSADO: 'badge-red',
   EXPIRADO: 'badge-gray'
 }
-const STATUS_LABEL = { APROVADO: 'Confirmado', PENDENTE: 'Aguarda confirmacao', RECUSADO: 'Recusado', EXPIRADO: 'Expirado' }
 
 export default function FaturacaoPage() {
   const { negocio, atualizarNegocio } = useAuthStore()
@@ -105,7 +104,7 @@ export default function FaturacaoPage() {
       try {
         const r = await api.get(`/pagamentos/status/${pagamentoAtivo}`)
         if (r.data.status === 'APROVADO') {
-          toast.success('Pagamento confirmado! Plano activado 🎉')
+          toast.success(t('ct.fat.pagConfirmado'))
           setPolling(false); setPagamentoAtivo(null); setModal(null)
           carregarHistorico()
           // Actualizar o negocio no store
@@ -127,7 +126,7 @@ export default function FaturacaoPage() {
       setModal('express-info')
       carregarHistorico()
     } catch (err) {
-      toast.error(err.response?.data?.erro || 'Erro ao gerar pedido')
+      toast.error(err.response?.data?.erro || t('ct.fat.erroPedido'))
     } finally { setCarregando(false) }
   }
 
@@ -151,7 +150,7 @@ export default function FaturacaoPage() {
       setModal('iban-info')
       carregarHistorico()
     } catch (err) {
-      toast.error(err.response?.data?.erro || 'Erro ao gerar instrucao')
+      toast.error(err.response?.data?.erro || t('ct.fat.erroInstr'))
     } finally { setCarregando(false) }
   }
 
@@ -159,12 +158,12 @@ export default function FaturacaoPage() {
     setCarregando(true)
     try {
       await api.post('/pagamentos/ativar-gratis')
-      toast.success('Plano Basico gratis activado!')
+      toast.success(t('ct.fat.gratisAtivado'))
       const me = await api.get('/auth/me')
       atualizarNegocio(me.data.negocio)
       setMostrarPlanos(false)
     } catch (err) {
-      toast.error(err.response?.data?.erro || 'Erro ao activar plano gratis')
+      toast.error(err.response?.data?.erro || t('ct.fat.erroAtivar'))
     } finally { setCarregando(false) }
   }
 
@@ -182,7 +181,7 @@ export default function FaturacaoPage() {
 
   return (
     <div className="p-6 max-w-4xl">
-      <h1 className="font-display text-2xl font-bold mb-6">Faturacao e Assinatura</h1>
+      <h1 className="font-display text-2xl font-bold mb-6">{t('ct.fat.titulo')}</h1>
 
       {/* Card: Status do Plano Actual */}
       <div className="card p-6 mb-5">
@@ -197,16 +196,16 @@ export default function FaturacaoPage() {
                 ${planoStatus === 'ATIVO' ? 'bg-green-100 text-green-700' :
                   planoStatus === 'SUSPENSO' ? 'bg-orange-100 text-orange-700' :
                   'bg-red-100 text-red-700'}`}>
-                {planoStatus === 'ATIVO' ? 'Activo' : planoStatus === 'SUSPENSO' ? 'Suspenso' : 'Expirado'}
+                {planoStatus === 'ATIVO' ? t('ct.fat.stAtivo') : planoStatus === 'SUSPENSO' ? t('ct.fat.stSuspenso') : t('ct.fat.stExpirado')}
               </span>
             </div>
             <p className="text-slate-500 text-sm">
-              {fmtKz(planoActualInfo?.preco ?? 0)}{planoActualInfo?.preco !== 0 && '/mes'}
+              {fmtKz(planoActualInfo?.preco ?? 0)}{planoActualInfo?.preco !== 0 && t('comum.porMes')}
               {planoExpira && (
                 <span className="ml-2 text-slate-400">
                   · {diasRestantes === 0
-                    ? 'Expira hoje!'
-                    : `Expira em ${diasRestantes} dia${diasRestantes !== 1 ? 's' : ''} (${format(new Date(planoExpira), "d 'de' MMMM", { locale: pt })})`}
+                    ? t('ct.fat.expiraHoje')
+                    : t(diasRestantes === 1 ? 'ct.fat.expiraEm1' : 'ct.fat.expiraEmN', { n: diasRestantes, data: new Date(planoExpira).toLocaleDateString(locale, { day: 'numeric', month: 'long' }) })}
                 </span>
               )}
             </p>
@@ -221,7 +220,7 @@ export default function FaturacaoPage() {
           <div className="mt-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
             <AlertTriangle size={15} className="text-amber-500 shrink-0" />
             <p className="text-xs text-amber-700 font-medium">
-              O teu plano expira em {diasRestantes === 0 ? 'hoje' : `${diasRestantes} dias`}. Renova agora para evitar interrupcoes.
+              {diasRestantes === 0 ? t('ct.fat.avisoHoje') : t('ct.fat.avisoDias', { n: diasRestantes })}
             </p>
           </div>
         )}
@@ -234,7 +233,7 @@ export default function FaturacaoPage() {
           className="flex items-center justify-between w-full text-left"
         >
           <h2 className="font-semibold text-slate-800">
-            {mostrarPlanos ? 'Escolher plano para renovar' : 'Renovar / Mudar de plano'}
+            {mostrarPlanos ? t('ct.fat.escolherRenovar') : t('ct.fat.renovarMudar')}
           </h2>
           {mostrarPlanos
             ? <ChevronUp size={18} className="text-slate-400" />
@@ -269,7 +268,7 @@ export default function FaturacaoPage() {
                     </span>
                   )}
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-semibold text-slate-800">{p.label}</p>
+                    <p className="font-semibold text-slate-800">{t(`plano.${p.key}`)}</p>
                     {planoSelecionado === p.key && (
                       <div className="w-5 h-5 bg-brand-600 rounded-full flex items-center justify-center">
                         <Check size={11} className="text-white" />
@@ -279,11 +278,11 @@ export default function FaturacaoPage() {
                   <p className="font-display font-bold text-slate-900 text-xl">
                     {fmtP(p.key)}{p.preco !== 0 && <span className="text-xs font-normal text-slate-400">{t('comum.porMes')}</span>}
                   </p>
-                  <p className="text-xs text-slate-400 mb-3">{p.profissionais}</p>
+                  <p className="text-xs text-slate-400 mb-3">{t(p.profissionais)}</p>
                   <ul className="space-y-1">
                     {p.features.slice(0, 3).map(f => (
                       <li key={f} className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Check size={10} className="text-green-500 shrink-0" />{f}
+                        <Check size={10} className="text-green-500 shrink-0" />{t(f)}
                       </li>
                     ))}
                   </ul>
@@ -295,12 +294,12 @@ export default function FaturacaoPage() {
             <div className="bg-slate-50 rounded-xl p-4 mb-5 flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-700">
-                  Plano seleccionado: <span className="text-brand-700">{PLANOS.find(p => p.key === planoSelecionado)?.label}</span>
+                  {t('ct.fat.planoSel')} <span className="text-brand-700">{t(`plano.${planoSelecionado}`)}</span>
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
                   {PLANOS.find(p => p.key === planoSelecionado)?.preco === 0
-                    ? 'Plano gratis, sem prazo de validade'
-                    : 'Validade: 30 dias apos confirmacao do pagamento'}
+                    ? t('ct.fat.validadeGratis')
+                    : t('ct.fat.validade30')}
                 </p>
               </div>
               <p className="font-display font-bold text-2xl text-slate-900">
@@ -314,7 +313,7 @@ export default function FaturacaoPage() {
                 disabled={carregando}
                 className="btn-primary w-full py-3"
               >
-                {carregando ? 'A activar...' : 'Activar plano gratis'}
+                {carregando ? t('ct.fat.ativando') : t('ct.fat.ativarGratis')}
               </button>
             ) : (<>
             {/* Metodos de pagamento */}
@@ -332,7 +331,7 @@ export default function FaturacaoPage() {
               </div>
             ) : (<>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
-              Escolhe o metodo de pagamento
+              {t('ct.fat.escolheMetodo')}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -345,7 +344,7 @@ export default function FaturacaoPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-800">Multicaixa Express</p>
-                  <p className="text-xs text-slate-400">Paga no telemóvel · Imediato</p>
+                  <p className="text-xs text-slate-400">{t('ct.fat.expressSub')}</p>
                 </div>
               </button>
 
@@ -358,8 +357,8 @@ export default function FaturacaoPage() {
                   <Building2 size={20} className="text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">Transferencia IBAN</p>
-                  <p className="text-xs text-slate-400">Qualquer banco angolano</p>
+                  <p className="text-sm font-semibold text-slate-800">{t('ct.fat.ibanTitulo')}</p>
+                  <p className="text-xs text-slate-400">{t('ct.fat.ibanSub')}</p>
                 </div>
               </button>
             </div>
@@ -368,9 +367,9 @@ export default function FaturacaoPage() {
             <div className="mt-4 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3">
               <Clock size={14} className="text-blue-500 shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700">
-                <strong>Confirmacao em ate 24h.</strong> Apos o pagamento, envia o comprovativo para{' '}
-                <strong>agendaaosuporte@gmail.com</strong> com o assunto{' '}
-                <strong>"Pagamento Agenda Aqui - [teu nome de negocio]"</strong> para agilizar a activacao.
+                <strong>{t('ct.fat.conf24')}</strong> {t('ct.fat.confApos')}{' '}
+                <strong>agendaaosuporte@gmail.com</strong> {t('ct.fat.confAssunto')}{' '}
+                <strong>{t('ct.fat.confAssuntoVal')}</strong> {t('ct.fat.confFim')}
               </p>
             </div>
             </>)}
@@ -382,12 +381,12 @@ export default function FaturacaoPage() {
       {/* Historico de pagamentos */}
       <div className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-800">Historico de pagamentos</h2>
+          <h2 className="font-semibold text-slate-800">{t('ct.fat.historico')}</h2>
         </div>
         {historico.length === 0 ? (
           <div className="py-12 text-center text-slate-400 text-sm">
             <CreditCard size={28} className="mx-auto mb-3 text-slate-200" />
-            Sem pagamentos registados
+            {t('ct.fat.vazio')}
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -404,7 +403,7 @@ export default function FaturacaoPage() {
               {historico.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50/50">
                   <td className="px-6 py-4 text-slate-500 text-xs whitespace-nowrap">
-                    {format(new Date(p.criadoEm), 'dd/MM/yyyy HH:mm')}
+                    {new Date(p.criadoEm).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' })}
                   </td>
                   <td className="px-4 py-4 text-slate-700 font-medium">
                     {p.assinatura?.plano || 'BASICO'}
@@ -420,7 +419,7 @@ export default function FaturacaoPage() {
                   </td>
                   <td className="px-4 py-4 font-semibold text-slate-800">{fmtMoeda(p.valor, p.moeda || 'AOA', locale)}</td>
                   <td className="px-4 py-4">
-                    <span className={STATUS_BADGE[p.status]}>{STATUS_LABEL[p.status]}</span>
+                    <span className={STATUS_BADGE[p.status]}>{t(`ct.fat.st${p.status}`)}</span>
                   </td>
                 </tr>
               ))}
@@ -434,12 +433,12 @@ export default function FaturacaoPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-bold text-lg">Pagar com Multicaixa Express</h2>
+              <h2 className="font-display font-bold text-lg">{t('ct.fat.payExpress')}</h2>
               <button onClick={() => setModal(null)}><X size={18} className="text-slate-400" /></button>
             </div>
             <div className="bg-brand-50 rounded-2xl p-4 mb-5">
               <p className="text-xs text-brand-600 font-semibold uppercase tracking-wide mb-1">
-                Plano {PLANOS.find(p => p.key === planoSelecionado)?.label}
+                {t('ct.fat.planoNome', { plano: t(`plano.${planoSelecionado}`) })}
               </p>
               <p className="font-display text-3xl font-bold text-brand-800">
                 {fmtKz(PLANOS.find(p => p.key === planoSelecionado)?.preco)}
@@ -447,17 +446,17 @@ export default function FaturacaoPage() {
             </div>
 
             <div className="bg-slate-50 rounded-xl p-4 mb-5 space-y-2">
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Dados para pagamento</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">{t('ct.fat.dadosPag')}</p>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Numero Express</span>
+                <span className="text-xs text-slate-500">{t('ct.fat.numExpress')}</span>
                 <span className="font-mono font-bold text-slate-800 text-sm">925 856 294</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Nome</span>
+                <span className="text-xs text-slate-500">{t('ct.fat.nome')}</span>
                 <span className="text-slate-700 text-sm font-medium">Agenda Aqui</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Valor</span>
+                <span className="text-xs text-slate-500">{t('ct.fat.thValor')}</span>
                 <span className="font-bold text-slate-800">
                   {fmtKz(PLANOS.find(p => p.key === planoSelecionado)?.preco)}
                 </span>
@@ -466,8 +465,7 @@ export default function FaturacaoPage() {
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
               <p className="text-xs text-amber-700">
-                Apos o pagamento, o sistema cria automaticamente uma referencia unica.
-                Envia o comprovativo para <strong>agendaaosuporte@gmail.com</strong> para activacao mais rapida.
+                {t('ct.fat.expNota1')} <strong>agendaaosuporte@gmail.com</strong> {t('ct.fat.expNota2')}
               </p>
             </div>
 
@@ -486,7 +484,7 @@ export default function FaturacaoPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-bold text-lg">Instrucoes de pagamento</h2>
+              <h2 className="font-display font-bold text-lg">{t('ct.fat.instrucoes')}</h2>
               <button onClick={() => { setModal(null); setPolling(false) }}>
                 <X size={18} className="text-slate-400" />
               </button>
@@ -494,10 +492,10 @@ export default function FaturacaoPage() {
 
             <div className="space-y-2.5 mb-5">
               {[
-                { label: 'Numero Express', valor: '925 856 294', mono: true },
-                { label: 'Nome do recebedor', valor: 'Agenda Aqui', mono: false },
-                { label: 'Valor a pagar', valor: fmtKz(infoExpress.valor), mono: false },
-                { label: 'Referencia (obrigatoria)', valor: infoExpress.referencia, mono: true },
+                { label: t('ct.fat.numExpress'), valor: '925 856 294', mono: true },
+                { label: t('ct.fat.nomeReceb'), valor: 'Agenda Aqui', mono: false },
+                { label: t('ct.fat.valorPagar'), valor: fmtKz(infoExpress.valor), mono: false },
+                { label: t('ct.fat.refObrig'), valor: infoExpress.referencia, mono: true },
               ].map(({ label, valor, mono }) => (
                 <div key={label} className="flex items-center justify-between py-2 border-b border-slate-50">
                   <span className="text-xs text-slate-400 font-medium">{label}</span>
@@ -508,24 +506,24 @@ export default function FaturacaoPage() {
 
             <div className="bg-brand-50 border border-brand-200 rounded-xl p-3 mb-4">
               <p className="text-xs text-brand-700">
-                <strong>Passo a passo:</strong><br />
-                1. Abre o Multicaixa Express no teu telefone<br />
-                2. Envia {fmtKz(infoExpress.valor)} para o numero <strong>925 856 294</strong><br />
-                3. No campo "descricao" coloca: <strong>{infoExpress.referencia}</strong><br />
-                4. Guarda o comprovativo e envia para agendaaosuporte@gmail.com
+                <strong>{t('ct.fat.passoTit')}</strong><br />
+                {t('ct.fat.p1')}<br />
+                {t('ct.fat.p2', { valor: fmtKz(infoExpress.valor) })} <strong>925 856 294</strong><br />
+                {t('ct.fat.p3')} <strong>{infoExpress.referencia}</strong><br />
+                {t('ct.fat.p4')} agendaaosuporte@gmail.com
               </p>
             </div>
 
             <button onClick={() => {
-              navigator.clipboard.writeText(`Numero: 925 856 294 | Valor: ${fmtKz(infoExpress.valor)} | Ref: ${infoExpress.referencia}`)
-              toast.success('Dados copiados!')
+              navigator.clipboard.writeText(t('ct.fat.cpExpress', { num: '925 856 294', valor: fmtKz(infoExpress.valor), ref: infoExpress.referencia }))
+              toast.success(t('ct.fat.copiados'))
             }} className="btn-ghost w-full text-sm mb-2">
-              Copiar dados
+              {t('ct.fat.copiar')}
             </button>
 
             <div className="flex items-center gap-2 text-xs text-slate-400 justify-center">
               <RefreshCw size={12} className="animate-spin" />
-              A verificar pagamento automaticamente...
+              {t('ct.fat.verificando')}
             </div>
           </div>
         </div>
@@ -536,18 +534,18 @@ export default function FaturacaoPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-bold text-lg">Transferencia IBAN</h2>
+              <h2 className="font-display font-bold text-lg">{t('ct.fat.ibanTitulo')}</h2>
               <button onClick={() => setModal(null)}><X size={18} className="text-slate-400" /></button>
             </div>
             <div className="bg-slate-50 rounded-xl p-3 mb-5">
-              <p className="text-xs text-slate-500 mb-0.5">Valor a transferir</p>
+              <p className="text-xs text-slate-500 mb-0.5">{t('ct.fat.valorTransf')}</p>
               <p className="font-display font-bold text-2xl text-slate-900">
                 {fmtKz(PLANOS.find(p => p.key === planoSelecionado)?.preco)}
               </p>
-              <p className="text-xs text-slate-400">Plano {PLANOS.find(p => p.key === planoSelecionado)?.label}</p>
+              <p className="text-xs text-slate-400">{t('ct.fat.planoNome', { plano: t(`plano.${planoSelecionado}`) })}</p>
             </div>
 
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Escolhe o teu banco</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('ct.fat.escolheBanco')}</p>
             <div className="space-y-2 mb-5">
               {[
                 { key: 'ATLANTICO', label: 'Banco Atlantico' },
@@ -577,19 +575,19 @@ export default function FaturacaoPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-bold text-lg">Dados para transferencia</h2>
+              <h2 className="font-display font-bold text-lg">{t('ct.fat.dadosTransf')}</h2>
               <button onClick={() => setModal(null)}><X size={18} className="text-slate-400" /></button>
             </div>
 
             {/* Mostrar o IBAN preferido primeiro */}
             <div className="space-y-2.5 mb-5">
               {[
-                { label: 'Titular', valor: infoIban.titular, mono: false },
+                { label: t('ct.fat.titular'), valor: infoIban.titular, mono: false },
                 { label: bancoPref === 'ATLANTICO' ? 'IBAN Atlantico' : 'IBAN BAI',
                   valor: bancoPref === 'ATLANTICO' ? 'AO06.0055.0000.5012.2997.1018.1' : 'AO06.0040.0000.4755.2292.10181.9',
                   mono: true },
-                { label: 'Valor', valor: fmtKz(infoIban.valor), mono: false },
-                { label: 'Referencia (obrigatoria)', valor: infoIban.referencia, mono: true },
+                { label: t('ct.fat.valor'), valor: fmtKz(infoIban.valor), mono: false },
+                { label: t('ct.fat.refObrig'), valor: infoIban.referencia, mono: true },
               ].map(({ label, valor, mono }) => (
                 <div key={label} className="flex items-center justify-between py-2 border-b border-slate-50">
                   <span className="text-xs text-slate-400 font-medium">{label}</span>
@@ -600,22 +598,21 @@ export default function FaturacaoPage() {
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
               <p className="text-xs text-amber-700">
-                <strong>Importante:</strong> inclui sempre a referencia <strong>{infoIban.referencia}</strong> na descricao da transferencia.
-                Apos transferir, envia o comprovativo para <strong>agendaaosuporte@gmail.com</strong>.
+                <strong>{t('ct.fat.impt')}</strong> {t('ct.fat.imp1')} <strong>{infoIban.referencia}</strong> {t('ct.fat.imp2')} <strong>agendaaosuporte@gmail.com</strong>.
               </p>
             </div>
 
             <button onClick={() => {
               const iban = bancoPref === 'ATLANTICO' ? 'AO06.0055.0000.5012.2997.1018.1' : 'AO06.0040.0000.4755.2292.10181.9'
               navigator.clipboard.writeText(
-                `Titular: ${infoIban.titular}\nIBAN: ${iban}\nValor: ${fmtKz(infoIban.valor)}\nReferencia: ${infoIban.referencia}`
+                t('ct.fat.cpIban', { titular: infoIban.titular, iban, valor: fmtKz(infoIban.valor), ref: infoIban.referencia })
               )
-              toast.success('Dados copiados!')
+              toast.success(t('ct.fat.copiados'))
             }} className="btn-ghost w-full mb-2 text-sm">
-              Copiar dados
+              {t('ct.fat.copiar')}
             </button>
             <button onClick={() => setModal(null)} className="btn-primary w-full text-sm">
-              Ja fiz a transferencia
+              {t('ct.fat.jaFiz')}
             </button>
           </div>
         </div>

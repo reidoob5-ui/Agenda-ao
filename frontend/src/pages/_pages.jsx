@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import toast from 'react-hot-toast'
 import { format, addDays, subDays, parseISO } from 'date-fns'
-import { pt } from 'date-fns/locale'
+import { dfLocale } from '../utils/dfLocale'
+import { useT, traduzir, IDIOMAS } from '../i18n'
 import { ChevronLeft, ChevronRight, X, Check, Clock, User, Scissors, Plus, Video } from 'lucide-react'
 import { fmtDinheiro } from '../utils/moeda'
 import { fmtHora, FUSO_PADRAO } from '../utils/tempo'
@@ -14,11 +15,11 @@ import { usePlano } from '../utils/planos'
 import Bloqueado from '../components/Bloqueado'
 
 const STATUS_BADGE = { PENDENTE:'badge-yellow',CONFIRMADO:'badge-green',CONCLUIDO:'badge-gray',CANCELADO:'badge-red' }
-const STATUS_LABEL = { PENDENTE:'Pendente',CONFIRMADO:'Confirmado',CONCLUIDO:'Concluído',CANCELADO:'Cancelado' }
 function fmtKz(v){return fmtDinheiro(v)}
 
 export function AgendaPage() {
   const { negocio } = useAuthStore()
+  const { t, idioma } = useT()
   const [dataAtual, setDataAtual] = useState(new Date())
   const [agendamentos, setAgendamentos] = useState([])
   const [pendentes, setPendentes] = useState([])
@@ -28,10 +29,13 @@ export function AgendaPage() {
 
   // Mensagem de WhatsApp para o cliente (abre o WhatsApp com o texto pronto)
   const linkMensagem = (ag) => {
-    const quando = `${format(parseISO(ag.dataHora), "d 'de' MMMM", { locale: pt })} às ${hhmm(ag.dataHora)}`
-    const texto = ag.status === 'PENDENTE'
-      ? `Olá ${ag.cliente?.nome}! Recebemos o teu pedido de marcação em ${negocio?.nome}: ${ag.servico?.nome}, ${quando}. Já te confirmamos!`
-      : `Olá ${ag.cliente?.nome}! A tua marcação em ${negocio?.nome} está confirmada: ${ag.servico?.nome} com ${ag.profissional?.nome}, ${quando}. Até já!`
+    // A mensagem vai para o cliente: usa o idioma do negócio, não o do dono
+    const idN = IDIOMAS.some(i => i.codigo === negocio?.idioma) ? negocio.idioma : idioma
+    const tn = (k, v) => traduzir(idN, k, v)
+    const data = format(parseISO(ag.dataHora), tn('ag.fmt.diaMes'), { locale: dfLocale(idN) })
+    const quando = tn('ag.quando', { data, hora: hhmm(ag.dataHora) })
+    const vars = { cliente: ag.cliente?.nome, negocio: negocio?.nome, servico: ag.servico?.nome, profissional: ag.profissional?.nome, quando }
+    const texto = tn(ag.status === 'PENDENTE' ? 'ag.msg.pendente' : 'ag.msg.confirmado', vars)
     return linkWhatsApp(ag.cliente?.telefone, texto)
   }
 
@@ -60,23 +64,23 @@ export function AgendaPage() {
 
   const atualizarStatus = async (id, status) => {
     await api.patch(`/agendamentos/${id}/status`, { status })
-    toast.success('Estado actualizado'); carregar()
+    toast.success(t('ag.toast.estado')); carregar()
   }
 
   const aprovar = async (id) => {
     try {
       await api.patch(`/public/negocio/${slug}/agendamento/${id}/aprovar`)
-      toast.success('✅ Agendamento aprovado!')
+      toast.success(t('ag.toast.aprovado'))
       carregarPendentes(); carregar()
-    } catch(err) { toast.error(err.response?.data?.erro || 'Erro ao aprovar') }
+    } catch(err) { toast.error(err.response?.data?.erro || t('ag.err.aprovar')) }
   }
 
   const rejeitar = async (id) => {
     try {
       await api.patch(`/public/negocio/${slug}/agendamento/${id}/rejeitar`)
-      toast.success('Agendamento rejeitado.')
+      toast.success(t('ag.toast.rejeitado'))
       carregarPendentes(); carregar()
-    } catch(err) { toast.error(err.response?.data?.erro || 'Erro ao rejeitar') }
+    } catch(err) { toast.error(err.response?.data?.erro || t('ag.err.rejeitar')) }
   }
 
   return (
@@ -86,10 +90,10 @@ export function AgendaPage() {
         <div className="flex items-center gap-3">
           <button onClick={() => setDataAtual(d => subDays(d, 1))} className="btn-ghost p-2"><ChevronLeft size={16}/></button>
           <h1 className="font-display text-xl font-bold text-slate-900 capitalize">
-            {format(dataAtual, "EEEE, d 'de' MMMM", {locale:pt})}
+            {format(dataAtual, t('ag.fmt.diaSemana'), { locale: dfLocale(idioma) })}
           </h1>
           <button onClick={() => setDataAtual(d => addDays(d, 1))} className="btn-ghost p-2"><ChevronRight size={16}/></button>
-          <button onClick={() => setDataAtual(new Date())} className="btn-ghost text-xs px-3">Hoje</button>
+          <button onClick={() => setDataAtual(new Date())} className="btn-ghost text-xs px-3">{t('ag.hoje')}</button>
         </div>
 
         {/* Tabs: Agenda | Pedidos Pendentes */}
@@ -99,14 +103,14 @@ export function AgendaPage() {
             className={`px-4 py-2 font-medium transition-all ${
               !abaPendentes ? 'bg-brand-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'
             }`}>
-            Agenda
+            {t('ag.tab.agenda')}
           </button>
           <button
             onClick={() => setAbaPendentes(true)}
             className={`px-4 py-2 font-medium flex items-center gap-2 transition-all ${
               abaPendentes ? 'bg-brand-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'
             }`}>
-            Pedidos Pendentes
+            {t('ag.tab.pendentes')}
             {pendentes.length > 0 && (
               <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
                 abaPendentes ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'
@@ -123,17 +127,17 @@ export function AgendaPage() {
         <div className="card overflow-hidden">
           {agendamentos.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-slate-400">Sem agendamentos neste dia</p>
+              <p className="text-slate-400">{t('ag.vazio.dia')}</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100">
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase">Hora</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Cliente</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Serviço</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Profissional</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Valor</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Estado</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.col.hora')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.col.cliente')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.col.servico')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.col.profissional')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.col.valor')}</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.col.estado')}</th>
                 <th className="px-4 py-3"></th>
               </tr></thead>
               <tbody className="divide-y divide-slate-50">
@@ -151,13 +155,13 @@ export function AgendaPage() {
                     <td className="px-4 py-4 text-slate-600">{ag.servico?.nome}</td>
                     <td className="px-4 py-4 text-slate-600">{ag.profissional?.nome}</td>
                     <td className="px-4 py-4 font-semibold text-slate-800">{fmtKz(ag.preco)}</td>
-                    <td className="px-4 py-4"><span className={STATUS_BADGE[ag.status]}>{STATUS_LABEL[ag.status]}</span></td>
+                    <td className="px-4 py-4"><span className={STATUS_BADGE[ag.status]}>{t('ag.status.' + ag.status)}</span></td>
                     <td className="px-4 py-4">
                       <div className="flex gap-1">
                         {ag.status === 'CONFIRMADO' && ag.linkSessao && (
                           <a href={ag.linkSessao} target="_blank" rel="noopener noreferrer"
                             className="p-1.5 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 text-xs font-medium px-2 flex items-center gap-1">
-                            <Video size={12}/> Entrar na consulta
+                            <Video size={12}/> {t('ag.entrarConsulta')}
                           </a>
                         )}
                         {['PENDENTE','CONFIRMADO'].includes(ag.status) && linkMensagem(ag) && (
@@ -168,7 +172,7 @@ export function AgendaPage() {
                         )}
                         {ag.status === 'CONFIRMADO' && (
                           <button onClick={() => atualizarStatus(ag.id,'CONCLUIDO')} className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium px-2">
-                            ✓ Feito
+                            {t('ag.feito')}
                           </button>
                         )}
                         {['PENDENTE','CONFIRMADO'].includes(ag.status) && (
@@ -192,13 +196,13 @@ export function AgendaPage() {
           {pendentes.length === 0 ? (
             <div className="card py-16 text-center">
               <Check size={32} className="text-green-400 mx-auto mb-3" />
-              <p className="text-slate-400 font-medium">Não há pedidos pendentes de aprovação</p>
-              <p className="text-slate-300 text-sm mt-1">Novos pedidos dos clientes aparecerão aqui</p>
+              <p className="text-slate-400 font-medium">{t('ag.vazio.pendentes')}</p>
+              <p className="text-slate-300 text-sm mt-1">{t('ag.vazio.pendentesSub')}</p>
             </div>
           ) : (
             <div className="space-y-3">
               {pendentes.map(ag => {
-                const dataFmt = format(parseISO(ag.dataHora), "d 'de' MMMM 'de' yyyy", { locale: pt })
+                const dataFmt = format(parseISO(ag.dataHora), t('ag.fmt.diaMesAno'), { locale: dfLocale(idioma) })
                 const horaFmt = hhmm(ag.dataHora)
                 return (
                   <div key={ag.id} className="card p-5 border-l-4 border-amber-400">
@@ -216,7 +220,7 @@ export function AgendaPage() {
                         <div className="flex flex-wrap gap-3 text-sm text-slate-600 pl-11">
                           <span className="flex items-center gap-1"><Scissors size={13} className="text-brand-500"/>{ag.servico?.nome}</span>
                           <span className="flex items-center gap-1"><User size={13} className="text-slate-400"/>{ag.profissional?.nome}</span>
-                          <span className="flex items-center gap-1"><Clock size={13} className="text-slate-400"/>{dataFmt} às {horaFmt}</span>
+                          <span className="flex items-center gap-1"><Clock size={13} className="text-slate-400"/>{t('ag.quando', { data: dataFmt, hora: horaFmt })}</span>
                         </div>
                         <p className="pl-11 font-display font-bold text-brand-600">{fmtKz(ag.preco)}</p>
                       </div>
@@ -224,12 +228,12 @@ export function AgendaPage() {
                         <button
                           onClick={() => aprovar(ag.id)}
                           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-all shadow-sm">
-                          <Check size={14}/> Aprovar
+                          <Check size={14}/> {t('ag.aprovar')}
                         </button>
                         <button
                           onClick={() => rejeitar(ag.id)}
                           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold transition-all border border-red-100">
-                          <X size={14}/> Rejeitar
+                          <X size={14}/> {t('ag.rejeitar')}
                         </button>
                         {linkMensagem(ag) && (
                           <a href={linkMensagem(ag)} target="_blank" rel="noopener noreferrer"
@@ -253,6 +257,13 @@ export function AgendaPage() {
 // ─── CLIENTES PAGE ────────────────────────────────────────────────────────────
 export function ClientesPage() {
   const { tem } = usePlano()
+  const { t, idioma } = useT()
+  const { negocio } = useAuthStore()
+  // Mensagem para o cliente: idioma do negócio, não do dono
+  const msgOla = (nome) => {
+    const idN = IDIOMAS.some(i => i.codigo === negocio?.idioma) ? negocio.idioma : idioma
+    return traduzir(idN, 'ag.msg.ola', { nome: nome?.split(' ')[0] || '' })
+  }
   const [clientes, setClientes] = useState([])
   const [q, setQ] = useState('')
   const [modal, setModal] = useState(false)
@@ -270,8 +281,8 @@ export function ClientesPage() {
     e.preventDefault()
     try {
       await api.post('/clientes', form)
-      toast.success('Cliente criado!'); setModal(false); setForm({nome:'',telefone:'',email:''}); carregar()
-    } catch(err) { toast.error(err.response?.data?.erro || 'Erro') }
+      toast.success(t('ag.cli.criado')); setModal(false); setForm({nome:'',telefone:'',email:''}); carregar()
+    } catch(err) { toast.error(err.response?.data?.erro || t('ag.err.generico')) }
   }
 
   const verCliente = async (id) => {
@@ -283,42 +294,42 @@ export function ClientesPage() {
     try {
       const r = await api.get(`/clientes/${id}`)
       setSelecionado(r.data)
-    } catch (err) { toast.error(err.response?.data?.erro || 'Erro ao abrir cliente') }
+    } catch (err) { toast.error(err.response?.data?.erro || t('ag.err.abrirCliente')) }
   }
 
   // Premium: usar pontos de fidelidade (ex.: desconto na proxima visita)
   const usarPontos = async () => {
-    const txt = window.prompt(`Quantos pontos usar? (tem ${selecionado.pontosFidelidade})`)
+    const txt = window.prompt(t('ag.cli.promptPontos', { n: selecionado.pontosFidelidade }))
     if (!txt) return
     const pontos = parseInt(txt)
-    if (!(pontos > 0)) return toast.error('Número inválido')
+    if (!(pontos > 0)) return toast.error(t('ag.cli.numInvalido'))
     try {
       const r = await api.post(`/clientes/${selecionado.id}/pontos/usar`, { pontos })
       setSelecionado({ ...selecionado, pontosFidelidade: r.data.pontosFidelidade })
-      toast.success(`${pontos} pontos usados`)
+      toast.success(t('ag.cli.pontosUsados', { n: pontos }))
       carregar()
-    } catch (err) { toast.error(err.response?.data?.erro || 'Erro ao usar pontos') }
+    } catch (err) { toast.error(err.response?.data?.erro || t('ag.err.usarPontos')) }
   }
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl font-bold">Clientes</h1>
+        <h1 className="font-display text-2xl font-bold">{t('ag.cli.titulo')}</h1>
         <button onClick={()=>setModal(true)} className="btn-primary flex items-center gap-2">
-          <Plus size={16}/> Novo cliente
+          <Plus size={16}/> {t('ag.cli.novo')}
         </button>
       </div>
       <div className="card mb-4 p-4">
-        <input className="input" placeholder="Pesquisar por nome ou telefone..." value={q}
+        <input className="input" placeholder={t('ag.cli.pesquisar')} value={q}
           onChange={e=>setQ(e.target.value)} />
       </div>
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-slate-100">
-            <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase">Cliente</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Telefone</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Visitas</th>
-            {tem('fidelidade') && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Pontos</th>}
+            <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.col.cliente')}</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.cli.col.telefone')}</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.cli.col.visitas')}</th>
+            {tem('fidelidade') && <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.cli.col.pontos')}</th>}
             <th className="px-4 py-3"></th>
           </tr></thead>
           <tbody className="divide-y divide-slate-50">
@@ -334,14 +345,14 @@ export function ClientesPage() {
                 </td>
                 <td className="px-4 py-4 text-slate-600">{c.telefone}</td>
                 <td className="px-4 py-4 font-semibold text-slate-800">{c._count?.agendamentos || 0}</td>
-                {tem('fidelidade') && <td className="px-4 py-4"><span className="badge-blue">{c.pontosFidelidade} pts</span></td>}
+                {tem('fidelidade') && <td className="px-4 py-4"><span className="badge-blue">{t('ag.cli.pts', { n: c.pontosFidelidade })}</span></td>}
                 <td className="px-4 py-4"><ChevronRight size={14} className="text-slate-300"/></td>
               </tr>
             ))}
           </tbody>
         </table>
         {clientes.length === 0 && (
-          <div className="py-16 text-center text-slate-400 text-sm">Nenhum cliente encontrado</div>
+          <div className="py-16 text-center text-slate-400 text-sm">{t('ag.cli.nenhum')}</div>
         )}
       </div>
 
@@ -350,22 +361,22 @@ export function ClientesPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-bold text-lg">Novo cliente</h2>
+              <h2 className="font-display font-bold text-lg">{t('ag.cli.novo')}</h2>
               <button onClick={()=>setModal(false)}><X size={18} className="text-slate-400"/></button>
             </div>
             <form onSubmit={criarCliente} className="space-y-4">
-              <div><label className="label">Nome</label>
-                <input className="input" placeholder="Nome completo" value={form.nome}
+              <div><label className="label">{t('ag.cli.nome')}</label>
+                <input className="input" placeholder={t('ag.cli.nomePh')} value={form.nome}
                   onChange={e=>setForm({...form,nome:e.target.value})} required/></div>
-              <div><label className="label">Telefone</label>
+              <div><label className="label">{t('ag.cli.telefone')}</label>
                 <input className="input" placeholder="+244 923 456 789" value={form.telefone}
                   onChange={e=>setForm({...form,telefone:e.target.value})} required/></div>
-              <div><label className="label">Email (opcional)</label>
+              <div><label className="label">{t('ag.cli.emailOpt')}</label>
                 <input className="input" type="email" placeholder="email@exemplo.com" value={form.email}
                   onChange={e=>setForm({...form,email:e.target.value})}/></div>
               <div className="flex gap-3">
-                <button type="button" onClick={()=>setModal(false)} className="btn-ghost flex-1">Cancelar</button>
-                <button type="submit" className="btn-primary flex-1">Criar</button>
+                <button type="button" onClick={()=>setModal(false)} className="btn-ghost flex-1">{t('ag.cli.cancelar')}</button>
+                <button type="submit" className="btn-primary flex-1">{t('ag.cli.criar')}</button>
               </div>
             </form>
           </div>
@@ -385,23 +396,23 @@ export function ClientesPage() {
               {selecionado.email && <p className="text-sm text-slate-600">📧 {selecionado.email}</p>}
               {tem('fidelidade') && (
                 <p className="text-sm flex items-center gap-2">
-                  <span className="badge-blue">{selecionado.pontosFidelidade} pontos</span>
-                  <button onClick={usarPontos} className="text-xs font-semibold text-brand-700 hover:underline">Usar pontos</button>
+                  <span className="badge-blue">{t('ag.cli.pontos', { n: selecionado.pontosFidelidade })}</span>
+                  <button onClick={usarPontos} className="text-xs font-semibold text-brand-700 hover:underline">{t('ag.cli.usarPontos')}</button>
                 </p>
               )}
-              {selecionado.telefone && linkWhatsApp(selecionado.telefone, `Olá ${selecionado.nome?.split(' ')[0] || ''}!`) && (
-                <a href={linkWhatsApp(selecionado.telefone, `Olá ${selecionado.nome?.split(' ')[0] || ''}!`)} target="_blank" rel="noreferrer"
+              {selecionado.telefone && linkWhatsApp(selecionado.telefone, msgOla(selecionado.nome)) && (
+                <a href={linkWhatsApp(selecionado.telefone, msgOla(selecionado.nome))} target="_blank" rel="noreferrer"
                    className="inline-block text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
-                  Falar no WhatsApp
+                  {t('ag.cli.falarWhats')}
                 </a>
               )}
             </div>
             {selecionado.semCrm ? (
               <Bloqueado compacto planoNecessario="PROFISSIONAL"
-                titulo="Ficha completa do cliente"
-                texto="Historial de visitas, gastos e notas de cada cliente estão no plano Profissional." />
+                titulo={t('ag.cli.bloqTitulo')}
+                texto={t('ag.cli.bloqTexto')} />
             ) : (<>
-            <h3 className="font-semibold text-slate-700 text-sm mb-3">Historial de visitas</h3>
+            <h3 className="font-semibold text-slate-700 text-sm mb-3">{t('ag.cli.historial')}</h3>
             <div className="space-y-2">
               {selecionado.agendamentos?.slice(0,10).map(ag => (
                 <div key={ag.id} className="flex items-center justify-between py-2 border-b border-slate-50">
@@ -423,6 +434,7 @@ export function ClientesPage() {
 
 // ─── SERVIÇOS PAGE ────────────────────────────────────────────────────────────
 export function ServicosPage() {
+  const { t } = useT()
   const [servicos, setServicos] = useState([])
   const [profissionais, setProfissionais] = useState([])
   const [modal, setModal] = useState(false)
@@ -438,8 +450,8 @@ export function ServicosPage() {
     e.preventDefault()
     try {
       await api.post('/servicos', form)
-      toast.success('Serviço criado!'); setModal(false); carregar()
-    } catch(err) { toast.error(err.response?.data?.erro || 'Erro') }
+      toast.success(t('ag.srv.criado')); setModal(false); carregar()
+    } catch(err) { toast.error(err.response?.data?.erro || t('ag.err.generico')) }
   }
 
   const toggleAtivo = async (id, ativo) => {
@@ -450,25 +462,25 @@ export function ServicosPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl font-bold">Serviços</h1>
+        <h1 className="font-display text-2xl font-bold">{t('ag.srv.titulo')}</h1>
         <button onClick={()=>setModal(true)} className="btn-primary flex items-center gap-2">
-          <Plus size={16}/> Novo serviço
+          <Plus size={16}/> {t('ag.srv.novo')}
         </button>
       </div>
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-slate-100">
-            <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase">Serviço</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Duração</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Preço</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Profissionais</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Activo</th>
+            <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.srv.col.servico')}</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.srv.col.duracao')}</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.srv.col.preco')}</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.srv.col.profissionais')}</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">{t('ag.srv.col.activo')}</th>
           </tr></thead>
           <tbody className="divide-y divide-slate-50">
             {servicos.map(s => (
               <tr key={s.id} className="hover:bg-slate-50/50">
-                <td className="px-6 py-4 font-medium text-slate-800">{s.nome}{s.online && <span className="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 font-semibold"><Video size={10}/> Online</span>}</td>
-                <td className="px-4 py-4 text-slate-600">{s.duracaoMin} min</td>
+                <td className="px-6 py-4 font-medium text-slate-800">{s.nome}{s.online && <span className="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 font-semibold"><Video size={10}/> {t('ag.srv.online')}</span>}</td>
+                <td className="px-4 py-4 text-slate-600">{t('ag.srv.min', { n: s.duracaoMin })}</td>
                 <td className="px-4 py-4 font-semibold text-slate-800">{fmtKz(s.preco)}</td>
                 <td className="px-4 py-4">
                   <div className="flex gap-1 flex-wrap">
@@ -493,27 +505,27 @@ export function ServicosPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-display font-bold text-lg">Novo serviço</h2>
+              <h2 className="font-display font-bold text-lg">{t('ag.srv.novo')}</h2>
               <button onClick={()=>setModal(false)}><X size={18} className="text-slate-400"/></button>
             </div>
             <form onSubmit={criarServico} className="space-y-4">
-              <div><label className="label">Nome</label>
-                <input className="input" placeholder="Ex: Corte de cabelo" value={form.nome}
+              <div><label className="label">{t('ag.cli.nome')}</label>
+                <input className="input" placeholder={t('ag.srv.nomePh')} value={form.nome}
                   onChange={e=>setForm({...form,nome:e.target.value})} required/></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="label">Duração (min)</label>
+                <div><label className="label">{t('ag.srv.duracaoMin')}</label>
                   <input className="input" type="number" min="5" step="5" value={form.duracaoMin}
                     onChange={e=>setForm({...form,duracaoMin:parseInt(e.target.value)})}/></div>
-                <div><label className="label">Preço ({useAuthStore.getState().negocio?.moeda || 'AOA'})</label>
+                <div><label className="label">{t('ag.srv.precoMoeda', { moeda: useAuthStore.getState().negocio?.moeda || 'AOA' })}</label>
                   <input className="input" type="number" min="0" step="0.01" value={form.preco}
                     onChange={e=>setForm({...form,preco:parseFloat(e.target.value)||0})}/></div>
               </div>
               <label className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-teal-300">
                 <input type="checkbox" className="mt-0.5" checked={form.online} onChange={e=>setForm({...form,online:e.target.checked})}/>
-                <span><span className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5"><Video size={14} className="text-teal-600"/> Sessão online (videochamada)</span>
-                <span className="block text-xs text-slate-400">O cliente recebe o link da consulta quando confirmares a marcação.</span></span>
+                <span><span className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5"><Video size={14} className="text-teal-600"/> {t('ag.srv.sessaoOnline')}</span>
+                <span className="block text-xs text-slate-400">{t('ag.srv.sessaoOnlineDesc')}</span></span>
               </label>
-              <div><label className="label">Profissionais</label>
+              <div><label className="label">{t('ag.srv.col.profissionais')}</label>
                 <div className="flex flex-wrap gap-2">
                   {profissionais.map(p => (
                     <button type="button" key={p.id}
@@ -525,8 +537,8 @@ export function ServicosPage() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button type="button" onClick={()=>setModal(false)} className="btn-ghost flex-1">Cancelar</button>
-                <button type="submit" className="btn-primary flex-1">Criar</button>
+                <button type="button" onClick={()=>setModal(false)} className="btn-ghost flex-1">{t('ag.cli.cancelar')}</button>
+                <button type="submit" className="btn-primary flex-1">{t('ag.cli.criar')}</button>
               </div>
             </form>
           </div>

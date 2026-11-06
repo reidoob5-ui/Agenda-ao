@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Star } from 'lucide-react'
 import api from '../services/api'
+import { useT } from '../i18n'
 
 const CHAVE = 'agendaao-depoimento-adiado'
 const ADIAR_MS = 24 * 60 * 60 * 1000
@@ -16,6 +17,7 @@ function adiadoRecentemente() {
 // Depois de 10 dias de uso, pede ao dono do negócio que deixe o depoimento.
 // "Mais tarde" adia o pedido por 24 horas; deixa de aparecer quando o depoimento é enviado.
 export default function PedidoDepoimento() {
+  const { t } = useT()
   const [mostrar, setMostrar] = useState(false)
 
   useEffect(() => {
@@ -38,15 +40,15 @@ export default function PedidoDepoimento() {
         <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
           <Star size={28} className="text-amber-400 fill-amber-400" />
         </div>
-        <h2 className="font-display text-xl font-bold text-slate-900 mb-2">Já usas o Agenda Aqui há 10 dias!</h2>
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-2">{t('ag.dep.titulo')}</h2>
         <p className="text-sm text-slate-500 mb-6">
-          Como está a correr? O teu depoimento demora 1 minuto e ajuda outros negócios a decidir.
+          {t('ag.dep.texto')}
         </p>
         <Link to="/avaliar" onClick={() => setMostrar(false)} className="btn-primary w-full py-3 block">
-          Deixar o meu depoimento
+          {t('ag.dep.deixar')}
         </Link>
         <button onClick={adiar} className="text-sm text-slate-400 hover:text-slate-600 mt-3">
-          Mais tarde
+          {t('ag.dep.maisTarde')}
         </button>
       </div>
     </div>

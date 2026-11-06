@@ -6,12 +6,14 @@ import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import { Avatar } from '../components/Depoimentos'
 import { reduzirImagem } from '../utils/imagem'
+import { useT } from '../i18n'
 
 const TEXTO_MIN = 10
 const TEXTO_MAX = 400
 
 export default function AvaliarPage() {
   const { negocio, atualizarNegocio } = useAuthStore()
+  const { t } = useT()
   const [estado, setEstado] = useState(null)
   const [estrelas, setEstrelas] = useState(0)
   const [texto, setTexto] = useState('')
@@ -27,23 +29,23 @@ export default function AvaliarPage() {
         setEstrelas(r.data.depoimento.estrelas)
         setTexto(r.data.depoimento.texto)
       }
-    }).catch(() => toast.error('Erro ao carregar'))
+    }).catch(() => toast.error(t('ct.av.erroCarregar')))
   }, [])
 
   const escolherLogo = async (e) => {
     const ficheiro = e.target.files?.[0]
     if (!ficheiro) return
-    if (!ficheiro.type.startsWith('image/')) return toast.error('Escolhe uma imagem')
+    if (!ficheiro.type.startsWith('image/')) return toast.error(t('ct.av.escolheImg'))
     try {
       setLogo(await reduzirImagem(ficheiro))
       setLogoNovo(true)
-    } catch { toast.error('Não consegui ler essa imagem') }
+    } catch { toast.error(t('ct.av.erroImg')) }
   }
 
   const enviar = async (e) => {
     e.preventDefault()
-    if (!estrelas) return toast.error('Escolhe de 1 a 5 estrelas')
-    if (texto.trim().length < TEXTO_MIN) return toast.error(`Escreve pelo menos ${TEXTO_MIN} caracteres`)
+    if (!estrelas) return toast.error(t('ct.av.escolheEstrelas'))
+    if (texto.trim().length < TEXTO_MIN) return toast.error(t('ct.av.minChars', { n: TEXTO_MIN }))
     setEnviando(true)
     try {
       // O logótipo do negócio é o que aparece no depoimento
@@ -53,24 +55,24 @@ export default function AvaliarPage() {
         setLogoNovo(false)
       }
       await api.put('/depoimentos/meu', { estrelas, texto })
-      toast.success('Obrigado pelo teu depoimento! 🎉')
+      toast.success(t('ct.av.obrigado'))
       const r = await api.get('/depoimentos/meu')
       setEstado(r.data)
     } catch (err) {
-      toast.error(err.response?.data?.erro || 'Erro ao guardar')
+      toast.error(err.response?.data?.erro || t('ct.av.erroGuardar'))
     } finally { setEnviando(false) }
   }
 
-  if (!estado) return <div className="p-6 text-slate-400">A carregar...</div>
+  if (!estado) return <div className="p-6 text-slate-400">{t('ct.av.aCarregar')}</div>
 
   if (!estado.elegivel) {
     return (
       <div className="p-6 max-w-xl">
-        <h1 className="font-display text-2xl font-bold mb-3">Deixar depoimento</h1>
+        <h1 className="font-display text-2xl font-bold mb-3">{t('ct.av.deixar')}</h1>
         <div className="card p-6">
-          <p className="text-slate-700 font-medium mb-1">Ainda não é possível</p>
+          <p className="text-slate-700 font-medium mb-1">{t('ct.av.aindaNao')}</p>
           <p className="text-sm text-slate-500">
-            Podes deixar o teu depoimento depois de 10 dias de uso. Faltam {estado.diasEmFalta} dia{estado.diasEmFalta !== 1 ? 's' : ''}.
+            {t(estado.diasEmFalta !== 1 ? 'ct.av.faltaN' : 'ct.av.faltaUm', { n: estado.diasEmFalta })}
           </p>
         </div>
       </div>
@@ -80,19 +82,19 @@ export default function AvaliarPage() {
   return (
     <div className="p-6 max-w-xl">
       <h1 className="font-display text-2xl font-bold mb-1">
-        {estado.depoimento ? 'O teu depoimento' : 'Deixar depoimento'}
+        {estado.depoimento ? t('ct.av.teuDep') : t('ct.av.deixar')}
       </h1>
       <p className="text-sm text-slate-500 mb-5">
-        Conta a outros negócios como o Agenda Aqui te ajuda. Aparece na página inicial e na página de{' '}
-        <Link to="/depoimentos" className="text-brand-600 font-semibold hover:underline">depoimentos</Link>.
+        {t('ct.av.intro')}{' '}
+        <Link to="/depoimentos" className="text-brand-600 font-semibold hover:underline">{t('ct.av.introLink')}</Link>.
       </p>
 
       <form onSubmit={enviar} className="card p-6 space-y-5">
         <div>
-          <label className="label">Quantas estrelas dás?</label>
+          <label className="label">{t('ct.av.quantas')}</label>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map(n => (
-              <button type="button" key={n} onClick={() => setEstrelas(n)} aria-label={`${n} estrelas`} className="p-0.5">
+              <button type="button" key={n} onClick={() => setEstrelas(n)} aria-label={t('ct.av.nEstrelas', { n })} className="p-0.5">
                 <Star size={34} className={n <= estrelas ? 'text-amber-400 fill-amber-400' : 'text-slate-300'} />
               </button>
             ))}
@@ -100,11 +102,11 @@ export default function AvaliarPage() {
         </div>
 
         <div>
-          <label className="label">O teu depoimento</label>
+          <label className="label">{t('ct.av.teuDep')}</label>
           <textarea
             className="input min-h-[120px]"
             maxLength={TEXTO_MAX}
-            placeholder="Ex: Os meus clientes marcam sozinhos e deixei de perder horas ao telefone."
+            placeholder={t('ct.av.placeholder')}
             value={texto}
             onChange={e => setTexto(e.target.value)}
           />
@@ -112,21 +114,21 @@ export default function AvaliarPage() {
         </div>
 
         <div>
-          <label className="label">Logótipo ou foto (aparece junto ao teu nome)</label>
+          <label className="label">{t('ct.av.logoLabel')}</label>
           <div className="flex items-center gap-4">
             <Avatar nome={negocio?.nome} logo={logo} tamanho={56} />
             <div>
               <button type="button" onClick={() => inputRef.current?.click()} className="btn-ghost text-sm inline-flex items-center gap-2">
-                <ImagePlus size={15} /> {logo ? 'Mudar imagem' : 'Escolher imagem'}
+                <ImagePlus size={15} /> {logo ? t('ct.av.mudarImg') : t('ct.av.escolherImg')}
               </button>
-              <p className="text-xs text-slate-400 mt-1">Sem imagem, mostramos a inicial do teu negócio.</p>
+              <p className="text-xs text-slate-400 mt-1">{t('ct.av.logoAjuda')}</p>
             </div>
             <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={escolherLogo} />
           </div>
         </div>
 
         <button type="submit" disabled={enviando} className="btn-primary w-full py-3">
-          {enviando ? 'A guardar...' : estado.depoimento ? 'Atualizar depoimento' : 'Publicar depoimento'}
+          {enviando ? t('ct.av.guardando') : estado.depoimento ? t('ct.av.atualizar') : t('ct.av.publicar')}
         </button>
       </form>
     </div>

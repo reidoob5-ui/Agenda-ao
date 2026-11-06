@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { AlertTriangle, CreditCard, ShieldOff } from 'lucide-react'
+import { useT } from '../../i18n'
 
 /**
  * PlanoGuard — exibe banner de aviso se plano expirado/suspenso
@@ -8,6 +9,7 @@ import { AlertTriangle, CreditCard, ShieldOff } from 'lucide-react'
  */
 export default function PlanoGuard({ children }) {
   const { negocio } = useAuthStore()
+  const { t } = useT()
 
   if (!negocio) return children
 
@@ -22,13 +24,13 @@ export default function PlanoGuard({ children }) {
           <div className="flex items-center gap-2.5">
             <AlertTriangle size={16} className="text-amber-500 shrink-0" />
             <p className="text-sm text-amber-700 font-medium">
-              A tua conta esta inativa. Ativa um plano para comecares a aceitar agendamentos.
+              {t('ag.pg.inativa')}
             </p>
           </div>
           <Link to="/faturacao"
             className="shrink-0 flex items-center gap-1.5 bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-700 transition-all">
             <CreditCard size={12} />
-            Ativar plano
+            {t('ag.pg.ativar')}
           </Link>
         </div>
         {children}
@@ -43,13 +45,13 @@ export default function PlanoGuard({ children }) {
           <div className="flex items-center gap-2.5">
             <AlertTriangle size={16} className="text-red-500 shrink-0" />
             <p className="text-sm text-red-700 font-medium">
-              A tua assinatura expirou. Algumas funcionalidades estao bloqueadas.
+              {t('ag.pg.expirou')}
             </p>
           </div>
           <Link to="/faturacao"
             className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all">
             <CreditCard size={12} />
-            Renovar agora
+            {t('ag.pg.renovar')}
           </Link>
         </div>
         {children}
@@ -64,13 +66,13 @@ export default function PlanoGuard({ children }) {
           <div className="flex items-center gap-2.5">
             <ShieldOff size={16} className="text-orange-500 shrink-0" />
             <p className="text-sm text-orange-700 font-medium">
-              A tua conta esta suspensa. Contacta o suporte: agendaaosuporte@gmail.com
+              {t('ag.pg.suspensa')}
             </p>
           </div>
           <Link to="/faturacao"
             className="shrink-0 flex items-center gap-1.5 bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-orange-700 transition-all">
             <CreditCard size={12} />
-            Ver faturacao
+            {t('ag.pg.verFat')}
           </Link>
         </div>
         {children}
@@ -88,12 +90,12 @@ export default function PlanoGuard({ children }) {
             <div className="flex items-center gap-2">
               <AlertTriangle size={14} className="text-amber-500 shrink-0" />
               <p className="text-xs text-amber-700 font-medium">
-                O teu plano expira em <strong>{diasRestantes} dia{diasRestantes !== 1 ? 's' : ''}</strong>. Renova para nao perder acesso.
+                {t('ag.pg.expira1')} <strong>{diasRestantes} {t(diasRestantes !== 1 ? 'ag.pg.dias' : 'ag.pg.dia')}</strong>{t('ag.pg.expira2')}
               </p>
             </div>
             <Link to="/faturacao"
               className="shrink-0 text-amber-700 text-xs font-semibold hover:underline">
-              Renovar
+              {t('ag.pg.renovarCurto')}
             </Link>
           </div>
           {children}

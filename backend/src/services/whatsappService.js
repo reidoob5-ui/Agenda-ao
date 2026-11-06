@@ -30,11 +30,16 @@ function limiteMensal() {
   return n > 0 ? n : 500;
 }
 
-// 923456789 -> 244923456789 ; devolve '' se o numero nao parecer valido
-function normalizarTelefone(tel) {
-  let d = String(tel || '').replace(/\D/g, '');
+// Numero com + ou 00 fica como esta; numero local recebe o indicativo do pais do negocio (pelo fuso).
+// Ex.: 923456789 (Luanda) -> 244923456789 ; devolve '' se o numero nao parecer valido
+function normalizarTelefone(tel, fuso) {
+  const bruto = String(tel || '').trim();
+  const internacional = bruto.startsWith('+') || bruto.startsWith('00');
+  let d = bruto.replace(/\D/g, '');
   if (d.startsWith('00')) d = d.slice(2);
-  if (d.length === 9 && d.startsWith('9')) d = '244' + d;
+  const ddi = T.ddiDoFuso(fuso);
+  if (!internacional && ddi && !d.startsWith(ddi)) d = ddi + d.replace(/^0+/, '');
+  else if (!internacional && !ddi && d.length === 9 && d.startsWith('9')) d = '244' + d; // compatibilidade
   return d.length >= 11 && d.length <= 15 ? d : '';
 }
 
@@ -103,7 +108,7 @@ async function enviarWhatsAppAgendamento({ agendamento, negocio, tipo }) {
     if (negocio.planoStatus !== 'ATIVO' || !planosPermitidos().includes(negocio.plano)) {
       return { enviado: false, motivo: 'PLANO' };
     }
-    const para = normalizarTelefone(agendamento.cliente?.telefone);
+    const para = normalizarTelefone(agendamento.cliente?.telefone, negocio.fusoHorario);
     if (!para) return { enviado: false, motivo: 'TELEFONE_INVALIDO' };
 
     const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);

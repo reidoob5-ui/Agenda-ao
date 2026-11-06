@@ -5,14 +5,14 @@ import api from '../services/api'
 import toast from 'react-hot-toast'
 import { Calendar, Users, TrendingUp, Clock, Plus, ChevronRight, Bell } from 'lucide-react'
 import { format } from 'date-fns'
-import { pt } from 'date-fns/locale'
+import { dfLocale } from '../utils/dfLocale'
+import { useT } from '../i18n'
 import { QRCodeCanvas } from 'qrcode.react'
 import PedidoDepoimento from '../components/PedidoDepoimento'
 import { fmtDinheiro } from '../utils/moeda'
 import { fmtHora, FUSO_PADRAO } from '../utils/tempo'
 
 const statusBadge = { PENDENTE: 'badge-yellow', CONFIRMADO: 'badge-green', CONCLUIDO: 'badge-gray', CANCELADO: 'badge-red', FALTA: 'badge-red' }
-const statusLabel = { PENDENTE: 'Pendente', CONFIRMADO: 'Confirmado', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado', FALTA: 'Falta' }
 
 function fmtKz(v) { return fmtDinheiro(v) }
 
@@ -72,6 +72,7 @@ const tocarSomNotificacao = () => {
 }
 
 export default function Dashboard() {
+  const { t, idioma } = useT()
   const { negocio } = useAuthStore()
   const [dados, setDados] = useState(null)
   const [carregando, setCarregando] = useState(true)
@@ -155,8 +156,8 @@ export default function Dashboard() {
               tocarSomNotificacao()
               toast.success(
                 <div>
-                  <p className="font-semibold">Novo agendamento recebido! 📅</p>
-                  <p className="text-xs text-slate-500">{novo.cliente?.nome} marcou {novo.servico?.nome}</p>
+                  <p className="font-semibold">{t('gs.dash.novoAg')}</p>
+                  <p className="text-xs text-slate-500">{t('gs.dash.novoAgDetalhe', { cliente: novo.cliente?.nome, servico: novo.servico?.nome })}</p>
                 </div>, 
                 { duration: 7000 }
               )
@@ -172,7 +173,7 @@ export default function Dashboard() {
     return () => clearInterval(interval)
   }, [])
 
-  const hoje = format(new Date(), "EEEE, d 'de' MMMM", { locale: pt })
+  const hoje = format(new Date(), t('gs.dash.fmtData'), { locale: dfLocale(idioma) })
 
   if (carregando) return (
     <div className="flex items-center justify-center h-full">
@@ -185,7 +186,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-display text-2xl font-bold text-slate-900">Bom dia! 👋</h1>
+          <h1 className="font-display text-2xl font-bold text-slate-900">{t('gs.dash.bomDia')}</h1>
           <p className="text-slate-500 text-sm capitalize">{hoje}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -194,11 +195,11 @@ export default function Dashboard() {
             <button onClick={() => Notification.requestPermission()}
               className="btn-ghost flex items-center gap-2 text-xs border border-slate-200 bg-white">
               <Bell size={14} className="text-brand-600 animate-bounce" />
-              Ativar Alertas
+              {t('gs.dash.ativarAlertas')}
             </button>
           )}
           <Link to="/agenda" className="btn-ghost flex items-center gap-2 text-sm border border-slate-200">
-            <Calendar size={14} /> Ver Agenda
+            <Calendar size={14} /> {t('gs.dash.verAgendaBtn')}
           </Link>
         </div>
       </div>
@@ -206,10 +207,10 @@ export default function Dashboard() {
       {/* Métricas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Agendamentos hoje', valor: dados?.totalHoje || 0, icon: Calendar, cor: 'text-brand-600 bg-brand-50' },
-          { label: 'Confirmados', valor: dados?.confirmadosHoje || 0, icon: Clock, cor: 'text-green-600 bg-green-50' },
-          { label: 'Receita hoje', valor: fmtKz(dados?.receitaHoje), icon: TrendingUp, cor: 'text-purple-600 bg-purple-50', grande: true },
-          { label: 'Clientes novos', valor: dados?.novosClientes || 0, icon: Users, cor: 'text-blue-600 bg-blue-50' },
+          { label: t('gs.dash.agHoje'), valor: dados?.totalHoje || 0, icon: Calendar, cor: 'text-brand-600 bg-brand-50' },
+          { label: t('gs.dash.confirmados'), valor: dados?.confirmadosHoje || 0, icon: Clock, cor: 'text-green-600 bg-green-50' },
+          { label: t('gs.dash.receitaHoje'), valor: fmtKz(dados?.receitaHoje), icon: TrendingUp, cor: 'text-purple-600 bg-purple-50', grande: true },
+          { label: t('gs.dash.clientesNovos'), valor: dados?.novosClientes || 0, icon: Users, cor: 'text-blue-600 bg-blue-50' },
         ].map(({ label, valor, icon: Icon, cor, grande }) => (
           <div key={label} className="card p-5">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${cor}`}>
@@ -224,17 +225,17 @@ export default function Dashboard() {
       {/* Agendamentos do dia */}
       <div className="card">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-800">Agendamentos de hoje</h2>
+          <h2 className="font-semibold text-slate-800">{t('gs.dash.agendamentosDeHoje')}</h2>
           <Link to="/agenda" className="text-sm text-brand-600 font-medium flex items-center gap-1 hover:gap-2 transition-all">
-            Ver agenda <ChevronRight size={14} />
+            {t('gs.dash.verAgenda')} <ChevronRight size={14} />
           </Link>
         </div>
 
         {!dados?.agendamentosHoje?.length ? (
           <div className="px-6 py-12 text-center">
             <Calendar size={32} className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-400 text-sm">Sem agendamentos para hoje</p>
-            <p className="text-xs text-slate-300 mt-1">Os clientes marcam pelo link de agendamento</p>
+            <p className="text-slate-400 text-sm">{t('gs.dash.semAg')}</p>
+            <p className="text-xs text-slate-300 mt-1">{t('gs.dash.semAgDica')}</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
@@ -254,7 +255,7 @@ export default function Dashboard() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-slate-800">{fmtKz(ag.preco)}</p>
-                  <span className={statusBadge[ag.status]}>{statusLabel[ag.status]}</span>
+                  <span className={statusBadge[ag.status]}>{t('gs.status.' + ag.status)}</span>
                 </div>
               </div>
             ))}
@@ -270,8 +271,8 @@ export default function Dashboard() {
         return (
           <div className={`card p-5 mt-4 border ${perto ? 'border-amber-200 bg-amber-50' : 'border-slate-100'}`}>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-slate-800">Plano Básico · marcações deste mês</p>
-              <p className="text-sm font-bold text-slate-900">{usados} de {limite}</p>
+              <p className="text-sm font-semibold text-slate-800">{t('gs.dash.planoUso', { plano: t('plano.BASICO') })}</p>
+              <p className="text-sm font-bold text-slate-900">{t('gs.dash.usadosDe', { usados, limite })}</p>
             </div>
             <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
               <div
@@ -281,18 +282,18 @@ export default function Dashboard() {
             </div>
             {pct >= 100 ? (
               <p className="text-xs text-red-600 mt-2 font-medium">
-                Limite atingido: os teus clientes já não conseguem marcar este mês.
+                {t('gs.dash.limiteAtingido')}
               </p>
             ) : perto ? (
               <p className="text-xs text-amber-700 mt-2 font-medium">
-                Estás a chegar ao limite. Muda de plano para não perder marcações.
+                {t('gs.dash.pertoLimite')}
               </p>
             ) : (
-              <p className="text-xs text-slate-400 mt-2">Plano grátis · até {limite} marcações por mês.</p>
+              <p className="text-xs text-slate-400 mt-2">{t('gs.dash.planoGratis', { limite })}</p>
             )}
             {perto && (
               <Link to="/faturacao" className="btn-primary text-xs mt-3 inline-block">
-                Ver planos · desde 8.000 Kz/mês
+                {t('gs.dash.verPlanos', { preco: '8.000 Kz' })}
               </Link>
             )}
           </div>
@@ -302,12 +303,12 @@ export default function Dashboard() {
       {/* Receita do mês */}
       <div className="grid md:grid-cols-2 gap-4 mt-4">
         <div className="card p-5">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Receita do mês</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">{t('gs.dash.receitaMes')}</p>
           <p className="font-display text-3xl font-bold text-slate-900">{fmtKz(dados?.receitaMes)}</p>
-          <p className="text-xs text-slate-400 mt-1">{dados?.agendamentosMes} agendamentos concluídos</p>
+          <p className="text-xs text-slate-400 mt-1">{t('gs.dash.agConcluidos', { n: dados?.agendamentosMes })}</p>
         </div>
         <div className="card p-5 flex flex-col items-center text-center">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">QR Code de agendamento</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">{t('gs.dash.qrTitulo')}</p>
           <div className="bg-white p-2 rounded-xl border border-slate-100">
             <QRCodeCanvas
               id="qr-agendamento"
@@ -319,7 +320,7 @@ export default function Dashboard() {
             />
           </div>
           <p className="text-xs text-slate-400 mt-3 max-w-[16rem]">
-            Mostra este QR aos teus clientes. Basta apontar a câmara do telemóvel para marcar.
+            {t('gs.dash.qrDica')}
           </p>
           <div className="flex items-center gap-2 mt-3">
             <button
@@ -330,19 +331,19 @@ export default function Dashboard() {
                 a.href = canvas.toDataURL('image/png')
                 a.download = `qr-agendamento-${negocio?.slug || 'negocio'}.png`
                 a.click()
-                toast.success('QR Code descarregado! 📥')
+                toast.success(t('gs.dash.qrDescarregado'))
               }}
               className="btn-primary text-xs">
-              Descarregar QR
+              {t('gs.dash.descarregarQr')}
             </button>
             <button
-              onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/b/${negocio?.slug}`); toast.success('Link copiado com sucesso! 📋') }}
+              onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/b/${negocio?.slug}`); toast.success(t('gs.dash.linkCopiado')) }}
               className="btn-ghost text-xs">
-              Copiar link
+              {t('gs.dash.copiarLink')}
             </button>
           </div>
           <Link to="/cartaz" className="text-xs font-semibold text-brand-600 hover:underline mt-3">
-            🖨️ Imprimir cartaz para o balcão
+            {t('gs.dash.imprimirCartaz')}
           </Link>
         </div>
       </div>

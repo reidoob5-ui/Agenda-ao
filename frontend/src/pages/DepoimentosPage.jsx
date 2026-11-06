@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarCheck } from 'lucide-react'
 import { format } from 'date-fns'
-import { pt } from 'date-fns/locale'
+import { useT } from '../i18n'
+import { dfLocale } from '../utils/dfLocale'
 import api from '../services/api'
 import { Estrelas, Avatar } from '../components/Depoimentos'
 
@@ -10,6 +11,7 @@ const POR_PAGINA = 20
 
 // Página pública de depoimentos, ao estilo das lojas de aplicações
 export default function DepoimentosPage() {
+  const { t, idioma } = useT()
   const [dados, setDados] = useState(null)
   const [itens, setItens] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -44,21 +46,21 @@ export default function DepoimentosPage() {
             </div>
             <span className="font-display font-bold text-xl">Agenda Aqui</span>
           </Link>
-          <Link to="/criar" className="btn-primary">Começar grátis →</Link>
+          <Link to="/criar" className="btn-primary">{t('comum.comecarGratis')}</Link>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-10">
-        <h1 className="font-display text-3xl font-bold text-slate-900 mb-1">O que dizem os nossos clientes</h1>
-        <p className="text-slate-500 mb-8">Depoimentos de negócios que já usam o Agenda Aqui.</p>
+        <h1 className="font-display text-3xl font-bold text-slate-900 mb-1">{t('ct.dep.titulo')}</h1>
+        <p className="text-slate-500 mb-8">{t('ct.dep.sub')}</p>
 
-        {carregando && <p className="text-slate-400 text-center py-16">A carregar...</p>}
-        {erro && <p className="text-slate-500 text-center py-16">Não foi possível carregar os depoimentos. Tenta novamente daqui a pouco.</p>}
+        {carregando && <p className="text-slate-400 text-center py-16">{t('ct.dep.aCarregar')}</p>}
+        {erro && <p className="text-slate-500 text-center py-16">{t('ct.dep.erro')}</p>}
 
         {!carregando && !erro && total === 0 && (
           <div className="card p-10 text-center">
-            <p className="font-semibold text-slate-700 mb-1">Ainda não há depoimentos</p>
-            <p className="text-sm text-slate-400">Os primeiros depoimentos aparecem aqui depois de 10 dias de uso.</p>
+            <p className="font-semibold text-slate-700 mb-1">{t('ct.dep.nenhum')}</p>
+            <p className="text-sm text-slate-400">{t('ct.dep.nenhumSub')}</p>
           </div>
         )}
 
@@ -69,7 +71,7 @@ export default function DepoimentosPage() {
               <div className="text-center sm:pr-6 sm:border-r border-slate-100">
                 <p className="font-display text-5xl font-bold text-slate-900">{dados.media.toFixed(1)}</p>
                 <div className="mt-1"><Estrelas valor={Math.round(dados.media)} tamanho={18} /></div>
-                <p className="text-xs text-slate-400 mt-1">{total} depoimento{total !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-slate-400 mt-1">{t(total !== 1 ? 'ct.dep.nN' : 'ct.dep.n1', { n: total })}</p>
               </div>
               <div className="flex-1 w-full space-y-1.5">
                 {[5, 4, 3, 2, 1].map(n => {
@@ -102,7 +104,7 @@ export default function DepoimentosPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <Estrelas valor={d.estrelas} tamanho={14} />
                     <span className="text-xs text-slate-400">
-                      {format(new Date(d.criadoEm), "d 'de' MMMM 'de' yyyy", { locale: pt })}
+                      {format(new Date(d.criadoEm), t('ct.fmtDataLonga'), { locale: dfLocale(idioma) })}
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{d.texto}</p>
@@ -113,7 +115,7 @@ export default function DepoimentosPage() {
             {itens.length < total && (
               <div className="text-center mt-6">
                 <button onClick={carregarMais} disabled={maisCarregando} className="btn-ghost">
-                  {maisCarregando ? 'A carregar...' : 'Ver mais depoimentos'}
+                  {maisCarregando ? t('ct.dep.aCarregar') : t('ct.dep.verMais')}
                 </button>
               </div>
             )}
