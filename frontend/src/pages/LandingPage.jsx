@@ -76,7 +76,10 @@ function QuadroMarcacoes({ t, locale, idioma }) {
   const cid = CIDADES.find((x) => x.id === c.cidade)
   const rotuloPag = c.pag.startsWith('lp.') ? t(c.pag) : c.pag
   return (
-    <div className="relative">
+    <div className="relative lp-hero-visual">
+      <div className="lp-hero-photo" aria-hidden="true">
+        <img src="https://images.unsplash.com/photo-1600948836101-f9ffda59d250?auto=format&fit=crop&w=1200&q=85" alt="" fetchPriority="high" />
+      </div>
       <div className="lp-board" aria-live="polite">
         <div className="flex items-center justify-between text-sm text-slate-500">
           <span className="font-semibold text-slate-700">{cid.n[idioma] || cid.n.en}</span>
@@ -287,6 +290,36 @@ function Funcionalidades({ t, locale }) {
   )
 }
 
+/* ---------- Galeria visual com movimento ao entrar no ecrã ---------- */
+function ExperienciaVisual({ t }) {
+  return (
+    <section className="lp-experiencia max-w-6xl mx-auto px-6 py-20">
+      <div className="lp-experiencia-top">
+        <div>
+          <span className="lp-eyebrow"><span /> {t('land.funcionalidades')}</span>
+          <h2 className="lp-display lp-h2 mt-4 max-w-2xl">{t('lp.exp.h2')}</h2>
+        </div>
+        <p className="text-slate-500 leading-relaxed max-w-sm">{t('lp.exp.p')}</p>
+      </div>
+      <div className="lp-photo-grid mt-10">
+        <figure className="lp-photo lp-photo-main">
+          <img src="https://images.unsplash.com/photo-1521590832167-7bcbfac643a6?auto=format&fit=crop&w=1400&q=85" alt={t('lp.exp.alt1')} loading="lazy" />
+          <figcaption><span>{t('lp.exp.c1')}</span><strong>{t('lp.exp.t1')}</strong></figcaption>
+        </figure>
+        <figure className="lp-photo lp-photo-side">
+          <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1000&q=85" alt={t('lp.exp.alt2')} loading="lazy" />
+          <figcaption><span>{t('lp.exp.c2')}</span><strong>{t('lp.exp.t2')}</strong></figcaption>
+        </figure>
+        <div className="lp-photo-note">
+          <span className="lp-note-icon"><CalendarCheck size={19}/></span>
+          <p className="lp-display text-2xl font-bold">{t('lp.exp.nota')}</p>
+          <span className="text-sm text-slate-500">{t('lp.exp.notap')}</span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ---------- Para quem ---------- */
 function ParaQuem({ t }) {
   const lista = t('lp.quem').split('|')
@@ -374,6 +407,21 @@ function Faq({ t }) {
 
 export default function LandingPage() {
   const { t, idioma, locale } = useT()
+  useEffect(() => {
+    const targets = document.querySelectorAll('.lp section, .lp footer')
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
+    targets.forEach(el => el.classList.add('lp-reveal'))
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -45px 0px' })
+    targets.forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
   return (
     <div className="lp min-h-screen">
       {/* Barra de topo */}
@@ -398,7 +446,8 @@ export default function LandingPage() {
 
       {/* Topo */}
       <section className="max-w-6xl mx-auto px-6 pt-14 pb-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-14 items-center">
-        <div>
+        <div className="lp-hero-copy">
+          <span className="lp-eyebrow"><span /> {t('lp.eyebrow')}</span>
           <h1 className="lp-display lp-h1 max-w-2xl">{t('lp.h1')}</h1>
           <p className="text-lg md:text-xl text-slate-600 mt-6 max-w-xl leading-relaxed">{t('lp.sub')}</p>
           <div className="flex flex-wrap items-center gap-3 mt-9">
@@ -412,6 +461,7 @@ export default function LandingPage() {
 
       <Relogios t={t} locale={locale} idioma={idioma} />
       <AntesDepois t={t} />
+      <ExperienciaVisual t={t} />
       <Funcionalidades t={t} locale={locale} />
       <ParaQuem t={t} />
 

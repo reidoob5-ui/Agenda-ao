@@ -46,7 +46,7 @@ export default function RegistarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
+    <div className="auth-shell min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
       <div className="absolute top-4 right-4"><SeletorIdioma /></div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -62,7 +62,7 @@ export default function RegistarPage() {
           </div>
           <p className="text-xs text-slate-400 mt-2">{t('reg.passo', { n: passo })}</p>
         </div>
-        <div className="card p-6">
+        <div className="card auth-card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {passo === 1 ? (<>
               <div><label className="label">{t('reg.nomeNegocio')}</label>

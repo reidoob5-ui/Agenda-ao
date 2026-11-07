@@ -42,7 +42,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
+    <div className="auth-shell min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
       <div className="absolute top-4 right-4"><SeletorIdioma /></div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -55,7 +55,7 @@ export default function LoginPage() {
           <h1 className="font-display text-2xl font-bold text-slate-900">{t('auth.entrarTitulo')}</h1>
           <p className="text-sm text-slate-500 mt-1">{t('auth.entrarSub')}</p>
         </div>
-        <div className="card p-6">
+        <div className="card auth-card p-6">
           {googleClientId && (
             <>
               <GoogleButton clientId={googleClientId} texto="signin_with" onCredential={entrarComGoogle} />
