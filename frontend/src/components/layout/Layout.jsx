@@ -1,10 +1,11 @@
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import PlanoGuard from './PlanoGuard'
 import AssinaturaAda from '../AssinaturaAda'
 import SeletorIdioma from '../SeletorIdioma'
 import { useT } from '../../i18n'
 import { EMAIL_SUPORTE } from '../../utils/marca'
+import Illustracao3D from '../Illustracao3D'
 import {
   LayoutDashboard, Calendar, Users, Scissors,
   BarChart2, Settings, CreditCard, LogOut, CalendarCheck, ShieldCheck, User, Star, Hourglass, LifeBuoy
@@ -24,15 +25,22 @@ const nav = [
 ]
 
 const PLANO_BADGE = {
-  PREMIUM:       'bg-amber-50 text-amber-700 border border-amber-200',
-  PROFISSIONAL:  'bg-blue-50 text-blue-700 border border-blue-200',
-  BASICO:        'bg-slate-100 text-slate-500 border border-slate-200',
+  PREMIUM:       'bg-[#fff0ef] text-[#a65361] border border-[#f0d1d2]',
+  PROFISSIONAL:  'bg-[#fff5f1] text-[#9c6c66] border border-[#efdcd5]',
+  BASICO:        'bg-[#f7f0ee] text-[#88777b] border border-[#eadfdd]',
 }
 
 export default function Layout() {
   const { t } = useT()
   const { negocio, usuario, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
+  const paginaAtual = nav.find(item => location.pathname.startsWith(item.to)) || nav[0]
+  const iconeAtual = ({
+    '/dashboard': 'analytics', '/agenda': 'calendar', '/clientes': 'people',
+    '/servicos': 'smart', '/profissionais': 'people', '/relatorios': 'analytics',
+    '/lista-espera': 'reminder', '/config': 'security', '/faturacao': 'payment', '/avaliar': 'globe'
+  })[paginaAtual.to] || 'calendar'
 
   const handleLogout = () => { logout(); navigate('/login') }
 
@@ -114,9 +122,21 @@ export default function Layout() {
 
       {/* Conteudo */}
       <main className="flex-1 overflow-y-auto">
-        <PlanoGuard>
-          <Outlet />
-        </PlanoGuard>
+        <div className="aa-app-topbar">
+          <div className="aa-app-topbar__brand">
+            <Illustracao3D type={iconeAtual} size="mini" />
+            <div className="min-w-0">
+              <p className="aa-app-topbar__eyebrow">Agenda Aqui · {t('lp.painel')}</p>
+              <p className="aa-app-topbar__title truncate">{t(paginaAtual.label)}</p>
+            </div>
+          </div>
+          {negocio?.nome && <span className="aa-app-topbar__status truncate" title={negocio.nome}>{negocio.nome}</span>}
+        </div>
+        <div className="aa-page-content">
+          <PlanoGuard>
+            <Outlet />
+          </PlanoGuard>
+        </div>
       </main>
     </div>
   )

@@ -200,9 +200,9 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50" style={estiloDaMarca(negocio.corPrimaria)}>
-      <div className="bg-white border-b border-slate-100">
+      <div className="bg-white border-b border-slate-100 booking-brand-header">
         <div className="max-w-lg mx-auto px-4 py-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-brand-600 flex items-center justify-center text-white font-display font-bold text-lg shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-brand-600 flex items-center justify-center text-white font-display font-bold text-lg shrink-0 booking-brand-mark">
             {negocio.logo
               ? <img src={negocio.logo} alt={negocio.nome} className="w-full h-full object-cover rounded-xl" />
               : negocio.nome?.charAt(0)}

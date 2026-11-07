@@ -207,10 +207,10 @@ export default function Dashboard() {
       {/* Métricas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: t('gs.dash.agHoje'), valor: dados?.totalHoje || 0, icon: Calendar, cor: 'text-brand-600 bg-brand-50' },
-          { label: t('gs.dash.confirmados'), valor: dados?.confirmadosHoje || 0, icon: Clock, cor: 'text-green-600 bg-green-50' },
-          { label: t('gs.dash.receitaHoje'), valor: fmtKz(dados?.receitaHoje), icon: TrendingUp, cor: 'text-purple-600 bg-purple-50', grande: true },
-          { label: t('gs.dash.clientesNovos'), valor: dados?.novosClientes || 0, icon: Users, cor: 'text-blue-600 bg-blue-50' },
+          { label: t('gs.dash.agHoje'), valor: dados?.totalHoje || 0, icon: Calendar, cor: 'text-brand-700 bg-brand-50' },
+          { label: t('gs.dash.confirmados'), valor: dados?.confirmadosHoje || 0, icon: Clock, cor: 'text-[#73977e] bg-[#eef6ef]' },
+          { label: t('gs.dash.receitaHoje'), valor: fmtKz(dados?.receitaHoje), icon: TrendingUp, cor: 'text-[#b17b69] bg-[#fbf0e9]', grande: true },
+          { label: t('gs.dash.clientesNovos'), valor: dados?.novosClientes || 0, icon: Users, cor: 'text-[#9d7d89] bg-[#f7edf1]' },
         ].map(({ label, valor, icon: Icon, cor, grande }) => (
           <div key={label} className="card p-5">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${cor}`}>

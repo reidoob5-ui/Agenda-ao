@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Illustracao3D from '../components/Illustracao3D'
 import {
   LayoutDashboard, Users, CreditCard, CheckCircle, XCircle,
   Clock, TrendingUp, ShieldAlert, RefreshCw, CalendarCheck,
@@ -20,9 +21,9 @@ function fmtData(d) {
 }
 
 const PLANO_COR = {
-  BASICO: 'bg-slate-100 text-slate-600',
-  PROFISSIONAL: 'bg-blue-100 text-blue-700',
-  PREMIUM: 'bg-amber-100 text-amber-700',
+  BASICO: 'bg-[#f7f0ee] text-[#88777b]',
+  PROFISSIONAL: 'bg-[#fff5f1] text-[#9c6c66]',
+  PREMIUM: 'bg-[#fff0ef] text-[#a65361]',
 }
 
 const STATUS_COR = {
@@ -194,7 +195,8 @@ export default function AdminPage() {
   // ─── Login ───────────────────────────────────────────────────────────────────
   if (!autenticado) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="admin-shell admin-login min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="admin-illustration" aria-hidden="true"><Illustracao3D type="security" size="feature" /></div>
         <div className="w-full max-w-sm">
           <div className="flex items-center justify-center gap-3 mb-8">
             <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
@@ -256,7 +258,7 @@ export default function AdminPage() {
 
   // ─── Dashboard Admin ─────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="admin-shell admin-panel min-h-screen bg-slate-900 text-white">
       {/* Navbar Admin */}
       <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
@@ -267,6 +269,7 @@ export default function AdminPage() {
               </div>
               <span className="font-display font-bold text-sm">Agenda Aqui Admin</span>
             </div>
+            <Illustracao3D type="analytics" size="mini" />
             <nav className="flex gap-1">
               {[
                 { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },

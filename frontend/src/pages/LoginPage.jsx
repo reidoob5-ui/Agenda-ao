@@ -8,6 +8,7 @@ import api from '../services/api'
 import GoogleButton from '../components/GoogleButton'
 import SeletorIdioma from '../components/SeletorIdioma'
 import { useT } from '../i18n'
+import Illustracao3D from '../components/Illustracao3D'
 
 export default function LoginPage() {
   const { t } = useT()
@@ -43,6 +44,7 @@ export default function LoginPage() {
 
   return (
     <div className="auth-shell min-h-screen bg-slate-50 flex items-center justify-center p-4 relative">
+      <div className="auth-illustration auth-illustration--login" aria-hidden="true"><Illustracao3D type="calendar" size="feature" /></div>
       <div className="absolute top-4 right-4"><SeletorIdioma /></div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">

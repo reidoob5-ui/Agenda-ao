@@ -156,7 +156,7 @@ export default function RelatoriosPage() {
             <YAxis tickFormatter={v=>v>=1000?`${v/1000}k`:v} tick={{fontSize:12,fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
             <Tooltip formatter={v=>fmtKz(v)} labelStyle={{fontSize:12}} contentStyle={{borderRadius:12,border:'1px solid #f1f5f9',fontSize:13}}/>
             <Bar dataKey="receita" radius={[6,6,0,0]}>
-              {semanas.map((_,i)=><Cell key={i} fill={i===semanas.length-1?'#ea580c':'#fed7aa'}/>)}
+              {semanas.map((_,i)=><Cell key={i} fill={i===semanas.length-1?'#df7d85':'#f3d4d2'}/>)}
             </Bar>
           </BarChart>
         </ResponsiveContainer>

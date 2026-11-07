@@ -137,7 +137,7 @@ export default function ConfigPage() {
               <label className="label">{t('ct.cfg.corPagina')}</label>
               {tem('corPropria') ? (
                 <div className="flex items-center gap-3">
-                  <input type="color" value={cor || '#ea580c'} onChange={e => setCor(e.target.value)} className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5 bg-white" />
+                  <input type="color" value={cor || '#df7d85'} onChange={e => setCor(e.target.value)} className="w-12 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5 bg-white" />
                   <span className="text-sm text-slate-500 font-mono">{cor || t('ct.cfg.corAgenda')}</span>
                   {cor && <button type="button" className="text-xs text-slate-400 hover:text-red-500" onClick={() => setCor('')}>{t('ct.cfg.repor')}</button>}
                 </div>

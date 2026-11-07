@@ -62,15 +62,15 @@ export default function PlanoGuard({ children }) {
   if (status === 'SUSPENSO') {
     return (
       <>
-        <div className="bg-orange-50 border-b border-orange-200 px-6 py-3 flex items-center justify-between gap-4">
+        <div className="bg-[#fff3f1] border-b border-[#efdbd8] px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <ShieldOff size={16} className="text-orange-500 shrink-0" />
-            <p className="text-sm text-orange-700 font-medium">
+            <ShieldOff size={16} className="text-[#c8797e] shrink-0" />
+            <p className="text-sm text-[#9b5e67] font-medium">
               {t('ag.pg.suspensa')}
             </p>
           </div>
           <Link to="/faturacao"
-            className="shrink-0 flex items-center gap-1.5 bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-orange-700 transition-all">
+            className="shrink-0 flex items-center gap-1.5 bg-brand-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-brand-700 transition-all">
             <CreditCard size={12} />
             {t('ag.pg.verFat')}
           </Link>

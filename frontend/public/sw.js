@@ -4,7 +4,7 @@
 // ============================================================
 
 // Mudar este número apaga as versões antigas guardadas e obriga a descarregar o site novo
-const CACHE_NAME = 'agendaao-admin-v2';
+const CACHE_NAME = 'agendaao-admin-v3';
 const ADMIN_ROUTE = '/gestao-x7k3m9';
 
 // Ficheiros a fazer cache para funcionamento offline
@@ -16,6 +16,7 @@ const URLS_PARA_CACHE = [
   '/icon-192.png',
   '/icon-512.png',
   '/favicon.svg',
+  '/images/hero-profissional.webp',
 ];
 
 // ── Install: pré-cache dos assets estáticos ──────────────────

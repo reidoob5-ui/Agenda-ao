@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CalendarCheck, Bell, Video, Check, Plus } from 'lucide-react'
 import { DepoimentosRotativos } from '../components/Depoimentos'
 import AssinaturaAda from '../components/AssinaturaAda'
@@ -8,6 +8,7 @@ import { useT, useIdioma, IDIOMAS } from '../i18n'
 import { PRECOS, MOEDAS_PRECO } from '../utils/planos'
 import { fmtMoeda, moedaSugerida } from '../utils/moeda'
 import { fmtHora } from '../utils/tempo'
+import Illustracao3D from '../components/Illustracao3D'
 import { MARCA } from '../utils/marca'
 import './landing.css'
 
@@ -77,9 +78,12 @@ function QuadroMarcacoes({ t, locale, idioma }) {
   const rotuloPag = c.pag.startsWith('lp.') ? t(c.pag) : c.pag
   return (
     <div className="relative lp-hero-visual">
-      <div className="lp-hero-photo" aria-hidden="true">
-        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1400&q=90" alt="" fetchPriority="high" />
+      <div className="lp-hero-photo">
+        <div className="lp-hero-glow" />
+        <img className="lp-hero-person" src="/images/hero-profissional.webp" alt={t('lp.heroAlt')} fetchPriority="high" />
       </div>
+      <div className="lp-hero-decoration lp-hero-decoration--calendar"><Illustracao3D type="calendar" size="small" /></div>
+      <div className="lp-hero-decoration lp-hero-decoration--reminder"><Illustracao3D type="reminder" size="small" /></div>
       <div className="lp-board" aria-live="polite">
         <div className="flex items-center justify-between text-sm text-slate-500">
           <span className="font-semibold text-slate-700">{cid.n[idioma] || cid.n.en}</span>
@@ -102,14 +106,14 @@ function QuadroMarcacoes({ t, locale, idioma }) {
         </div>
       </div>
       <div className="lp-float" role="status">
-        <Bell size={16} className="text-orange-300" aria-hidden />
+        <Bell size={16} aria-hidden />
         <span>{t('lp.lembrete')}</span>
       </div>
       <div className="flex items-center gap-2 mt-10 justify-end">
         <span className="text-xs text-slate-400 mr-1">{t('lp.exemplo')}</span>
         {CENAS.map((s, n) => (
           <button key={s.cidade} onClick={() => setI(n)} aria-label={CIDADES.find((x) => x.id === s.cidade).n[idioma]}
-            aria-current={n === i} className={`h-2.5 rounded-full transition-all ${n === i ? 'w-7 bg-slate-900' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`} />
+            aria-current={n === i} className={`h-2.5 rounded-full transition-all ${n === i ? 'w-7 bg-brand-500' : 'w-2.5 bg-rose-200 hover:bg-rose-300'}`} />
         ))}
       </div>
     </div>
@@ -124,12 +128,12 @@ function Relogios({ t, locale, idioma }) {
       <div className="max-w-6xl mx-auto px-6 py-14 grid lg:grid-cols-[1fr_1.4fr] gap-10 items-center">
         <div>
           <h2 className="lp-display lp-h2 max-w-md">{t('lp.relTitulo')}</h2>
-          <p className="text-slate-400 mt-3">{t('lp.relSub')}</p>
+          <p className="text-slate-600 mt-3">{t('lp.relSub')}</p>
         </div>
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-7">
           {CIDADES.map((c) => (
             <li key={c.id} className="lp-clock">
-              <p className="text-sm text-slate-400">{c.n[idioma] || c.n.en}</p>
+              <p className="text-sm text-slate-500">{c.n[idioma] || c.n.en}</p>
               <p className="lp-display text-4xl font-bold lp-tabular">{fmtHora(agora, c.tz, locale)}</p>
             </li>
           ))}
@@ -150,7 +154,7 @@ function AntesDepois({ t }) {
         <div className="inline-flex mt-7 p-1 rounded-full bg-white shadow-sm ring-1 ring-slate-200" role="group">
           {[['sem', 'lp.adSem'], ['com', 'lp.adCom']].map(([k, rot]) => (
             <button key={k} aria-pressed={modo === k} onClick={() => setModo(k)}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${modo === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}>
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${modo === k ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>
               {t(rot)}
             </button>
           ))}
@@ -159,56 +163,23 @@ function AntesDepois({ t }) {
       </div>
       <div className="lp-fone max-w-sm w-full mx-auto lg:ml-auto">
         {modo === 'sem' ? (
-          <div key="sem" className="lp-fone-tela lp-swap" style={{ background: '#efeae2' }}>
+          <div key="sem" className="lp-fone-tela lp-swap" style={{ background: '#fff3ef' }}>
             {bolhas.map(([q, k]) => <div key={k} className={`lp-bolha ${q}`}>{t(k)}</div>)}
           </div>
         ) : (
-          <div key="com" className="lp-fone-tela lp-swap items-stretch justify-center" style={{ background: '#f1f5f9' }}>
+          <div key="com" className="lp-fone-tela lp-swap items-stretch justify-center" style={{ background: '#fff8f5' }}>
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-2 text-green-700 font-semibold text-sm"><Visto />{t('lp.confirmada')}</div>
               <p className="lp-display text-5xl font-extrabold mt-3 lp-tabular">17:30</p>
               <p className="font-semibold mt-1">{t('lp.s1')}</p>
             </div>
-            <div className="bg-slate-900 text-white rounded-2xl px-4 py-3 text-sm flex items-center gap-2.5">
-              <Bell size={15} className="text-orange-300" aria-hidden />{t('lp.lembrete')}
+            <div className="lp-notification rounded-2xl px-4 py-3 text-sm flex items-center gap-2.5">
+              <Bell size={15} aria-hidden />{t('lp.lembrete')}
             </div>
           </div>
         )}
       </div>
     </section>
-  )
-}
-
-/* ---------- Pequenos desenhos usados nos blocos ---------- */
-function Qr() {
-  const n = 15
-  const celulas = useMemo(() => {
-    const r = []; let s = 11
-    const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff }
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-      const f = (x < 5 && y < 5) || (x >= n - 5 && y < 5) || (x < 5 && y >= n - 5)
-      if (f) {
-        const lxx = x >= n - 5 ? x - (n - 5) : x, lyy = y >= n - 5 ? y - (n - 5) : y
-        const borda = lxx === 0 || lxx === 4 || lyy === 0 || lyy === 4
-        if (borda || (lxx === 2 && lyy === 2)) r.push([x, y])
-      } else if (rnd() > 0.5) r.push([x, y])
-    }
-    return r
-  }, [])
-  return (
-    <svg viewBox={`0 0 ${n} ${n}`} className="w-28 h-28 shrink-0" role="img" aria-label="QR code Pix" shapeRendering="crispEdges">
-      <rect width={n} height={n} fill="#fff" rx="1" />
-      {celulas.map(([x, y]) => <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#0f1b2d" />)}
-    </svg>
-  )
-}
-
-function Pessoa({ cls = 'w-20' }) {
-  return (
-    <svg viewBox="0 0 80 60" className={cls} aria-hidden>
-      <circle cx="40" cy="22" r="12" fill="#fff" opacity=".9" />
-      <path d="M12 60c2-18 14-24 28-24s26 6 28 24z" fill="#fff" opacity=".9" />
-    </svg>
   )
 }
 
@@ -220,70 +191,85 @@ function Funcionalidades({ t, locale }) {
   const alturas = [38, 52, 45, 68, 60, 82, 96]
   return (
     <section id="funcionalidades" className="max-w-6xl mx-auto px-6 pb-20">
-      <h2 className="lp-display lp-h2 max-w-2xl mb-10">{t('lp.bTitulo')}</h2>
-      <div className="grid md:grid-cols-6 gap-4">
-        {/* Consulta por video */}
-        <div className="md:col-span-3 lp-ink rounded-[32px] p-7 flex flex-col">
-          <h3 className="lp-display text-2xl font-bold">{t('lp.bVideoT')}</h3>
-          <p className="text-slate-300 mt-2 mb-6 max-w-sm leading-relaxed">{t('lp.bVideoD')}</p>
-          <div className="rounded-3xl bg-white/10 p-3 mt-auto">
-            <div className="grid grid-cols-[2fr_1fr] gap-2 h-32">
-              <div className="rounded-2xl bg-white/15 flex items-end justify-center overflow-hidden"><Pessoa cls="w-28" /></div>
-              <div className="rounded-2xl bg-white/10 flex items-end justify-center overflow-hidden"><Pessoa cls="w-16" /></div>
-            </div>
-            <div className="mt-3 flex justify-center">
-              <span className="lp-lagoon rounded-full px-5 py-2 text-sm font-semibold inline-flex items-center gap-2"><Video size={15} />{t('book.entrarSessao')}</span>
-            </div>
+      <div className="lp-section-heading">
+        <span className="lp-eyebrow"><span /> {t('land.funcionalidades')}</span>
+        <h2 className="lp-display lp-h2 max-w-2xl mt-4">{t('lp.bTitulo')}</h2>
+        <p className="text-slate-500 mt-4 max-w-xl leading-relaxed">{t('lp.bSub')}</p>
+      </div>
+      <div className="lp-feature-grid mt-10">
+        {/* Consulta por vídeo */}
+        <article className="lp-feature-card lp-feature-card--wide">
+          <div className="lp-feature-card__copy">
+            <span className="lp-feature-index">{t('lp.bi1')}</span>
+            <h3 className="lp-display text-2xl">{t('lp.bVideoT')}</h3>
+            <p>{t('lp.bVideoD')}</p>
+            <span className="lp-feature-link"><Video size={15} /> {t('book.entrarSessao')}</span>
           </div>
-        </div>
+          <Illustracao3D type="video" size="feature" className="lp-feature-art" />
+          <div className="lp-video-mini" aria-hidden="true">
+            <span /><span /><span />
+          </div>
+        </article>
 
         {/* Pagamentos e moeda */}
-        <div className="md:col-span-3 lp-sky rounded-[32px] p-7">
-          <h3 className="lp-display text-2xl font-bold">{t('lp.bPayT')}</h3>
-          <p className="text-slate-600 mt-2 leading-relaxed max-w-sm">{t('lp.bPayD')}</p>
-          <div className="mt-6 flex items-center gap-5 bg-white rounded-3xl p-4">
-            <Qr />
-            <div>
-              <p className="lp-display text-3xl font-bold lp-tabular">{fmtMoeda(180, 'BRL', locale)}</p>
-              <p className="text-sm text-slate-500 mt-1">Pix</p>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {['AOA', 'BRL', 'USD', 'EUR'].map((m) => <span key={m} className="text-xs font-semibold bg-slate-100 text-slate-600 rounded-full px-2.5 py-1">{m}</span>)}
-              </div>
+        <article className="lp-feature-card lp-feature-card--wide lp-feature-card--warm">
+          <div className="lp-feature-card__copy">
+            <span className="lp-feature-index">{t('lp.bi2')}</span>
+            <h3 className="lp-display text-2xl">{t('lp.bPayT')}</h3>
+            <p>{t('lp.bPayD')}</p>
+            <div className="lp-currency-row">
+              {['AOA', 'BRL', 'USD', 'EUR'].map((m) => <span key={m}>{m}</span>)}
             </div>
           </div>
-        </div>
+          <div className="lp-payment-art">
+            <Illustracao3D type="payment" size="feature" />
+            <div className="lp-payment-receipt"><Check size={17} /><span>{t('lp.paySeguro')}</span></div>
+          </div>
+        </article>
 
         {/* Lembretes */}
-        <div className="md:col-span-2 bg-white rounded-[28px] p-6 ring-1 ring-slate-200/70">
-          <div className="w-11 h-11 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center"><Bell size={20} /></div>
-          <h3 className="lp-display text-xl font-bold mt-4">{t('lp.bLembT')}</h3>
-          <p className="text-slate-600 mt-2 text-sm leading-relaxed">{t('lp.bLembD')}</p>
-        </div>
+        <article className="lp-feature-card">
+          <Illustracao3D type="reminder" size="feature" />
+          <span className="lp-feature-index">{t('lp.bi3')}</span>
+          <h3 className="lp-display text-xl">{t('lp.bLembT')}</h3>
+          <p>{t('lp.bLembD')}</p>
+        </article>
 
         {/* Idiomas */}
-        <div className="md:col-span-2 lp-lagoon rounded-[28px] p-6">
-          <h3 className="lp-display text-xl font-bold">{t('lp.bIdT')}</h3>
-          <p className="text-teal-50 mt-2 text-sm leading-relaxed">{t('lp.bIdD')}</p>
-          <div className="flex flex-wrap gap-2 mt-5">
+        <article className="lp-feature-card lp-feature-card--language">
+          <Illustracao3D type="globe" size="feature" />
+          <span className="lp-feature-index">{t('lp.bi4')}</span>
+          <h3 className="lp-display text-xl">{t('lp.bIdT')}</h3>
+          <p>{t('lp.bIdD')}</p>
+          <div className="lp-language-pills">
             {IDIOMAS.map((i) => (
               <button key={i.codigo} onClick={() => setIdioma(i.codigo)} aria-pressed={idioma === i.codigo}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${idioma === i.codigo ? 'bg-white text-teal-800' : 'bg-white/15 text-white hover:bg-white/25'}`}>
+                className={idioma === i.codigo ? 'is-active' : ''}>
                 {i.nome}
               </button>
             ))}
           </div>
-        </div>
+        </article>
 
-        {/* Relatorios */}
-        <div ref={refBarras} className={`md:col-span-2 bg-white rounded-[28px] p-6 ring-1 ring-slate-200/70 ${barrasVisiveis ? 'lp-in' : ''}`}>
-          <svg viewBox="0 0 140 64" className="w-full h-16" aria-hidden>
+        {/* Relatórios */}
+        <article ref={refBarras} className={`lp-feature-card lp-feature-card--reports ${barrasVisiveis ? 'lp-in' : ''}`}>
+          <Illustracao3D type="analytics" size="feature" />
+          <span className="lp-feature-index">{t('lp.bi5')}</span>
+          <h3 className="lp-display text-xl">{t('lp.bRelT')}</h3>
+          <p>{t('lp.bRelD')}</p>
+          <svg viewBox="0 0 140 64" className="lp-report-bars" aria-hidden>
             {alturas.map((h, k) => (
               <rect key={k} className="lp-bar" x={k * 20 + 2} y={64 - h * 0.62} width="14" height={h * 0.62} rx="4"
-                fill={k === alturas.length - 1 ? '#f97316' : '#cbd5e1'} style={{ transitionDelay: `${k * 70}ms` }} />
+                fill={k === alturas.length - 1 ? '#df7d85' : '#efd0d0'} style={{ transitionDelay: `${k * 70}ms` }} />
             ))}
           </svg>
-          <h3 className="lp-display text-xl font-bold mt-4">{t('lp.bRelT')}</h3>
-          <p className="text-slate-600 mt-2 text-sm leading-relaxed">{t('lp.bRelD')}</p>
+        </article>
+      </div>
+      <div className="lp-everything-more mt-5">
+        <Illustracao3D type="smart" size="small" />
+        <div>
+          <h3 className="lp-display text-2xl">{t('lp.maisT')}</h3>
+          <p>{t('lp.maisD')}</p>
         </div>
       </div>
     </section>
@@ -323,7 +309,7 @@ function ExperienciaVisual({ t }) {
 /* ---------- Para quem ---------- */
 function ParaQuem({ t }) {
   const lista = t('lp.quem').split('|')
-  const tons = ['bg-white', 'bg-orange-100', 'bg-sky-100', 'bg-teal-100']
+  const tons = ['bg-white', 'bg-[#fff0ef]', 'bg-[#f8eee8]', 'bg-[#f5e8e6]']
   return (
     <section className="max-w-6xl mx-auto px-6 pb-20">
       <h2 className="lp-display lp-h2 max-w-xl mb-8">{t('lp.paraTitulo')}</h2>
@@ -347,7 +333,7 @@ function Precos({ t, locale }) {
         <div className="flex justify-center gap-1.5 mb-10" role="tablist" aria-label={t('comum.moeda')}>
           {MOEDAS_PRECO.map((m) => (
             <button key={m} role="tab" aria-selected={moeda === m} onClick={() => setMoeda(m)}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all ${moeda === m ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all ${moeda === m ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300'}`}>
               {m}
             </button>
           ))}
@@ -367,7 +353,7 @@ function Precos({ t, locale }) {
               </div>
               <p className={`text-xs mb-6 ${p.popular ? 'text-slate-400' : 'text-slate-500'}`}>{t(p.prof)}</p>
               <Link to="/criar" className={`block text-center py-3 rounded-full text-sm font-semibold mb-6 transition-all
-                ${p.popular ? 'bg-brand-600 text-white hover:bg-brand-500' : 'bg-slate-900 text-white hover:bg-slate-700'}`}>
+                ${p.popular ? 'bg-brand-600 text-white hover:bg-brand-500' : 'bg-white text-brand-700 border border-brand-200 hover:bg-brand-50'}`}>
                 {t('land.comecarAgora')}
               </Link>
               <ul className="space-y-2.5">
@@ -407,6 +393,7 @@ function Faq({ t }) {
 
 export default function LandingPage() {
   const { t, idioma, locale } = useT()
+  const partesTitulo = t('lp.h1').split(/,\s*/)
   useEffect(() => {
     const targets = document.querySelectorAll('.lp section, .lp footer, .lp-photo, .lp-board, .lp-fone, .lp-clock, .lp section > div > div, .lp section li')
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
@@ -439,7 +426,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <SeletorIdioma />
             <Link to="/login" className="hidden sm:block text-sm font-semibold text-slate-700 px-3">{t('comum.entrar')}</Link>
-            <Link to="/criar" className="bg-slate-900 text-white text-sm font-semibold rounded-full px-4 py-2 hover:bg-slate-700">{t('comum.comecarGratis')}</Link>
+            <Link to="/criar" className="bg-brand-600 text-white text-sm font-semibold rounded-full px-4 py-2 hover:bg-brand-700 shadow-sm">{t('comum.comecarGratis')}</Link>
           </div>
         </div>
       </header>
@@ -448,7 +435,7 @@ export default function LandingPage() {
       <section className="max-w-6xl mx-auto px-6 pt-14 pb-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-14 items-center">
         <div className="lp-hero-copy">
           <span className="lp-eyebrow"><span /> {t('lp.eyebrow')}</span>
-          <h1 className="lp-display lp-h1 max-w-2xl">{t('lp.h1')}</h1>
+          <h1 className="lp-display lp-h1 max-w-2xl"><span>{partesTitulo[0]}</span>{partesTitulo.length > 1 && <><br /><em>{partesTitulo.slice(1).join(', ')}</em></>}</h1>
           <p className="text-lg md:text-xl text-slate-600 mt-6 max-w-xl leading-relaxed">{t('lp.sub')}</p>
           <div className="flex flex-wrap items-center gap-3 mt-9">
             <Link to="/criar" className="bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-full px-8 py-3.5 text-base transition-colors">{t('comum.criarConta')}</Link>
@@ -472,26 +459,27 @@ export default function LandingPage() {
       <Faq t={t} />
 
       {/* Chamada final */}
-      <section className="lp-ink">
-        <div className="max-w-3xl mx-auto px-6 py-20 text-center">
-          <h2 className="lp-display lp-h2">{t('land.ctaTitulo')}</h2>
-          <p className="text-slate-300 mt-4">{t('land.ctaTexto')}</p>
-          <Link to="/criar" className="inline-block mt-8 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-full px-9 py-4 transition-colors">{t('comum.criarConta')}</Link>
+      <section className="lp-final-cta">
+        <div className="lp-final-cta__inner max-w-5xl mx-auto px-6 py-16 text-center">
+          <Illustracao3D type="smart" size="small" />
+          <h2 className="lp-display lp-h2 mt-3">{t('land.ctaTitulo')}</h2>
+          <p className="text-slate-600 mt-4">{t('land.ctaTexto')}</p>
+          <Link to="/criar" className="inline-flex items-center justify-center gap-2 mt-8 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-full px-9 py-4 transition-colors shadow-sm">{t('comum.criarConta')} <span aria-hidden="true">→</span></Link>
         </div>
       </section>
 
-      <footer className="bg-[#0a1322] py-10">
+      <footer className="lp-footer py-10">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2 text-white">
-            <CalendarCheck size={16} />
+          <div className="flex items-center gap-2 text-slate-800">
+            <span className="lp-footer-mark"><CalendarCheck size={17} /></span>
             <span className="lp-display font-bold">{MARCA}</span>
           </div>
-          <AssinaturaAda fundo="escuro" comEmail />
+          <AssinaturaAda fundo="claro" comEmail />
           <div className="text-center md:text-right">
             <p className="text-slate-500 text-sm">{t('land.rodape', { ano: new Date().getFullYear() })}</p>
             <p className="text-xs mt-1.5 space-x-3">
-              <Link to="/termos" className="text-slate-400 hover:text-slate-200">{t('legal.termos')}</Link>
-              <Link to="/privacidade" className="text-slate-400 hover:text-slate-200">{t('legal.privacidade')}</Link>
+              <Link to="/termos" className="text-slate-500 hover:text-brand-700">{t('legal.termos')}</Link>
+              <Link to="/privacidade" className="text-slate-500 hover:text-brand-700">{t('legal.privacidade')}</Link>
             </p>
           </div>
         </div>
