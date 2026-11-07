@@ -289,11 +289,11 @@ function ExperienciaVisual({ t }) {
       </div>
       <div className="lp-photo-grid mt-10">
         <figure className="lp-photo lp-photo-main">
-          <img src="https://images.unsplash.com/photo-1521590832167-7bcbfac643a6?auto=format&fit=crop&w=1400&q=85" alt={t('lp.exp.alt1')} loading="lazy" />
+          <img src="/images/salao.webp" alt={t('lp.exp.alt1')} loading="lazy" />
           <figcaption><span>{t('lp.exp.c1')}</span><strong>{t('lp.exp.t1')}</strong></figcaption>
         </figure>
         <figure className="lp-photo lp-photo-side">
-          <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1000&q=85" alt={t('lp.exp.alt2')} loading="lazy" />
+          <img src="/images/barbearia.webp" alt={t('lp.exp.alt2')} loading="lazy" />
           <figcaption><span>{t('lp.exp.c2')}</span><strong>{t('lp.exp.t2')}</strong></figcaption>
         </figure>
         <div className="lp-photo-note">
