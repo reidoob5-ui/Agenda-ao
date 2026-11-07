@@ -1,6 +1,9 @@
 // Textos da pagina inicial (lp.*)
 export default {
  "pt": {
+  "lp.3d.nova": "Nova marcação",
+  "lp.3d.conf": "Confirmada",
+  "lp.3d.hoje": "Hoje",
   "lp.eyebrow": "A gestão do teu negócio, simplificada",
   "lp.exp.h2": "Uma experiência que transmite confiança desde o primeiro olhar.",
   "lp.exp.p": "Uma presença digital cuidada, simples de explorar e preparada para transformar visitas em marcações.",
@@ -65,6 +68,9 @@ export default {
   "lp.fa5": "Não. O Básico é gratuito, não pede cartão e não tem prazo."
  },
  "en": {
+  "lp.3d.nova": "New booking",
+  "lp.3d.conf": "Confirmed",
+  "lp.3d.hoje": "Today",
   "lp.eyebrow": "Running your business, made simple",
   "lp.exp.h2": "An experience that inspires trust from the very first look.",
   "lp.exp.p": "A polished online presence that is easy to explore and ready to turn visits into bookings.",
@@ -129,6 +135,9 @@ export default {
   "lp.fa5": "No. Basic is free, needs no card and has no time limit."
  },
  "es": {
+  "lp.3d.nova": "Nueva reserva",
+  "lp.3d.conf": "Confirmada",
+  "lp.3d.hoje": "Hoy",
   "lp.eyebrow": "La gestión de tu negocio, simplificada",
   "lp.exp.h2": "Una experiencia que transmite confianza desde la primera mirada.",
   "lp.exp.p": "Una presencia digital cuidada, fácil de explorar y lista para convertir visitas en reservas.",
@@ -193,6 +202,9 @@ export default {
   "lp.fa5": "No. El Básico es gratuito, no pide tarjeta y no tiene plazo."
  },
  "fr": {
+  "lp.3d.nova": "Nouvelle réservation",
+  "lp.3d.conf": "Confirmée",
+  "lp.3d.hoje": "Aujourd'hui",
   "lp.eyebrow": "La gestion de votre activité, simplifiée",
   "lp.exp.h2": "Une expérience qui inspire confiance dès le premier regard.",
   "lp.exp.p": "Une présence en ligne soignée, simple à explorer et prête à transformer les visites en réservations.",

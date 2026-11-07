@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
+import PremiumMotion from './components/PremiumMotion'
 
 import Layout        from './components/layout/Layout'
 import RotaProtegida from './components/layout/RotaProtegida'
@@ -24,7 +25,6 @@ import CartazPage from './pages/CartazPage'
 import ListaEsperaPage from './pages/ListaEsperaPage'
 import PagarPage from './pages/PagarPage'
 import LegalPage from './pages/LegalPage'
-import PremiumMotion from './components/PremiumMotion'
 
 export default function App() {
   const inicializar = useAuthStore(s => s.inicializar)
