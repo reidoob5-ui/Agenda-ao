@@ -78,7 +78,7 @@ function QuadroMarcacoes({ t, locale, idioma }) {
   return (
     <div className="relative lp-hero-visual">
       <div className="lp-hero-photo" aria-hidden="true">
-        <img src="https://images.unsplash.com/photo-1600948836101-f9ffda59d250?auto=format&fit=crop&w=1200&q=85" alt="" fetchPriority="high" />
+        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1400&q=90" alt="" fetchPriority="high" />
       </div>
       <div className="lp-board" aria-live="polite">
         <div className="flex items-center justify-between text-sm text-slate-500">
@@ -408,9 +408,9 @@ function Faq({ t }) {
 export default function LandingPage() {
   const { t, idioma, locale } = useT()
   useEffect(() => {
-    const targets = document.querySelectorAll('.lp section, .lp footer')
+    const targets = document.querySelectorAll('.lp section, .lp footer, .lp-photo, .lp-board, .lp-fone, .lp-clock, .lp section > div > div, .lp section li')
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
-    targets.forEach(el => el.classList.add('lp-reveal'))
+    targets.forEach((el, index) => { el.classList.add('lp-reveal'); el.style.setProperty('--lp-reveal-delay', `${Math.min(index % 6, 5) * 75}ms`) })
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
