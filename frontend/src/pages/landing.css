@@ -138,7 +138,7 @@
 .lp-photo-note {background:radial-gradient(circle at 100% 0%,rgba(233,121,125,.2),transparent 44%),#1b1b2a;border-radius:30px}
 .lp-note-icon {background:#e9797d}
 .lp-reveal {opacity:0;transform:translateY(42px) scale(.985);filter:blur(5px);transition:opacity .85s cubic-bezier(.2,.75,.2,1),transform .85s cubic-bezier(.2,.75,.2,1),filter .85s ease;transition-delay:var(--lp-reveal-delay,0ms)}
-.lp-reveal.is-visible {opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+.lp-reveal.is-visible {opacity:1;transform:none;filter:none}
 .lp-photo img {transform:scale(1.04);transition:transform 1.4s cubic-bezier(.2,.8,.2,1),filter 1.2s ease;filter:saturate(.78)}
 .lp-photo.is-visible img {transform:scale(1);filter:saturate(1)}
 .lp-photo:hover img {transform:scale(1.055)}

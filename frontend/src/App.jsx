@@ -24,13 +24,16 @@ import CartazPage from './pages/CartazPage'
 import ListaEsperaPage from './pages/ListaEsperaPage'
 import PagarPage from './pages/PagarPage'
 import LegalPage from './pages/LegalPage'
+import PremiumMotion from './components/PremiumMotion'
 
 export default function App() {
   const inicializar = useAuthStore(s => s.inicializar)
   useEffect(() => { inicializar() }, [])
 
   return (
-    <Routes>
+    <>
+      <PremiumMotion />
+      <Routes>
       {/* Publicas */}
       <Route path="/"        element={<LandingPage />} />
       <Route path="/login"   element={<LoginPage />} />
@@ -63,6 +66,7 @@ export default function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }
