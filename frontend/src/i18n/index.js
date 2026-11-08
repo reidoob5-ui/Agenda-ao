@@ -15,10 +15,13 @@ export const IDIOMAS = [
   { codigo: 'fr', nome: 'Français' },
 ]
 export const LOCALES = { pt: 'pt-PT', en: 'en-GB', es: 'es-ES', fr: 'fr-FR' }
-const CHAVE = 'agendaaqui-idioma-v2' // chave nova: descarta escolhas antigas guardadas por engano
+// A escolha manual vale so enquanto o separador estiver aberto (sessionStorage). Ao voltar ao site, o idioma
+// volta a seguir o pais/navegador — assim um teste em espanhol nao fica "preso" para sempre.
+const CHAVE = 'agendaaqui-idioma-sessao'
+try { localStorage.removeItem('agendaao-idioma'); localStorage.removeItem('agendaaqui-idioma-v2') } catch {}
 
 function lerEscolha() {
-  try { const g = localStorage.getItem(CHAVE); return DICIONARIOS[g] ? g : null } catch { return null }
+  try { const g = sessionStorage.getItem(CHAVE); return DICIONARIOS[g] ? g : null } catch { return null }
 }
 
 // Idioma do navegador (o que o utilizador tem no telemovel/computador), se for um dos suportados
@@ -47,7 +50,7 @@ export const useIdioma = create((set) => ({
   escolhido: !!lerEscolha(),
   setIdioma: (idioma) => {
     if (!DICIONARIOS[idioma]) return
-    try { localStorage.setItem(CHAVE, idioma) } catch {}
+    try { sessionStorage.setItem(CHAVE, idioma) } catch {}
     set({ idioma, escolhido: true })
   },
   // so usado se a pessoa nao escolheu e o navegador esta num idioma nao suportado
