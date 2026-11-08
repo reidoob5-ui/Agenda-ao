@@ -376,7 +376,7 @@ function Precos({ t, locale }) {
 /* ---------- Perguntas frequentes ---------- */
 function Faq({ t }) {
   return (
-    <section className="max-w-3xl mx-auto px-6 py-20">
+    <section className="lp-faq max-w-3xl mx-auto px-6 py-20">
       <h2 className="lp-display lp-h2 mb-8">{t('lp.faqT')}</h2>
       <div className="divide-y divide-slate-200 border-y border-slate-200">
         {[1, 2, 3, 4, 5].map((n) => (
@@ -396,57 +396,29 @@ function Faq({ t }) {
 export default function LandingPage() {
   const { t, idioma, locale } = useT()
   const partesTitulo = t('lp.h1').split(/,\s*/)
+  // Efeito de construcao ao rolar: so nas Perguntas Frequentes (o resto da pagina fica sempre visivel)
   useLayoutEffect(() => {
     const root = document.querySelector('.lp')
     if (!root) return
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
-
     let observer
-    let guarda
-    let targets = []
-    const mostrarTudo = () => {
-      targets.forEach(el => el.classList.add('is-visible'))
-      root.classList.remove('lp-scroll-ready')
-    }
+    let itens = []
     try {
-      // Efeito de construção ao rolar: o conteudo entra quando chega a zona visivel.
-      const selectors = [
-        '.lp-hero-copy > *', '.lp-hero-visual > *',
-        '.lp-ink > div > *', '.lp-clock',
-        '.lp-fone', '.lp-experiencia-top > *', '.lp-photo', '.lp-photo-note',
-        '.lp-section-heading > *', '.lp-feature-card', '.lp-everything-more',
-        '.lp > section > div.max-w-5xl > *',
-        '.lp > section > div.max-w-3xl > *',
-        '.lp-final-cta__inner > *', '.lp-footer > div > *',
-        '.lp section details', '.lp section ul > li'
-      ]
-      targets = [...new Set(selectors.flatMap(selector => [...root.querySelectorAll(selector)]))]
-      const grupos = new Map()
-      targets.forEach(el => {
-        const parent = el.parentElement
-        const index = grupos.get(parent) || 0
-        grupos.set(parent, index + 1)
-        el.classList.add('lp-reveal')
-        el.style.setProperty('--lp-reveal-delay', `${Math.min(index, 7) * 90}ms`)
+      itens = [...root.querySelectorAll('.lp-faq h2, .lp-faq details')]
+      itens.forEach((el, i) => {
+        el.classList.add('lp-build')
+        el.style.setProperty('--lp-d', `${i * 110}ms`)
       })
-      observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible')
-            observer.unobserve(entry.target)
-          }
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) { e.target.classList.add('is-in'); observer.unobserve(e.target) }
         })
-      }, { threshold: 0.04, rootMargin: '0px 0px -8% 0px' })
-      targets.forEach(el => observer.observe(el))
-      root.classList.add('lp-scroll-ready')
-      // Rede de seguranca: se passado 1,5 s nada ficou visivel, o efeito nao esta a funcionar neste aparelho -> mostra tudo
-      guarda = setTimeout(() => {
-        if (!targets.some(el => el.classList.contains('is-visible'))) mostrarTudo()
-      }, 1500)
+      }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' })
+      itens.forEach((el) => observer.observe(el))
     } catch {
-      mostrarTudo()
+      itens.forEach((el) => el.classList.add('is-in'))
     }
-    return () => { clearTimeout(guarda); observer?.disconnect() }
+    return () => observer?.disconnect()
   }, [])
   return (
     <div className="lp min-h-screen">
