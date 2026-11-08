@@ -450,7 +450,7 @@ export default function LandingPage() {
       </header>
 
       {/* Topo */}
-      <section className="max-w-6xl mx-auto px-6 pt-14 pb-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-14 items-center">
+      <section className="lp-hero-section max-w-6xl mx-auto px-6 pt-14 pb-20 grid lg:grid-cols-[1.15fr_0.85fr] gap-14 items-center">
         <div className="lp-hero-copy">
           <span className="lp-eyebrow"><span /> {t('lp.eyebrow')}</span>
           <h1 className="lp-display lp-h1 max-w-2xl"><span>{partesTitulo[0]}</span>{partesTitulo.length > 1 && <><br /><em>{partesTitulo.slice(1).join(', ')}</em></>}</h1>
