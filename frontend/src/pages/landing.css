@@ -420,7 +420,7 @@
     linear-gradient(105deg, #fffaf7 0%, #fff4f1 54%, #fbe7e2 100%);
 }
 .lp-hero-section .lp-hero-visual {
-  isolation: auto;
+  isolation: isolate;
   position: relative;
   z-index: 1;
 }
@@ -473,7 +473,7 @@
   .lp-hero-section .lp-hero-visual {
     min-height: 550px;
     margin-top: 8px;
-    isolation: auto;
+    isolation: isolate;
   }
   .lp-hero-section .lp-hero-photo {
     inset: 0 -12px 0 -12px;
