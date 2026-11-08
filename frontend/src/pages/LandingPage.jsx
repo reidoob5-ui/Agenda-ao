@@ -293,8 +293,8 @@ function ExperienciaVisual({ t }) {
           <figcaption><span>{t('lp.exp.c1')}</span><strong>{t('lp.exp.t1')}</strong></figcaption>
         </figure>
         <figure className="lp-photo lp-photo-side">
-          <img src="/images/barbearia.webp" alt={t('lp.exp.alt2')} loading="lazy" />
-          <figcaption><span>{t('lp.exp.c2')}</span><strong>{t('lp.exp.t2')}</strong></figcaption>
+          <img src="https://images.unsplash.com/photo-1758691461957-474a7686e388?auto=format&fit=crop&w=1400&q=85" alt="Consulta médica num consultório moderno, com profissional de saúde a atender uma paciente" loading="lazy" />
+          <figcaption><span>SAÚDE E BEM-ESTAR</span><strong>Consultas num consultório acolhedor</strong></figcaption>
         </figure>
         <div className="lp-photo-note">
           <span className="lp-note-icon"><CalendarCheck size={19}/></span>
@@ -395,9 +395,12 @@ export default function LandingPage() {
   const { t, idioma, locale } = useT()
   const partesTitulo = t('lp.h1').split(/,\s*/)
   useEffect(() => {
-    const targets = document.querySelectorAll('.lp section, .lp footer, .lp-photo, .lp-board, .lp-fone, .lp-clock, .lp section > div > div, .lp section li')
+    const targets = document.querySelectorAll('.lp > section, .lp > footer, .lp-hero-copy > *, .lp-hero-visual > *, .lp-board, .lp-fone, .lp-bolha, .lp-clock, .lp-feature-card, .lp-everything-more, .lp-photo, .lp-photo-note, .lp section li')
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
-    targets.forEach((el, index) => { el.classList.add('lp-reveal'); el.style.setProperty('--lp-reveal-delay', `${Math.min(index % 6, 5) * 75}ms`) })
+    targets.forEach((el, index) => {
+      el.classList.add('lp-reveal')
+      el.style.setProperty('--lp-reveal-delay', `${Math.min(index % 5, 4) * 110}ms`)
+    })
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
