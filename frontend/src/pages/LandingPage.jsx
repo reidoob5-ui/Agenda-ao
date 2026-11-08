@@ -478,7 +478,7 @@ export default function LandingPage() {
           <p className="text-lg md:text-xl text-slate-600 mt-6 max-w-xl leading-relaxed">{t('lp.sub')}</p>
           <div className="flex flex-wrap items-center gap-3 mt-9">
             <Link to="/criar" className="bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-full px-8 py-3.5 text-base transition-colors">{t('comum.criarConta')}</Link>
-            <Link to="/b/demo" className="font-semibold rounded-full px-7 py-3.5 text-base ring-1 ring-slate-300 hover:bg-white transition-colors">{t('land.demo')}</Link>
+            <Link to="/demo" className="font-semibold rounded-full px-7 py-3.5 text-base ring-1 ring-slate-300 hover:bg-white transition-colors">{t('land.demo')}</Link>
           </div>
           <p className="text-sm text-slate-500 mt-4">{t('land.semCartao')}</p>
         </div>

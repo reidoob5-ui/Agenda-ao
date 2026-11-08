@@ -24,6 +24,7 @@ import CartazPage from './pages/CartazPage'
 import ListaEsperaPage from './pages/ListaEsperaPage'
 import PagarPage from './pages/PagarPage'
 import LegalPage from './pages/LegalPage'
+import DemoPage from './pages/DemoPage'
 import PremiumMotion from './components/PremiumMotion'
 
 export default function App() {
@@ -38,6 +39,8 @@ export default function App() {
       <Route path="/"        element={<LandingPage />} />
       <Route path="/login"   element={<LoginPage />} />
       <Route path="/criar"   element={<RegistarPage />} />
+      <Route path="/demo" element={<DemoPage />} />
+      <Route path="/b/demo" element={<Navigate to="/demo" replace />} />
       <Route path="/b/:slug" element={<BookingPage />} />
       <Route path="/depoimentos" element={<DepoimentosPage />} />
       <Route path="/termos" element={<LegalPage tipo="termos" />} />
