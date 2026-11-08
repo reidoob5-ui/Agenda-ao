@@ -555,3 +555,35 @@
       linear-gradient(180deg, rgba(255,248,246,.18), transparent 20%, transparent 84%, rgba(255,245,242,.38));
   }
 }
+
+
+/* ===== Topo final: UMA só fotografia, a fundir-se no fundo da secção (substitui as camadas anteriores) ===== */
+.lp { overflow-x: clip; }
+.lp .lp-hero-section {
+  background: none;
+}
+.lp .lp-hero-section .lp-hero-person,
+.lp .lp-hero-section .lp-hero-glow { display: none; }
+.lp .lp-hero-section .lp-hero-photo {
+  position: absolute;
+  z-index: 0;
+  inset: -48px -9vw -48px -34vw;
+  overflow: visible;
+  border-radius: 0;
+  background: url('/images/hero-cena.webp') right center / auto 112% no-repeat;
+  filter: none;
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, rgba(0,0,0,.35) 20%, #000 46%),
+    linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%),
+    linear-gradient(270deg, transparent 0%, #000 9%);
+  -webkit-mask-composite: source-in, source-in;
+  mask-image:
+    linear-gradient(90deg, transparent 0%, rgba(0,0,0,.35) 20%, #000 46%),
+    linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%),
+    linear-gradient(270deg, transparent 0%, #000 9%);
+  mask-composite: intersect;
+}
+.lp .lp-hero-section .lp-hero-photo::after { display: none; }
+@media (max-width: 900px) {
+  .lp .lp-hero-section .lp-hero-photo { inset: -20px -16px -24px -16px; background-size: auto 100%; background-position: 82% center; }
+}

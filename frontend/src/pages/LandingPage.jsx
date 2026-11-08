@@ -78,10 +78,7 @@ function QuadroMarcacoes({ t, locale, idioma }) {
   const rotuloPag = c.pag.startsWith('lp.') ? t(c.pag) : c.pag
   return (
     <div className="relative lp-hero-visual">
-      <div className="lp-hero-photo">
-        <div className="lp-hero-glow" />
-        <img className="lp-hero-person" src="/images/hero-profissional.webp?v=3" alt={t('lp.heroAlt')} fetchPriority="high" />
-      </div>
+      <div className="lp-hero-photo" role="img" aria-label={t('lp.heroAlt')} />
       <div className="lp-hero-decoration lp-hero-decoration--calendar"><Illustracao3D type="calendar" size="small" /></div>
       <div className="lp-hero-decoration lp-hero-decoration--reminder"><Illustracao3D type="reminder" size="small" /></div>
       <div className="lp-board" aria-live="polite">
