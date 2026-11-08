@@ -1,0 +1,51 @@
+/* Refinamento visual do painel autenticado — apenas apresentação, sem alterar fluxos. */
+.aa-workspace {
+  background:
+    radial-gradient(ellipse at 92% 4%, rgba(255, 225, 224, .58), transparent 27rem),
+    radial-gradient(ellipse at 8% 88%, rgba(245, 222, 211, .28), transparent 30rem),
+    linear-gradient(135deg, #fffaf8 0%, #fffdfb 52%, #fff8f5 100%) !important;
+  background-size: 120% 120%, 125% 125%, 100% 100% !important;
+  animation: aa-workspace-glow 22s ease-in-out infinite alternate;
+}
+@keyframes aa-workspace-glow {
+  from { background-position: 0% 0%, 100% 100%, 0% 0%; }
+  to { background-position: 100% 20%, 0% 80%, 0% 0%; }
+}
+
+/* Os ícones da navegação ganham relevo e um movimento quase imperceptível. */
+.h-screen > aside nav a svg.aa-nav-icon {
+  animation: aa-nav-float 5.8s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+.h-screen > aside nav a:nth-child(2) svg.aa-nav-icon { animation-delay: -.7s; }
+.h-screen > aside nav a:nth-child(3) svg.aa-nav-icon { animation-delay: -1.4s; }
+.h-screen > aside nav a:nth-child(4) svg.aa-nav-icon { animation-delay: -2.1s; }
+.h-screen > aside nav a:nth-child(5) svg.aa-nav-icon { animation-delay: -2.8s; }
+.h-screen > aside nav a:nth-child(6) svg.aa-nav-icon { animation-delay: -3.5s; }
+.h-screen > aside nav a:nth-child(7) svg.aa-nav-icon { animation-delay: -4.2s; }
+.h-screen > aside nav a:nth-child(8) svg.aa-nav-icon { animation-delay: -4.9s; }
+.h-screen > aside nav a:nth-child(9) svg.aa-nav-icon { animation-delay: -1.8s; }
+.h-screen > aside nav a:nth-child(10) svg.aa-nav-icon { animation-delay: -3.1s; }
+@keyframes aa-nav-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(-2deg); }
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+  .h-screen > aside nav a:hover svg.aa-nav-icon {
+    animation-play-state: paused;
+    transform: translateY(-2px) scale(1.06);
+  }
+  .h-screen > aside nav a[aria-current="page"] svg.aa-nav-icon {
+    box-shadow: 0 8px 16px -9px rgba(175, 75, 92, .72), inset 0 1px rgba(255,255,255,.65);
+  }
+}
+
+/* Realce discreto dos pequenos botões/ícones 3D já existentes no produto. */
+.aa-app-topbar .aa-3d--mini .aa-3d__tile {
+  box-shadow: 0 9px 16px -13px rgba(124,68,77,.65), inset 0 2px 3px rgba(255,255,255,.98), inset -4px -5px 9px rgba(194,113,122,.16);
+}
+@media (prefers-reduced-motion:reduce) {
+  .aa-workspace,
+  .h-screen > aside nav a svg.aa-nav-icon { animation: none !important; }
+}
