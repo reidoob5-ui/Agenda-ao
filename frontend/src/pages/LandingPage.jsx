@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CalendarCheck, Bell, Video, Check, Plus } from 'lucide-react'
 import { DepoimentosRotativos } from '../components/Depoimentos'
 import AssinaturaAda from '../components/AssinaturaAda'
@@ -394,13 +394,34 @@ function Faq({ t }) {
 export default function LandingPage() {
   const { t, idioma, locale } = useT()
   const partesTitulo = t('lp.h1').split(/,\s*/)
-  useEffect(() => {
-    const targets = document.querySelectorAll('.lp > section, .lp > footer, .lp-hero-copy > *, .lp-hero-visual > *, .lp-board, .lp-fone, .lp-bolha, .lp-clock, .lp-feature-card, .lp-everything-more, .lp-photo, .lp-photo-note, .lp section li')
+  useLayoutEffect(() => {
+    const root = document.querySelector('.lp')
+    if (!root) return
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
-    targets.forEach((el, index) => {
+
+    // Ativa o modo de construção antes do primeiro desenho no ecrã:
+    // o conteúdo começa oculto e só entra quando chega à zona visível.
+    root.classList.add('lp-scroll-ready')
+    const selectors = [
+      '.lp-hero-copy > *', '.lp-hero-visual > *',
+      '.lp-ink > div > *', '.lp-clock',
+      '.lp-fone', '.lp-experiencia-top > *', '.lp-photo', '.lp-photo-note',
+      '.lp-section-heading > *', '.lp-feature-card', '.lp-everything-more',
+      '.lp > section > div.max-w-5xl > *',
+      '.lp > section > div.max-w-3xl > *',
+      '.lp-final-cta__inner > *', '.lp-footer > div > *',
+      '.lp section details', '.lp section ul > li'
+    ]
+    const targets = [...new Set(selectors.flatMap(selector => [...root.querySelectorAll(selector)]))]
+    const grupos = new Map()
+    targets.forEach(el => {
+      const parent = el.parentElement
+      const index = grupos.get(parent) || 0
+      grupos.set(parent, index + 1)
       el.classList.add('lp-reveal')
-      el.style.setProperty('--lp-reveal-delay', `${Math.min(index % 5, 4) * 110}ms`)
+      el.style.setProperty('--lp-reveal-delay', `${Math.min(index, 7) * 135}ms`)
     })
+
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -408,7 +429,7 @@ export default function LandingPage() {
           observer.unobserve(entry.target)
         }
       })
-    }, { threshold: 0.12, rootMargin: '0px 0px -45px 0px' })
+    }, { threshold: 0.04, rootMargin: '0px 0px -8% 0px' })
     targets.forEach(el => observer.observe(el))
     return () => observer.disconnect()
   }, [])
