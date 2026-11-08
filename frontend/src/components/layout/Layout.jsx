@@ -6,6 +6,7 @@ import SeletorIdioma from '../SeletorIdioma'
 import { useT } from '../../i18n'
 import { EMAIL_SUPORTE } from '../../utils/marca'
 import Illustracao3D from '../Illustracao3D'
+import '../../dashboard-visual.css'
 import {
   LayoutDashboard, Calendar, Users, Scissors,
   BarChart2, Settings, CreditCard, LogOut, CalendarCheck, ShieldCheck, User, Star, Hourglass, LifeBuoy
@@ -85,7 +86,7 @@ export default function Layout() {
                 ? 'bg-brand-50 text-brand-700 font-semibold'
                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`
             }>
-              <Icon size={17} />
+              <Icon size={17} className="aa-nav-icon" />
               {t(label)}
             </NavLink>
           ))}
@@ -121,7 +122,7 @@ export default function Layout() {
       </aside>
 
       {/* Conteudo */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="aa-workspace flex-1 overflow-y-auto">
         <div className="aa-app-topbar">
           <div className="aa-app-topbar__brand">
             <Illustracao3D type={iconeAtual} size="mini" />
