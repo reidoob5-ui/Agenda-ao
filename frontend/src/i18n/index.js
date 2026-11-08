@@ -15,7 +15,7 @@ export const IDIOMAS = [
   { codigo: 'fr', nome: 'Français' },
 ]
 export const LOCALES = { pt: 'pt-PT', en: 'en-GB', es: 'es-ES', fr: 'fr-FR' }
-const CHAVE = 'agendaao-idioma'
+const CHAVE = 'agendaaqui-idioma-v2' // chave nova: descarta escolhas antigas guardadas por engano
 
 function lerEscolha() {
   try { const g = localStorage.getItem(CHAVE); return DICIONARIOS[g] ? g : null } catch { return null }
