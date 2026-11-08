@@ -22,8 +22,9 @@ export function moedaSugerida() {
   if (tz === 'Africa/Luanda') return 'AOA'
   if (FUSOS_BR.test(tz)) return 'BRL'
   if (/^Europe\//.test(tz) && !/London|Dublin|Belfast|Moscow|Kyiv|Minsk|Istanbul/.test(tz)) return 'EUR'
-  const lang = (typeof navigator !== 'undefined' && navigator.language) || ''
-  if (/-AO$/i.test(lang)) return 'AOA'
+  const langs = (typeof navigator !== 'undefined' && (navigator.languages?.length ? navigator.languages : [navigator.language])) || []
+  if (langs.some((l) => /-AO$/i.test(l))) return 'AOA'
+  const lang = langs[0] || ''
   if (/-BR$/i.test(lang)) return 'BRL'
   return 'USD'
 }

@@ -31,8 +31,16 @@ export function idiomaDoNavegador() {
   return null
 }
 
-// Escolha manual > idioma do navegador > ingles (lingua franca)
-const inicial = () => lerEscolha() || idiomaDoNavegador() || 'en'
+// Paises de lingua portuguesa (pelo fuso horario do aparelho): Angola, Mocambique, Portugal, Brasil, etc.
+const FUSOS_PT = /^(Africa\/(Luanda|Maputo|Bissau|Sao_Tome)|Atlantic\/(Cape_Verde|Madeira|Azores)|Europe\/Lisbon|Asia\/(Dili|Macau)|America\/(Sao_Paulo|Bahia|Fortaleza|Recife|Belem|Manaus|Cuiaba|Campo_Grande|Porto_Velho|Rio_Branco|Maceio|Araguaina|Santarem|Noronha|Boa_Vista|Eirunepe))$/
+export function idiomaDoFuso() {
+  let tz = ''
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '' } catch {}
+  return FUSOS_PT.test(tz) ? 'pt' : null
+}
+
+// Escolha manual > pais (fuso horario) lusofono > idioma do navegador > ingles (lingua franca)
+const inicial = () => lerEscolha() || idiomaDoFuso() || idiomaDoNavegador() || 'en'
 
 export const useIdioma = create((set) => ({
   idioma: inicial(),
@@ -43,7 +51,7 @@ export const useIdioma = create((set) => ({
     set({ idioma, escolhido: true })
   },
   // so usado se a pessoa nao escolheu e o navegador esta num idioma nao suportado
-  sugerir: (idioma) => set((s) => (s.escolhido || idiomaDoNavegador() || !DICIONARIOS[idioma] ? s : { idioma })),
+  sugerir: (idioma) => set((s) => (s.escolhido || idiomaDoFuso() || idiomaDoNavegador() || !DICIONARIOS[idioma] ? s : { idioma })),
 }))
 
 export function traduzir(idioma, chave, vars) {
