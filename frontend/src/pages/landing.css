@@ -410,46 +410,55 @@
 }
 
 
-/* Hero integrado: fotografia e fundo passam a formar uma única superfície */
+
+/* Hero: uma só cena, com a fotografia a desaparecer suavemente no fundo */
 .lp-hero-section {
   position: relative;
   isolation: isolate;
-  overflow: visible;
   background:
-    radial-gradient(ellipse at 76% 42%, rgba(249, 190, 190, .34), transparent 36rem),
-    linear-gradient(105deg, #fffaf7 0%, #fff2f0 52%, #fce5e1 100%);
+    radial-gradient(ellipse at 78% 42%, rgba(249, 190, 190, .30), transparent 38rem),
+    linear-gradient(105deg, #fffaf7 0%, #fff4f1 54%, #fbe7e2 100%);
 }
-.lp-hero-section .lp-hero-copy { z-index: 2; }
 .lp-hero-section .lp-hero-visual {
-  z-index: 1;
   isolation: auto;
+  position: relative;
+  z-index: 1;
 }
 .lp-hero-section .lp-hero-photo {
-  inset: -35px -7vw -35px -56vw;
+  inset: -42px -9vw -42px -48vw;
+  overflow: visible;
   border-radius: 0;
-  background:
-    radial-gradient(ellipse at 78% 44%, rgba(249, 191, 187, .62), transparent 45%),
-    linear-gradient(100deg, #fffaf7 0%, #fff2ef 42%, #f9dcd8 100%);
+  background: transparent;
 }
 .lp-hero-section .lp-hero-photo::before { display: none; }
-.lp-hero-section .lp-hero-photo::after {
-  background:
-    linear-gradient(90deg, #fffaf7 0%, rgba(255,250,247,.88) 24%, rgba(255,242,239,.38) 49%, transparent 74%),
-    linear-gradient(180deg, rgba(255,250,247,.12), transparent 48%, rgba(255,239,235,.16));
+.lp-hero-section .lp-hero-photo::after { display: none; }
+.lp-hero-section .lp-hero-glow {
+  z-index: 0;
+  width: 66%;
+  top: 12%;
+  right: 5%;
+  background: rgba(255, 219, 216, .55);
+  filter: blur(58px);
 }
 .lp-hero-section .lp-hero-person {
-  width: 64%;
+  z-index: 1;
+  width: 112%;
   height: 112%;
-  right: -2%;
+  right: -12%;
   bottom: -5%;
   object-fit: contain;
   object-position: bottom right;
-  filter: drop-shadow(0 22px 28px rgba(119,70,75,.12));
+  filter: drop-shadow(0 22px 26px rgba(119,70,75,.13));
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.12) 17%, #000 43%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.12) 17%, #000 43%);
 }
+.lp-hero-section .lp-board { z-index: 3; }
+.lp-hero-section .lp-hero-decoration,
+.lp-hero-section .lp-float { z-index: 4; }
 
 @media (max-width: 900px) {
-  .lp-hero-section .lp-hero-photo { inset: -28px -5vw -28px -55vw; }
-  .lp-hero-section .lp-hero-person { width: 68%; right: -3%; }
+  .lp-hero-section .lp-hero-photo { inset: -30px -7vw -30px -42vw; }
+  .lp-hero-section .lp-hero-person { width: 116%; right: -14%; }
 }
 @media (max-width: 700px) {
   .lp-hero-section {
@@ -458,40 +467,33 @@
     padding-top: 34px;
     padding-bottom: 42px;
     background:
-      radial-gradient(ellipse at 82% 60%, rgba(249,190,190,.34), transparent 28rem),
-      linear-gradient(180deg, #fffaf7 0%, #fff3f0 72%, #fffaf7 100%);
+      radial-gradient(ellipse at 78% 68%, rgba(249,190,190,.35), transparent 30rem),
+      linear-gradient(180deg, #fffaf7 0%, #fff2ef 72%, #fffaf7 100%);
   }
-  .lp-hero-section .lp-hero-copy { z-index: 2; }
   .lp-hero-section .lp-hero-visual {
-    min-height: 540px;
-    margin-top: 4px;
-    padding-top: 18px;
+    min-height: 550px;
+    margin-top: 8px;
     isolation: auto;
   }
   .lp-hero-section .lp-hero-photo {
-    inset: -8px -12px 0 -12px;
+    inset: 0 -12px 0 -12px;
+    overflow: hidden;
     border-radius: 0;
-    background:
-      radial-gradient(ellipse at 76% 44%, rgba(248,190,188,.62), transparent 54%),
-      linear-gradient(135deg, #fff4f0, #f9dedb);
-  }
-  .lp-hero-section .lp-hero-photo::after {
-    background:
-      linear-gradient(90deg, rgba(255,247,244,.72), rgba(255,247,244,.06) 58%, transparent),
-      linear-gradient(180deg, rgba(255,247,244,.06), transparent 70%, #fffaf7 100%);
+    background: transparent;
   }
   .lp-hero-section .lp-hero-person {
-    width: 100%;
-    height: 104%;
-    right: -13%;
+    width: 112%;
+    height: 105%;
+    right: -15%;
     bottom: -2%;
     object-fit: contain;
     object-position: bottom right;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.2) 20%, #000 48%);
+    mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.2) 20%, #000 48%);
   }
   .lp-hero-section .lp-board {
     width: min(78%, 315px);
     margin-left: 0;
     margin-bottom: 0;
   }
-  .lp-hero-section .lp-float { right: 0; }
 }
