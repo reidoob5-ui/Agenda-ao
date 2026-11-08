@@ -295,3 +295,28 @@
 @media (prefers-reduced-motion: reduce) {
   .lp-reveal { opacity: 1; transform: none; filter: none; transition: none; will-change: auto; }
 }
+
+
+/* Fotografia de aconselhamento de relacionamento atrás do quadro de mensagens */
+.lp-fone {
+  position: relative;
+  isolation: isolate;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255,238,239,.12), rgba(255,248,244,.08)),
+    url('https://images.pexels.com/photos/5336904/pexels-photo-5336904.jpeg?auto=compress&cs=tinysrgb&w=1400') center 43% / cover;
+  border: 1px solid rgba(255,255,255,.95);
+  box-shadow: 0 28px 72px -38px rgba(99,55,64,.46), 0 0 0 7px rgba(255,255,255,.35);
+}
+.lp-fone-tela {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,250,248,.94) !important;
+  backdrop-filter: blur(7px);
+  box-shadow: 0 12px 34px -22px rgba(70,40,48,.45);
+}
+.lp-fone-tela::before { display: none !important; }
+@media (max-width: 700px) {
+  .lp-fone { padding: 13px; }
+}

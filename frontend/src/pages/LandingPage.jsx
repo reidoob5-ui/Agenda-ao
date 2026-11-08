@@ -293,8 +293,8 @@ function ExperienciaVisual({ t }) {
           <figcaption><span>{t('lp.exp.c1')}</span><strong>{t('lp.exp.t1')}</strong></figcaption>
         </figure>
         <figure className="lp-photo lp-photo-side">
-          <img src="https://images.unsplash.com/photo-1758691461957-474a7686e388?auto=format&fit=crop&w=1400&q=85" alt="Consulta médica num consultório moderno, com profissional de saúde a atender uma paciente" loading="lazy" />
-          <figcaption><span>SAÚDE E BEM-ESTAR</span><strong>Consultas num consultório acolhedor</strong></figcaption>
+          <img src="https://images.pexels.com/photos/5336904/pexels-photo-5336904.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Casal numa sessão de aconselhamento de relacionamento com terapeuta num consultório acolhedor" loading="lazy" />
+          <figcaption><span>RELACIONAMENTO E BEM-ESTAR</span><strong>Aconselhamento para casais</strong></figcaption>
         </figure>
         <div className="lp-photo-note">
           <span className="lp-note-icon"><CalendarCheck size={19}/></span>
