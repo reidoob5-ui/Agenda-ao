@@ -161,7 +161,8 @@ function AntesDepois({ t }) {
         </div>
         <p className="mt-5 text-lg text-slate-600 max-w-md leading-relaxed">{t(modo === 'sem' ? 'lp.adSemTxt' : 'lp.adComTxt')}</p>
       </div>
-      <div className="lp-fone max-w-sm w-full mx-auto lg:ml-auto">
+      <div className="lp-fone-scene">
+        <div className="lp-fone">
         {modo === 'sem' ? (
           <div key="sem" className="lp-fone-tela lp-swap" style={{ background: '#fff3ef' }}>
             {bolhas.map(([q, k]) => <div key={k} className={`lp-bolha ${q}`}>{t(k)}</div>)}
@@ -178,6 +179,7 @@ function AntesDepois({ t }) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </section>
   )
@@ -293,8 +295,8 @@ function ExperienciaVisual({ t }) {
           <figcaption><span>{t('lp.exp.c1')}</span><strong>{t('lp.exp.t1')}</strong></figcaption>
         </figure>
         <figure className="lp-photo lp-photo-side">
-          <img src="https://images.pexels.com/photos/5336904/pexels-photo-5336904.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Casal numa sessão de aconselhamento de relacionamento com terapeuta num consultório acolhedor" loading="lazy" />
-          <figcaption><span>RELACIONAMENTO E BEM-ESTAR</span><strong>Aconselhamento para casais</strong></figcaption>
+          <img src="https://images.unsplash.com/photo-1758691461957-474a7686e388?auto=format&fit=crop&w=1400&q=85" alt="Profissional de saúde a atender uma paciente num consultório médico moderno" loading="lazy" />
+          <figcaption><span>SAÚDE E BEM-ESTAR</span><strong>Consultas num consultório acolhedor</strong></figcaption>
         </figure>
         <div className="lp-photo-note">
           <span className="lp-note-icon"><CalendarCheck size={19}/></span>
