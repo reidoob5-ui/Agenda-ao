@@ -354,3 +354,48 @@
     will-change: auto;
   }
 }
+
+
+/* Cena panorâmica: fotografia ocupa toda a coluna; o painel WhatsApp fica à frente */
+.lp-fone-scene {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px clamp(18px, 4vw, 54px);
+  border-radius: 30px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255,246,243,.12), rgba(255,246,243,.04) 50%, rgba(255,246,243,.12)),
+    url('https://images.pexels.com/photos/5336904/pexels-photo-5336904.jpeg?auto=compress&cs=tinysrgb&w=1600') center 44% / cover no-repeat;
+  box-shadow: 0 24px 65px -42px rgba(83,52,57,.35);
+}
+.lp-fone {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 min(100%, 390px);
+  width: min(100%, 390px);
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 12px;
+  background: rgba(255,250,248,.94);
+  border: 1px solid rgba(255,255,255,.92);
+  box-shadow: 0 22px 58px -24px rgba(48,32,34,.42), 0 0 0 1px rgba(255,255,255,.35);
+  backdrop-filter: blur(8px);
+}
+.lp-fone-tela {
+  background: rgba(255,250,248,.97) !important;
+}
+.lp-fone-tela::before { display: none !important; }
+@media (max-width: 700px) {
+  .lp-fone-scene {
+    min-height: 410px;
+    padding: 22px 14px;
+    border-radius: 24px;
+    background-position: center 42%;
+  }
+  .lp-fone { max-width: min(100%, 350px); }
+}
