@@ -320,3 +320,37 @@
 @media (max-width: 700px) {
   .lp-fone { padding: 13px; }
 }
+
+
+/* Construção sequencial real: começa vazio e revela cada peça conforme o scroll */
+.lp.lp-scroll-ready .lp-reveal {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 76px, 0) scale(.975);
+  filter: blur(7px);
+  transition:
+    opacity .9s cubic-bezier(.16,.78,.22,1),
+    transform .9s cubic-bezier(.16,.78,.22,1),
+    filter .9s cubic-bezier(.16,.78,.22,1),
+    visibility 0s linear .9s;
+  transition-delay: var(--lp-reveal-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+.lp.lp-scroll-ready .lp-reveal.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate3d(0,0,0) scale(1);
+  filter: blur(0);
+  transition-delay: var(--lp-reveal-delay, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp.lp-scroll-ready .lp-reveal,
+  .lp.lp-scroll-ready .lp-reveal.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    filter: none;
+    transition: none;
+    will-change: auto;
+  }
+}
