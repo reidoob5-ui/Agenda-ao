@@ -396,7 +396,7 @@ function Faq({ t }) {
 export default function LandingPage() {
   const { t, idioma, locale } = useT()
   const partesTitulo = t('lp.h1').split(/,\s*/)
-  // Efeito de construcao ao rolar: so nas Perguntas Frequentes (o resto da pagina fica sempre visivel)
+  // Efeito de construcao ao rolar: so em "Tudo o que acontece..." e nas Perguntas Frequentes (o resto da pagina fica sempre visivel)
   useLayoutEffect(() => {
     const root = document.querySelector('.lp')
     if (!root) return
@@ -404,10 +404,17 @@ export default function LandingPage() {
     let observer
     let itens = []
     try {
-      itens = [...root.querySelectorAll('.lp-faq h2, .lp-faq details')]
-      itens.forEach((el, i) => {
-        el.classList.add('lp-build')
-        el.style.setProperty('--lp-d', `${i * 110}ms`)
+      // Cada bloco comeca o seu atraso do zero: assim as pecas entram uma a uma dentro do proprio bloco
+      const grupos = [
+        '.lp-faq h2, .lp-faq details',
+        '.lp-feature-card, .lp-everything-more',
+      ]
+      grupos.forEach((sel) => {
+        root.querySelectorAll(sel).forEach((el, i) => {
+          el.classList.add('lp-build')
+          el.style.setProperty('--lp-d', `${i * 110}ms`)
+          itens.push(el)
+        })
       })
       observer = new IntersectionObserver((entries) => {
         entries.forEach((e) => {
