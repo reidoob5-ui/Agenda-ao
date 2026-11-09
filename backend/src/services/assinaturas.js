@@ -14,7 +14,17 @@ async function processarPagamentoAprovado(pagamentoId) {
   const pagamento = await prisma.pagamento.findUnique({ where: { id: pagamentoId }, include: { assinatura: true } });
   if (!pagamento || pagamento.status === 'APROVADO') return false;
 
-  const fimPeriodo = new Date();
+  // Renovar antes de acabar nao faz perder os dias que sobram (mesmo plano ainda activo)
+  const negocio = await prisma.negocio.findUnique({
+    where: { id: pagamento.negocioId },
+    select: { plano: true, planoStatus: true, planoExpira: true }
+  });
+  const planoNovo = pagamento.assinatura?.plano || 'BASICO';
+  let inicio = new Date();
+  if (negocio && negocio.plano === planoNovo && negocio.planoStatus === 'ATIVO' && negocio.planoExpira && new Date(negocio.planoExpira) > inicio) {
+    inicio = new Date(negocio.planoExpira);
+  }
+  const fimPeriodo = new Date(inicio);
   fimPeriodo.setDate(fimPeriodo.getDate() + 30);
 
   await prisma.$transaction([
@@ -22,7 +32,7 @@ async function processarPagamentoAprovado(pagamentoId) {
     ...(pagamento.assinaturaId ? [prisma.assinatura.update({ where: { id: pagamento.assinaturaId }, data: { status: 'ATIVA', periodoFim: fimPeriodo } })] : []),
     prisma.negocio.update({
       where: { id: pagamento.negocioId },
-      data: { planoStatus: 'ATIVO', plano: pagamento.assinatura?.plano || 'BASICO', planoExpira: fimPeriodo }
+      data: { planoStatus: 'ATIVO', plano: planoNovo, planoExpira: fimPeriodo }
     })
   ]);
   return true;

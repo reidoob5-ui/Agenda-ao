@@ -11,22 +11,28 @@ router.post('/', async (req, res) => {
   if (!assinaturaValida(bruto, req.get('paddle-signature'), process.env.PADDLE_WEBHOOK_SECRET)) {
     return res.status(401).json({ erro: 'Assinatura inválida' });
   }
-  res.status(200).json({ recebido: true });
 
   try {
     const evento = JSON.parse(bruto);
-    if (evento.event_type !== 'transaction.completed') return;
-    const dados = evento.data || {};
-    const pagamento = await prisma.pagamento.findUnique({ where: { transactionId: dados.id } });
-    if (!pagamento || pagamento.status === 'APROVADO') return;
-    if (dados.currency_code && dados.currency_code !== pagamento.moeda) {
-      console.error('[Paddle] moeda diferente da esperada, ignorado:', dados.id);
-      return;
+    if (evento.event_type === 'transaction.completed') {
+      const dados = evento.data || {};
+      const pagamento = await prisma.pagamento.findUnique({ where: { transactionId: dados.id } });
+      if (pagamento && pagamento.status !== 'APROVADO') {
+        if (dados.currency_code && dados.currency_code !== pagamento.moeda) {
+          console.error('[Paddle] moeda diferente da esperada, ignorado:', dados.id);
+        } else {
+          await prisma.pagamento.update({ where: { id: pagamento.id }, data: { webhookPayload: bruto.slice(0, 20000) } });
+          await processarPagamentoAprovado(pagamento.id);
+          console.log(`[Paddle] Pagamento ${pagamento.id} aprovado`);
+        }
+      }
     }
-    await prisma.pagamento.update({ where: { id: pagamento.id }, data: { webhookPayload: bruto.slice(0, 20000) } });
-    await processarPagamentoAprovado(pagamento.id);
-    console.log(`[Paddle] Pagamento ${pagamento.id} aprovado`);
-  } catch (err) { console.error('[Paddle] webhook:', err.message); }
+    res.status(200).json({ recebido: true });
+  } catch (err) {
+    // 500 faz o Paddle tentar outra vez mais tarde (nao perder um pagamento por falha passageira)
+    console.error('[Paddle] webhook:', err.message);
+    res.status(500).json({ erro: 'Falha ao processar' });
+  }
 });
 
 module.exports = router;

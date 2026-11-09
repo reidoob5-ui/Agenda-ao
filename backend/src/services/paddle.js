@@ -45,12 +45,15 @@ async function criarTransacao({ nomePlano, valor, moeda, urlPagamento }) {
 function assinaturaValida(corpoBruto, cabecalho, segredo, toleranciaSeg = 300, agora = Date.now()) {
   try {
     if (!segredo || !cabecalho) return false;
-    const partes = Object.fromEntries(String(cabecalho).split(';').map(p => p.trim().split('=')));
-    const ts = Number(partes.ts);
+    const campos = String(cabecalho).split(';').map(p => p.trim().split('='));
+    const ts = Number((campos.find(c => c[0] === 'ts') || [])[1]);
     if (!ts || Math.abs(agora / 1000 - ts) > toleranciaSeg) return false;
-    const esperado = crypto.createHmac('sha256', segredo).update(`${partes.ts}:${corpoBruto}`).digest('hex');
-    const recebido = String(partes.h1 || '');
-    return recebido.length === esperado.length && crypto.timingSafeEqual(Buffer.from(esperado), Buffer.from(recebido));
+    const esperado = crypto.createHmac('sha256', segredo).update(`${ts}:${corpoBruto}`).digest('hex');
+    // Durante a troca do segredo o Paddle envia mais de um h1: basta um coincidir
+    return campos.filter(c => c[0] === 'h1').some(c => {
+      const recebido = String(c[1] || '');
+      return recebido.length === esperado.length && crypto.timingSafeEqual(Buffer.from(esperado), Buffer.from(recebido));
+    });
   } catch { return false; }
 }
 
