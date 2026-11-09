@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useIdioma } from '../i18n'
 
 // Em desenvolvimento: usa o proxy do Vite (/api -> localhost:4001)
 // Em producao: usa a URL do backend no Render.com
@@ -10,6 +11,12 @@ const api = axios.create({
   baseURL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' }
+})
+
+// Diz ao servidor em que idioma o utilizador esta, para as mensagens de erro virem traduzidas
+api.interceptors.request.use((config) => {
+  try { config.headers['x-idioma'] = useIdioma.getState().idioma } catch {}
+  return config
 })
 
 api.interceptors.response.use(

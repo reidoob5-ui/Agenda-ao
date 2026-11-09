@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /agenda
+Disallow: /clientes
+Disallow: /servicos
+Disallow: /profissionais
+Disallow: /relatorios
+Disallow: /config
+Disallow: /faturacao
+Disallow: /pagar
+Disallow: /cartaz
+
+Sitemap: https://agenda-ao.vercel.app/sitemap.xml

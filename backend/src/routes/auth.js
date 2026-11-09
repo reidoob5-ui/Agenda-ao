@@ -8,6 +8,9 @@ const { verificarTokenGoogle, googleConfigurado } = require('../services/googleA
 const { recursosDoPlano } = require('../utils/planos');
 const prisma = new PrismaClient();
 
+// Hash valido so para gastar o mesmo tempo quando o email nao existe
+const HASH_FALSO = bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 12);
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function gerarToken(usuario) {
   return jwt.sign(
@@ -95,7 +98,7 @@ router.get('/config', (req, res) => {
 router.post('/registar', [
   body('nome').trim().notEmpty().withMessage('Nome é obrigatório'),
   body('email').trim().isEmail().withMessage('Email inválido'),
-  body('senha').isLength({ min: 6 }).withMessage('Senha mínimo 6 caracteres'),
+  body('senha').isLength({ min: 6, max: 128 }).withMessage('Senha entre 6 e 128 caracteres'),
   body('telefone').notEmpty().withMessage('Telefone é obrigatório'),
   body('nomeNegocio').notEmpty().withMessage('Nome do negócio é obrigatório'),
 ], async (req, res) => {
@@ -202,7 +205,7 @@ router.post('/google-login', [
 // POST /api/auth/login (email + senha, para contas existentes)
 router.post('/login', [
   body('email').trim().isEmail().withMessage('Email inválido'),
-  body('senha').notEmpty(),
+  body('senha').isString().isLength({ min: 1, max: 128 }),
 ], async (req, res) => {
   const erros = validationResult(req);
   if (!erros.isEmpty()) return res.status(400).json({ erros: erros.array(), erro: erros.array()[0].msg });
@@ -216,7 +219,11 @@ router.post('/login', [
       include: { negocio: true }
     });
 
-    if (!usuario || !await bcrypt.compare(senha, usuario.senha)) {
+    // Compara sempre com um hash, mesmo sem utilizador, para o tempo de resposta
+    // nao revelar se o email existe.
+    const hash = usuario ? usuario.senha : HASH_FALSO;
+    const senhaOk = await bcrypt.compare(senha, hash).catch(() => false);
+    if (!usuario || !senhaOk) {
       return res.status(401).json({ erro: 'Email ou senha incorretos' });
     }
 

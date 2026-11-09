@@ -17,6 +17,14 @@ const { iniciarCrons } = require('./services/cronService');
 const { autenticar }  = require('./middleware/auth');
 const { verificarPlano } = require('./middleware/plano');
 
+if (!process.env.JWT_SECRET) {
+  console.error('❌ JWT_SECRET não está definido. Define-o nas variáveis de ambiente (Render) antes de arrancar.');
+  process.exit(1);
+}
+if (!process.env.ADMIN_SECRET) {
+  console.warn('⚠️  ADMIN_SECRET não definido: o painel admin fica bloqueado até o definires.');
+}
+
 const app = express();
 const PORT = process.env.PORT || 4001;
 
@@ -40,7 +48,8 @@ app.use(cors({
     if (origens.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
       return callback(null, true);
     }
-    callback(new Error('Origem nao permitida pelo CORS'));
+    // Recusa sem lancar erro (evita um 500 e um stack no log a cada pedido estranho)
+    callback(null, false);
   },
   credentials: true
 }));
@@ -48,6 +57,7 @@ app.use(cors({
 // Webhook precisa de body raw para validar HMAC
 app.use('/api/pagamentos/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/webhooks/paddle', express.raw({ type: '*/*', limit: '1mb' }), require('./routes/paddleWebhook'));
+app.use(require('./middleware/idioma').traduzirErros);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -79,12 +89,19 @@ const adminLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Escritas publicas (marcar, lista de espera): travao contra spam de reservas falsas
+const publicoEscritaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 40,
+  skip: (req) => req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS',
+  message: { erro: 'Muitos pedidos. Tenta novamente daqui a pouco.' }
+});
+
 app.use('/api/', limiter);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ── Rotas Publicas ─────────────────────────────────────────────────────────
 app.use('/api/auth',    authLimiter, authRoutes);
-app.use('/api/public',  publicRouter);
+app.use('/api/public',  publicoEscritaLimiter, publicRouter);
 app.use('/api/depoimentos', require('./routes/depoimentos'));
 app.use('/api/admin',   adminLimiter, adminRoutes);
 
@@ -105,12 +122,22 @@ app.use('/api/relatorios',   autenticar, verificarPlano, relatoriosRouter);
 app.use('/api/lista-espera', autenticar, verificarPlano, require('./routes/listaEspera'));
 
 // ── Handler de erros global ───────────────────────────────────────────────────
+// Rota de API inexistente: JSON limpo em vez da pagina HTML do Express
+app.use('/api', (req, res) => {
+  res.status(404).json({ erro: 'Rota não encontrada' });
+});
+
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  const status = err.status || 500;
-  res.status(status).json({
-    erro: process.env.NODE_ENV === 'production' ? 'Erro interno do servidor' : err.message
-  });
+  const status = err.status || err.statusCode || 500;
+  if (status >= 500) console.error(err.stack);
+  if (status >= 500) {
+    return res.status(500).json({
+      erro: process.env.NODE_ENV === 'production' ? 'Erro interno do servidor' : err.message
+    });
+  }
+  // 4xx (JSON invalido, corpo grande demais...) — o cliente merece saber o que falhou
+  const msg = err.type === 'entity.too.large' ? 'Pedido demasiado grande' : 'Pedido inválido';
+  res.status(status).json({ erro: msg });
 });
 
 app.listen(PORT, () => {

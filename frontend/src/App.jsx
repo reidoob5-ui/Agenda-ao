@@ -39,6 +39,7 @@ const ListaEsperaPage = pagina(() => import('./pages/ListaEsperaPage'))
 const PagarPage = pagina(() => import('./pages/PagarPage'))
 const LegalPage = pagina(() => import('./pages/LegalPage'))
 const DemoPage = pagina(() => import('./pages/DemoPage'))
+const NaoEncontradaPage = pagina(() => import('./pages/NaoEncontradaPage'))
 import PremiumMotion from './components/PremiumMotion'
 
 // Enquanto uma pagina carrega (so se descarrega o que se usa) mostra o logotipo em vez de ecra branco
@@ -92,7 +93,7 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NaoEncontradaPage />} />
       </Routes>
       </Suspense>
     </>
