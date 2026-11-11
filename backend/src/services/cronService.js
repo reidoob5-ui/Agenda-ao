@@ -46,13 +46,12 @@ function iniciarCrons() {
     });
   });
 
-  // Suspender negócios com plano expirado — corre diariamente à meia-noite
-  cron.schedule('0 0 * * *', async () => {
-    await prisma.negocio.updateMany({
-      where: { planoExpira: { lt: new Date() }, planoStatus: 'ATIVO' },
-      data: { planoStatus: 'EXPIRADO' }
-    });
-    console.log('[Cron] Planos expirados verificados');
+  // Plano pago expirado volta ao Basico gratis — corre de hora a hora
+  cron.schedule('5 * * * *', async () => {
+    try {
+      const n = await require('./assinaturas').rebaixarExpirados();
+      if (n) console.log(`[Cron] ${n} negocio(s) voltaram ao plano Basico (plano expirado)`);
+    } catch (e) { console.error('[Cron] rebaixar planos:', e.message); }
   });
 
   console.log('[Cron] Todos os jobs iniciados');

@@ -511,8 +511,12 @@ const verificarPlanoPublico = async (slug, res) => {
     return null;
   }
   
-  const expirou = negocio.planoExpira && new Date(negocio.planoExpira) < new Date();
-  if (negocio.planoStatus !== 'ATIVO' || expirou) {
+  // Plano pago expirado: a pagina de marcacao continua a funcionar no plano Basico gratis
+  if (negocio.planoExpira && new Date(negocio.planoExpira) < new Date()) {
+    await require('../services/assinaturas').rebaixarExpirados(negocio.id);
+    negocio.plano = 'BASICO'; negocio.planoStatus = 'ATIVO'; negocio.planoExpira = null;
+  }
+  if (negocio.planoStatus !== 'ATIVO') {
     res.status(403).json({
       erro: 'Serviço suspenso',
       codigo: 'PLANO_INATIVO',

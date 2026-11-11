@@ -38,4 +38,23 @@ async function processarPagamentoAprovado(pagamentoId) {
   return true;
 }
 
-module.exports = { criarAssinatura, processarPagamentoAprovado };
+// Plano pago que chegou ao fim e nao foi renovado: volta ao Basico gratis (nunca fica bloqueado).
+// Os dados (marcacoes, clientes...) ficam todos; so deixam de estar disponiveis os recursos pagos.
+// Se passar negocioId, so rebaixa esse negocio; sem argumentos rebaixa todos os que expiraram.
+async function rebaixarExpirados(negocioId) {
+  const agora = new Date();
+  const filtro = { planoExpira: { lt: agora }, planoStatus: { not: 'SUSPENSO' }, ...(negocioId ? { id: negocioId } : {}) };
+  const r = await prisma.negocio.updateMany({
+    where: filtro,
+    data: { plano: 'BASICO', planoStatus: 'ATIVO', planoExpira: null }
+  });
+  if (r.count) {
+    await prisma.assinatura.updateMany({
+      where: { status: 'ATIVA', periodoFim: { lt: agora }, ...(negocioId ? { negocioId } : {}) },
+      data: { status: 'EXPIRADA' }
+    });
+  }
+  return r.count;
+}
+
+module.exports = { criarAssinatura, processarPagamentoAprovado, rebaixarExpirados };

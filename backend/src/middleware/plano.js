@@ -3,6 +3,7 @@
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { rebaixarExpirados } = require('../services/assinaturas');
 
 // Rotas que NAO precisam de plano activo (sempre acessiveis)
 const ROTAS_LIVRES = [
@@ -30,26 +31,19 @@ const verificarPlano = async (req, res, next) => {
 
     if (!negocio) return res.status(404).json({ erro: 'Negocio nao encontrado' });
 
-    // Verificar se plano expirou (comparar data)
-    if (negocio.planoExpira && new Date(negocio.planoExpira) < new Date()) {
-      // Actualizar status no banco se ainda nao foi feito
-      await prisma.negocio.update({
-        where: { id: req.negocioId },
-        data: { planoStatus: 'EXPIRADO' }
-      });
-      return res.status(403).json({
-        erro: 'Plano expirado',
-        codigo: 'PLANO_EXPIRADO',
-        mensagem: 'O teu plano de assinatura expirou. Renova em Faturacao para continuar a usar o Agenda Aqui.'
-      });
-    }
-
     if (negocio.planoStatus === 'SUSPENSO') {
       return res.status(403).json({
         erro: 'Conta suspensa',
         codigo: 'CONTA_SUSPENSA',
         mensagem: 'A tua conta foi suspensa. Contacta o suporte em agendaaosuporte@gmail.com'
       });
+    }
+
+    // Plano pago expirado: volta ao Basico gratis em vez de bloquear
+    if (negocio.planoExpira && new Date(negocio.planoExpira) < new Date()) {
+      await rebaixarExpirados(req.negocioId);
+      if (req.usuario?.negocio) Object.assign(req.usuario.negocio, { plano: 'BASICO', planoStatus: 'ATIVO', planoExpira: null });
+      return next();
     }
 
     // EXPIRADO sem data (nunca pagou ainda — periodo de trial)
