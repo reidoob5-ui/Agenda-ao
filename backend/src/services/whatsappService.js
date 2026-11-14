@@ -102,7 +102,7 @@ async function registar(negocioId, agendamentoId, tipo, status, erro) {
 
 // tipo: 'CONFIRMACAO' | 'LEMBRETE_24H' | 'LEMBRETE_2H'
 // agendamento tem de incluir cliente e servico; negocio precisa de id, nome, plano, planoStatus
-async function enviarWhatsAppAgendamento({ agendamento, negocio, tipo }) {
+async function enviarWhatsAppAgendamentoInterno({ agendamento, negocio, tipo }) {
   try {
     if (!configurado()) return { enviado: false, motivo: 'NAO_CONFIGURADO' };
     if (negocio.planoStatus !== 'ATIVO' || !planosPermitidos().includes(negocio.plano)) {
@@ -136,6 +136,15 @@ async function enviarWhatsAppAgendamento({ agendamento, negocio, tipo }) {
     console.error('[WhatsApp] erro inesperado:', err.message);
     return { enviado: false, motivo: 'ERRO' };
   }
+}
+
+// Igual ao interno, mas regista nos logs porque e que uma mensagem nao saiu (antes ficava em silencio)
+async function enviarWhatsAppAgendamento(args) {
+  const r = await enviarWhatsAppAgendamentoInterno(args);
+  if (!r.enviado && r.motivo && r.motivo !== 'ERRO_META') {
+    console.log(`[WhatsApp] nao enviado (${args.tipo}): ${r.motivo} | plano=${args.negocio?.plano} planoStatus=${args.negocio?.planoStatus} configurado=${configurado()}`);
+  }
+  return r;
 }
 
 module.exports = {
