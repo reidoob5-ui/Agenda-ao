@@ -142,7 +142,7 @@ async function enviarWhatsAppAgendamentoInterno({ agendamento, negocio, tipo }) 
 async function enviarWhatsAppAgendamento(args) {
   const r = await enviarWhatsAppAgendamentoInterno(args);
   if (!r.enviado && r.motivo && r.motivo !== 'ERRO_META') {
-    console.log(`[WhatsApp] nao enviado (${args.tipo}): ${r.motivo} | plano=${args.negocio?.plano} planoStatus=${args.negocio?.planoStatus} configurado=${configurado()}`);
+    console.log(`[WhatsApp] nao enviado (${args.tipo}): ${r.motivo} | plano=${args.negocio?.plano} planoStatus=${args.negocio?.planoStatus} configurado=${configurado()} temToken=${!!process.env.WHATSAPP_TOKEN} temPhoneId=${!!process.env.WHATSAPP_PHONE_ID}`);
   }
   return r;
 }
